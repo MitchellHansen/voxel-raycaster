@@ -1,11 +1,36 @@
-#include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
 #include <iostream>
+#include <string>
 #include <chrono>
-#include <random>
 
 const int WINDOW_X = 600;
 const int WINDOW_Y = 800;
+
+struct fps_counter {
+public:
+	fps_counter(){
+		if(!f.loadFromFile("../assets/fonts/Arial.ttf")){
+			std::cout << "couldn't find the fallback Arial font "
+					     "in ../assets/fonts/" << std::endl;
+		} else {
+			t.setFont(f);
+		}
+	}
+	void frame(double delta_time){
+		frame_count++;
+		fps_average += (delta_time - fps_average) / frame_count;
+	}
+	void draw(sf::RenderWindow *r){
+		t.setString(std::to_string(fps_average));
+		r->draw(t);
+	}
+
+private:
+	sf::Font f;
+	sf::Text t;
+	int frame_count = 0;
+	double fps_average = 0;
+};
 
 float elap_time(){
 	static std::chrono::time_point<std::chrono::system_clock> start;
@@ -22,38 +47,69 @@ float elap_time(){
 }
 
 int main() {
-	elap_time();
-	std::mt19937 rng(time(NULL));
-	std::uniform_int_distribution<int> rgen(100, 400);
-
+	// Initialize the render window
 	sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
 
-	float step_size = 0.005f;
-	double frame_time = 0.0, elapsed_time = 0.0, delta_time = 0.0, accumulator_time = 0.0, current_time = 0.0;
+	// The step size in milliseconds between calls to Update()
+	// Lets set it to 16.6 milliseonds (60FPS)
+	float step_size = 0.0166f;
 
+	// Timekeeping values for the loop
+	double  frame_time = 0.0, 
+			elapsed_time = 0.0, 
+			delta_time = 0.0, 
+			accumulator_time = 0.0, 
+			current_time = 0.0;
+
+	fps_counter fps;
 
 	while (window.isOpen()) {
 
+		// Poll for events from the user
 		sf::Event event;
 		while (window.pollEvent(event)) {
+
+			// If the user tries to exit the application via the GUI
 			if (event.type == sf::Event::Closed)
 				window.close();
 		}
 
+		// Get the elapsed time from the start of the application
 		elapsed_time = elap_time();
+
+		// Find the time that passed between now and the last frame
 		delta_time = elapsed_time - current_time;
+
+		// Set the time for the next frame to use
 		current_time = elapsed_time;
-		if (delta_time > 0.02f)
-			delta_time = 0.02f;
+
+		// If the time between the last frame and now was too large (lag)
+		// cull the time to a more acceptable value. So instead of jumping large
+		// amounts when lagging, the app only jumps in set increments
+		if (delta_time > 0.05f)
+			delta_time = 0.05f;
+
+		// Add the frame time to the accumulator, a running total of time we
+		// need to account for in the application
 		accumulator_time += delta_time;
 
+		// While we have time to step
 		while ((accumulator_time - step_size) >= step_size) {
+
+			// Take away a step from the accumulator
 			accumulator_time -= step_size;
 
+			// And update the application for the amount of time alotted for one step
 			// Update(step_size);
 		}
 
+
+		// Rendering code goes here
 		window.clear(sf::Color::Black);
+
+		// Give the frame counter the frame time and draw the average frame time
+		fps.frame(delta_time);
+		fps.draw(&window);
 
 		window.display();
 
