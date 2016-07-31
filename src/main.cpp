@@ -23,6 +23,12 @@ float elap_time(){
 }
 
 int main() {
+
+	
+	sf::Uint8 c;
+	std::cout << sizeof(c);
+
+
 	// Initialize the render window
 	sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
 

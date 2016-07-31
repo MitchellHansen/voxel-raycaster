@@ -1,5 +1,9 @@
 #pragma once
 #include <SFML/Graphics.hpp>
+#include <iostream>
+
+const double PI = 3.141592653589793238463;
+const float  PI_F = 3.14159265358979f;
 
 struct fps_counter {
 public:
@@ -49,3 +53,24 @@ inline sf::Vector3f CartToSphere(sf::Vector3f in) {
 		);
 	return r;
 };
+
+
+inline sf::Vector3f Normalize(sf::Vector3f in) {
+	
+	float multiplier = sqrt(in.x * in.x + in.y * in.y + in.z * in.z);
+	auto r = sf::Vector3f(
+		in.x / multiplier,
+		in.y / multiplier,
+		in.z / multiplier
+	);
+	return r;
+
+}
+
+inline float DegreesToRadians(float in) {
+	return in * PI / 180.0f;
+}
+
+inline float RadiansToDegrees(float in) {
+	return in * 180.0f / PI;
+}
