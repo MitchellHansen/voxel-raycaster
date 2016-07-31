@@ -6,8 +6,8 @@
 #include "RayCaster.h"
 #include <Map.h>
 
-const int WINDOW_X = 600;
-const int WINDOW_Y = 800;
+const int WINDOW_X = 400;
+const int WINDOW_Y = 400;
 
 
 float elap_time(){
@@ -55,7 +55,7 @@ int main() {
 	sf::Vector3i map_dim(100, 100, 100);
 	sf::Vector2i view_res(WINDOW_X, WINDOW_Y);
 	sf::Vector3f cam_dir(1.0f, 0.0f, 1.57f);
-	sf::Vector3f cam_pos(10, 10, 10);
+	sf::Vector3f cam_pos(50, 50, 50);
 
 	Map* map = new Map(map_dim);
 	RayCaster ray_caster(map, map_dim, view_res);
@@ -74,21 +74,51 @@ int main() {
 			if (event.type == sf::Event::Closed)
 				window.close();
 
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
-				cam_dir.z -= 0.1f;
-				std::cout << "X:" << cam_dir.x << " Y:" << cam_dir.y << " Z:" << cam_dir.z << std::endl;
-			}
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
-				cam_dir.z += 0.1f;
-				std::cout << "X:" << cam_dir.x << " Y:" << cam_dir.y << " Z:" << cam_dir.z << std::endl;
-			}
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
-				cam_dir.y += 0.1f;
-				std::cout << "X:" << cam_dir.x << " Y:" << cam_dir.y << " Z:" << cam_dir.z << std::endl;
-			}
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
-				cam_dir.y -= 0.1f;
-				std::cout << "X:" << cam_dir.x << " Y:" << cam_dir.y << " Z:" << cam_dir.z << std::endl;
+			if (event.type == sf::Event::KeyPressed) {
+
+				// CAMERA DIRECTION
+				if (event.key.code == sf::Keyboard::Left) {
+					cam_dir.z -= 0.1f;
+					std::cout << "X:" << cam_dir.x << " Y:" << cam_dir.y << " Z:" << cam_dir.z << std::endl;
+				}
+				if (event.key.code == sf::Keyboard::Right) {
+					cam_dir.z += 0.1f;
+					std::cout << "X:" << cam_dir.x << " Y:" << cam_dir.y << " Z:" << cam_dir.z << std::endl;
+				}
+				if (event.key.code == sf::Keyboard::Down) {
+					cam_dir.y += 0.1f;
+					std::cout << "X:" << cam_dir.x << " Y:" << cam_dir.y << " Z:" << cam_dir.z << std::endl;
+				}
+				if (event.key.code == sf::Keyboard::Up) {
+					cam_dir.y -= 0.1f;
+					std::cout << "X:" << cam_dir.x << " Y:" << cam_dir.y << " Z:" << cam_dir.z << std::endl;
+				}
+
+				// CAMERA POSITION
+				if (event.key.code == sf::Keyboard::Q) {
+					cam_pos.z -= 1;
+					std::cout << "X:" << cam_pos.x << " Y:" << cam_pos.y << " Z:" << cam_pos.z << std::endl;
+				}
+				if (event.key.code == sf::Keyboard::E) {
+					cam_pos.z += 1;
+					std::cout << "X:" << cam_pos.x << " Y:" << cam_pos.y << " Z:" << cam_pos.z << std::endl;
+				}
+				if (event.key.code == sf::Keyboard::W) {
+					cam_pos.y += 1;
+					std::cout << "X:" << cam_pos.x << " Y:" << cam_pos.y << " Z:" << cam_pos.z << std::endl;
+				}
+				if (event.key.code == sf::Keyboard::S) {
+					cam_pos.y -= 1;
+					std::cout << "X:" << cam_pos.x << " Y:" << cam_pos.y << " Z:" << cam_pos.z << std::endl;
+				}
+				if (event.key.code == sf::Keyboard::A) {
+					cam_pos.x += 1;
+					std::cout << "X:" << cam_pos.x << " Y:" << cam_pos.y << " Z:" << cam_pos.z << std::endl;
+				}
+				if (event.key.code == sf::Keyboard::D) {
+					cam_pos.x -= 1;
+					std::cout << "X:" << cam_pos.x << " Y:" << cam_pos.y << " Z:" << cam_pos.z << std::endl;
+				}
 			}
 		}
 
@@ -104,8 +134,8 @@ int main() {
 		// If the time between the last frame and now was too large (lag)
 		// cull the time to a more acceptable value. So instead of jumping large
 		// amounts when lagging, the app only jumps in set increments
-		if (delta_time > 0.05f)
-			delta_time = 0.05f;
+		if (delta_time > 0.2f)
+			delta_time = 0.2f;
 
 		// Add the frame time to the accumulator, a running total of time we
 		// need to account for in the application

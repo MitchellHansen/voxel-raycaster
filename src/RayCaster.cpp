@@ -48,7 +48,7 @@ sf::Color* RayCaster::CastRays(sf::Vector3<float> camera_direction, sf::Vector3<
 		sf::Vector3f base_direction(1, 0, 0);
 		
 		//-resolution.y / 2
-		// Start the loop at the bottom left, scan right and work up
+		// Start the loop at the top left, scan right and work down
 		for (int x = 0; x < resolution.x; x++) {
 			for (int y = 0; y < resolution.y; y++) {
 
