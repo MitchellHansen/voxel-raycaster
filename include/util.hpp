@@ -5,8 +5,7 @@ struct fps_counter {
 public:
 		fps_counter(){
 				if(!f.loadFromFile("../assets/fonts/Arial.ttf")){
-						std::cout << "couldn't find the fallback Arial font "
-								         "in ../assets/fonts/" << std::endl;
+						std::cout << "couldn't find the fall back Arial font in ../assets/fonts/" << std::endl;
 				} else {
 						t.setFont(f);
 				}
@@ -29,3 +28,24 @@ private:
 		double fps_average = 0;
 };
 
+
+inline sf::Vector3f SphereToCart(sf::Vector3f i) {
+
+	auto r = sf::Vector3f(
+		(i.x * sin(i.z) * cos(i.y)),
+		(i.x * sin(i.z) * sin(i.y)),
+		(i.x * cos(i.z))
+		);
+	return r;
+};
+
+
+inline sf::Vector3f CartToSphere(sf::Vector3f in) {
+
+	auto r = sf::Vector3f(
+		sqrt(in.x * in.x + in.y * in.y + in.z * in.z),
+		atan(in.y / in.x),
+		atan(sqrt(in.x * in.x + in.y * in.y) / in.z)
+		);
+	return r;
+};

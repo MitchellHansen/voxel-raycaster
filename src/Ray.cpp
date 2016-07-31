@@ -2,24 +2,26 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include "Map.h"
+#include <Ray.h>
+#include "util.hpp"
 
 Ray::Ray(
-		Map *m,
+		Map *map,
 		sf::Vector2<int> resolution,
 		sf::Vector2<int> pixel,
 		sf::Vector3<float> camera_position,
 		sf::Vector3<float> ray_direction){
 				
-				this.m = m;
+				this->map = map;
 				origin = camera_position;
 				direction = ray_direction;
-				dimensions = m->getDimensions();
+				dimensions = map->getDimensions();
 		}
 
 sf::Color Ray::Cast(){
 
 				// Get the cartesian direction for computing slope
-				sf::Vector3<float> cartesian = direction.toCartesian();
+				sf::Vector3<float> cartesian = SphereToCart(direction);
 
 				// Compute the slopes
 				delta_t = sf::Vector3<float>(
@@ -28,31 +30,30 @@ sf::Color Ray::Cast(){
 						(float)(1.0 / cartesian.z)
 				);
 
+				// Setup the voxel coords from the camera origin
+				voxel = sf::Vector3<int>(
+					(int)origin.x,
+					(int)origin.y,
+					(int)origin.z
+					);
+
 				// Set the first intersection to be offset by the VOXEL camera position
 				intersection_t = sf::Vector3<float>(
-						delta_t.x + (int)origin.x,
-						delta_t.y + (int)origin.y,
-						delta_t.z + (int)origin.z
+						delta_t.x + voxel.x,
+						delta_t.y + voxel.y,
+						delta_t.z + voxel.z
 				);
-
-				// Setup the voxel coords from the camera origin
-				voxel = sf::Vector3<float>(
-						(int)origin.x,
-						(int)origin.y,
-						(int)origin.z
-				);
-
 
 				// Setup the voxel step based on what direction the ray is pointing
 				sf::Vector3<int> voxel_step(1, 1, 1);
 
-				if (direction.x <= 0f || direction.x >= 3.14f) {
+				if (direction.x <= 0.0f || direction.x >= 3.14f) {
 						voxel_step.x *= -1;
 				}
-				if (directoin.y <= 0f || direction.y >= 3.14f) {
+				if (direction.y <= 0.0f || direction.y >= 3.14f) {
 						voxel_step.y *= -1;
 				}
-				if (direction.z <= 0f || direction.z >= 3.14f) {
+				if (direction.z <= 0.0f || direction.z >= 3.14f) {
 						voxel_step.z *= -1;
 				}
 
@@ -82,14 +83,14 @@ sf::Color Ray::Cast(){
 								return sf::Color::Blue;;
 						}
 						else if (voxel.z > 49 || voxel.x < 0 || voxel.y < 0 || voxel.z < 0){
-								return sf::Color:Green;
+								return sf::Color::Green;
 						}
 						// If we found a voxel
 						// Registers hit on non-zero
-						else if (map.list[voxel.x, voxel.y, voxel.z] != 0){
+						else if (map->list[voxel.x, voxel.y, voxel.z] != 0){
 								
 								//TODO: Switch that assigns color on voxel data
-								return sf::Color:Red;
+								return sf::Color::Red;
 						} 
 						else {
 								dist++;
@@ -97,8 +98,8 @@ sf::Color Ray::Cast(){
 
 				} while(dist < 200);
 
-				return sf::Color::Grey;
+				return sf::Color::Cyan;
 		}
-}
+
 		
 

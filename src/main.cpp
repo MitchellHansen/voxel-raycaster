@@ -7,6 +7,7 @@
 const int WINDOW_X = 600;
 const int WINDOW_Y = 800;
 
+
 float elap_time(){
 	static std::chrono::time_point<std::chrono::system_clock> start;
 	static bool started = false;
