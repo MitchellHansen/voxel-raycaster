@@ -2,35 +2,10 @@
 #include <iostream>
 #include <string>
 #include <chrono>
+#include "util.hpp"
 
 const int WINDOW_X = 600;
 const int WINDOW_Y = 800;
-
-struct fps_counter {
-public:
-	fps_counter(){
-		if(!f.loadFromFile("../assets/fonts/Arial.ttf")){
-			std::cout << "couldn't find the fallback Arial font "
-					     "in ../assets/fonts/" << std::endl;
-		} else {
-			t.setFont(f);
-		}
-	}
-	void frame(double delta_time){
-		frame_count++;
-		fps_average += (delta_time - fps_average) / frame_count;
-	}
-	void draw(sf::RenderWindow *r){
-		t.setString(std::to_string(fps_average));
-		r->draw(t);
-	}
-
-private:
-	sf::Font f;
-	sf::Text t;
-	int frame_count = 0;
-	double fps_average = 0;
-};
 
 float elap_time(){
 	static std::chrono::time_point<std::chrono::system_clock> start;
