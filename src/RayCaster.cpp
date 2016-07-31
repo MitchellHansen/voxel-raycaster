@@ -19,7 +19,7 @@ RayCaster::RayCaster(
 	this->map = map;
 
 	resolution = viewport_resolution;
-	image = new sf::Color[resolution.x, resolution.y];
+	image = new sf::Color[resolution.x * resolution.y];
 
 
 
@@ -46,10 +46,11 @@ sf::Color* RayCaster::CastRays(sf::Vector3<float> camera_direction, sf::Vector3<
 
 		// A reference to the positive X axis as our base viewport point
 		sf::Vector3f base_direction(1, 0, 0);
-
+		
+		//-resolution.y / 2
 		// Start the loop at the bottom left, scan right and work up
-		for (int x = 0; x < resolution.x / 2; x++) {
-			for (int y = -resolution.y / 2; y < resolution.y / 2; y++) {
+		for (int x = 0; x < resolution.x; x++) {
+			for (int y = 0; y < resolution.y; y++) {
 
 				// The direction the final ray will point.
 				// First take a reference to the base direction to setup the viewport
@@ -60,7 +61,7 @@ sf::Color* RayCaster::CastRays(sf::Vector3<float> camera_direction, sf::Vector3<
 
 
 				sf::Vector3f ray_direction(
-					camera_direction.x + 1.0f,
+					camera_direction.x,
 					camera_direction.y + (float)(y_increment_radians * y),
 					camera_direction.z + (float)(x_increment_radians * x)
 				);
@@ -78,8 +79,18 @@ sf::Color* RayCaster::CastRays(sf::Vector3<float> camera_direction, sf::Vector3<
 				Ray r(map, resolution, sf::Vector2i(x, y), camera_position, ray_direction);
 
 				// Cast it
-				///image[x + 100, y + 100] = r.Cast();
+				sf::Color c = r.Cast();
+				if (c.a == 0)
+					std::cout << "BLACK";
+				image[x + resolution.x*y] = c;
 			}
 		}
+
+
 		return image;
 	}
+
+void RayCaster::moveCamera(sf::Vector2f v) {
+	camera_direction.y += v.x;
+	camera_direction.z += v.y;
+}

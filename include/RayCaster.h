@@ -12,7 +12,7 @@ public:
 
 
 	sf::Color* CastRays(sf::Vector3<float> camera_direction, sf::Vector3<float> camera_position);
-
+	void moveCamera(sf::Vector2f v);
 private:
 
 	sf::Vector3<int> map_dimensions;

@@ -3,7 +3,8 @@
 #include <string>
 #include <chrono>
 #include "util.hpp"
-#include "../build/RayCaster.h"
+#include "RayCaster.h"
+#include <Map.h>
 
 const int WINDOW_X = 600;
 const int WINDOW_Y = 800;
@@ -52,7 +53,7 @@ int main() {
 
 	// State values
 	sf::Vector3i map_dim(100, 100, 100);
-	sf::Vector2i view_res(200, 200);
+	sf::Vector2i view_res(WINDOW_X, WINDOW_Y);
 	sf::Vector3f cam_dir(1.0f, 0.0f, 1.57f);
 	sf::Vector3f cam_pos(10, 10, 10);
 
@@ -72,6 +73,23 @@ int main() {
 			// If the user tries to exit the application via the GUI
 			if (event.type == sf::Event::Closed)
 				window.close();
+
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
+				cam_dir.z -= 0.1f;
+				std::cout << "X:" << cam_dir.x << " Y:" << cam_dir.y << " Z:" << cam_dir.z << std::endl;
+			}
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
+				cam_dir.z += 0.1f;
+				std::cout << "X:" << cam_dir.x << " Y:" << cam_dir.y << " Z:" << cam_dir.z << std::endl;
+			}
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
+				cam_dir.y += 0.1f;
+				std::cout << "X:" << cam_dir.x << " Y:" << cam_dir.y << " Z:" << cam_dir.z << std::endl;
+			}
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
+				cam_dir.y -= 0.1f;
+				std::cout << "X:" << cam_dir.x << " Y:" << cam_dir.y << " Z:" << cam_dir.z << std::endl;
+			}
 		}
 
 		// Get the elapsed time from the start of the application

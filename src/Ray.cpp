@@ -47,10 +47,10 @@ sf::Color Ray::Cast(){
 				// Setup the voxel step based on what direction the ray is pointing
 				sf::Vector3<int> voxel_step(1, 1, 1);
 
-				if (direction.x <= 0.0f || direction.x >= 3.14f) {
-						voxel_step.x *= -1;
-				}
-				if (direction.y <= 0.0f || direction.y >= 3.14f) {
+				//if (direction.x <= 0.0f || direction.x >= 3.14f) {
+				//		voxel_step.x *= -1;
+				//}
+				if (direction.y > 0.0f || direction.y < PI/2) {
 						voxel_step.y *= -1;
 				}
 				if (direction.z <= 0.0f || direction.z >= 3.14f) {
@@ -77,17 +77,16 @@ sf::Color Ray::Cast(){
 										intersection_t.z = intersection_t.z + delta_t.z;
 								}
 						}
-
 						// If the voxel went out of bounds
-						if (voxel.x > 49 || voxel.y > 49){
+						if (voxel.z > dimensions.z || voxel.x > dimensions.x || voxel.y > dimensions.x){
 								return sf::Color::Blue;;
 						}
-						else if (voxel.z > 49 || voxel.x < 0 || voxel.y < 0 || voxel.z < 0){
+						else if ( voxel.x < 0 || voxel.y < 0 || voxel.z < 0){
 								return sf::Color::Green;
 						}
 						// If we found a voxel
 						// Registers hit on non-zero
-						else if (map->list[voxel.x, voxel.y, voxel.z] != 0){
+						else if (map->list[voxel.x + dimensions.x * (voxel.y + dimensions.z * voxel.z)] != 0){
 								
 								//TODO: Switch that assigns color on voxel data
 								return sf::Color::Red;
