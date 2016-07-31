@@ -6,14 +6,15 @@ class Map {
 public: 
 	Map(sf::Vector3i dim) {
 		list = new char[dim.x * dim.y * dim.z];
+		dimensions = dim;
 	}
 
 	~Map() {
 	}
 
-	sf::Vector3<int> getDimensions();
+	sf::Vector3i getDimensions();
 	char *list;
-
+	sf::Vector3i dimensions;
 
 protected:
 

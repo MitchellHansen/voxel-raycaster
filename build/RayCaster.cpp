@@ -3,11 +3,10 @@
 #include <Ray.h>
 
 
-RayCaster::RayCaster(Map *map,
-					 sf::Vector3<int> map_dimensions,
-                     sf::Vector2<int> viewport_resolution,
-                     sf::Vector3<float> camera_direction,
-                     sf::Vector3<float> camera_position) {
+RayCaster::RayCaster(
+	Map *map,
+	sf::Vector3<int> map_dimensions,
+    sf::Vector2<int> viewport_resolution ) {
 
 	// Override values
 	//this.map_dimensions = new Vector3<int> (50, 50, 50);
@@ -17,16 +16,12 @@ RayCaster::RayCaster(Map *map,
 
 	
 	this->map_dimensions = map_dimensions;
-	map = map;
+	this->map = map;
 
 	resolution = viewport_resolution;
-	image = new sf::Uint8[resolution.x, resolution.y];
+	image = new sf::Color[resolution.x, resolution.y];
 
 
-	this->camera_direction = camera_direction;
-	camera_direction_cartesian = Normalize(SphereToCart(camera_direction));
-
-	this->camera_position = camera_position;
 
 }
 
@@ -36,7 +31,13 @@ RayCaster::~RayCaster() {
 
 
 
-sf::Uint8* RayCaster::Cast() {
+sf::Color* RayCaster::CastRays(sf::Vector3<float> camera_direction, sf::Vector3<float> camera_position) {
+
+		// Setup the camera for this cast
+		this->camera_direction = camera_direction;
+		camera_direction_cartesian = Normalize(SphereToCart(camera_direction));
+		this->camera_position = camera_position;
+
 
 		// The radian increment each ray is spaced from one another
 		double y_increment_radians = DegreesToRadians(40.0 / resolution.y);

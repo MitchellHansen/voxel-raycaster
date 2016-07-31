@@ -3,6 +3,7 @@
 #include <string>
 #include <chrono>
 #include "util.hpp"
+#include "../build/RayCaster.h"
 
 const int WINDOW_X = 600;
 const int WINDOW_Y = 800;
@@ -22,12 +23,10 @@ float elap_time(){
 	return elapsed_time.count();
 }
 
+sf::Sprite window_sprite;
+sf::Texture window_texture;
+
 int main() {
-
-	
-	sf::Uint8 c;
-	std::cout << sizeof(c);
-
 
 	// Initialize the render window
 	sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
@@ -44,6 +43,25 @@ int main() {
 			current_time = 0.0;
 
 	fps_counter fps;
+
+	// ============================= RAYCASTER SETUP ==================================
+	
+	// Setup the sprite and texture
+	window_texture.create(WINDOW_X, WINDOW_Y);
+	window_sprite.setPosition(0, 0);
+
+	// State values
+	sf::Vector3i map_dim(100, 100, 100);
+	sf::Vector2i view_res(200, 200);
+	sf::Vector3f cam_dir(1.0f, 0.0f, 1.57f);
+	sf::Vector3f cam_pos(10, 10, 10);
+
+	Map* map = new Map(map_dim);
+	RayCaster ray_caster(map, map_dim, view_res);
+
+
+	// ===============================================================================
+
 
 	while (window.isOpen()) {
 
@@ -85,9 +103,20 @@ int main() {
 			// Update(step_size);
 		}
 
-
-		// Rendering code goes here
+		
 		window.clear(sf::Color::Black);
+
+		// Cast the rays and get the image
+		sf::Color* pixel_colors = ray_caster.CastRays(cam_dir, cam_pos);
+
+		/*for (int i = 0; i < img_size; i++) {
+			pixel_colors[i] = sf::Color::Green;
+		}*/
+
+		auto out = (sf::Uint8*)pixel_colors;
+		window_texture.update(out);
+		window_sprite.setTexture(window_texture);
+		window.draw(window_sprite);
 
 		// Give the frame counter the frame time and draw the average frame time
 		fps.frame(delta_time);

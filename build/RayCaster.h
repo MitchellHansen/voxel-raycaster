@@ -7,13 +7,11 @@ class RayCaster {
 public:
 	RayCaster(Map *map,
 			 sf::Vector3<int> map_dimensions,
-			 sf::Vector2<int> viewport_resolution,
-			 sf::Vector3<float> camera_direction,
-			 sf::Vector3<float> camera_position);
+			 sf::Vector2<int> viewport_resolution);
 	~RayCaster();
 
 
-	sf::Uint8* Cast();
+	sf::Color* CastRays(sf::Vector3<float> camera_direction, sf::Vector3<float> camera_position);
 
 private:
 
@@ -24,7 +22,7 @@ private:
 	sf::Vector2<int> resolution;
 
 	// The pixel array, maybe do RBGA? Are there even 4 byte data types?
-	sf::Uint8 *image;
+	sf::Color *image;
 
 	// The direction of the camera in POLAR coordinates
 	sf::Vector3<float> camera_direction;
