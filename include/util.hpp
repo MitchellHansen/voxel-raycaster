@@ -1,6 +1,7 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 #include <iostream>
+#include <math.h>
 
 const double PI = 3.141592653589793238463;
 const float  PI_F = 3.14159265358979f;
