@@ -38,12 +38,7 @@ sf::Color Ray::Cast(){
 					(int)origin.z
 					);
 
-				// Set the first intersection to be offset by the VOXEL camera position
-				intersection_t = sf::Vector3<float>(
-						delta_t.x + voxel.x,
-						delta_t.y + voxel.y,
-						delta_t.z + voxel.z
-				);
+
 
 				// Setup the voxel step based on what direction the ray is pointing
 				sf::Vector3<int> voxel_step(1, 1, 1);
@@ -56,16 +51,28 @@ sf::Color Ray::Cast(){
 				//if (direction.y < 0.0f) {
 				//	voxel_step.z *= -1;
 				//}
-				if (direction.y > PI * 2 + PI / 2 ||  direction.y < -1 *PI * 2 + PI / 2) {
-					voxel_step.x *= -1;
-				}
+				//if (direction.y > PI * 2 + PI / 2 ||  direction.y < -1 *PI * 2 + PI / 2) {
+				//	voxel_step.x *= -1;
+				//}
 				// Left right
-				if (direction.z > 1.57) {
-						//voxel_step.z *= -1;
-				}
+				/*if (direction.z > 1.57) {
+						voxel_step.y *= -1;
+						voxel_step.x *= -1;
+				}*/
 				//if (direction.z <= 3.14f + 1.57f && direction.z > 0.0f + 1.57f) {
 				//	voxel_step.z *= -1;
 				//}
+
+				voxel_step.x *= (cartesian.x > 0) - (cartesian.x < 0);
+				voxel_step.y *= (cartesian.y > 0) - (cartesian.y < 0);
+				voxel_step.z *= (cartesian.z > 0) - (cartesian.z < 0);
+
+				// Set the first intersection to be offset by the VOXEL camera position
+				intersection_t = sf::Vector3<float>(
+					delta_t.x * voxel_step.x + voxel.x,
+					delta_t.y * voxel_step.y + voxel.y,
+					delta_t.z * voxel_step.z + voxel.z
+				);
 
 				int dist = 0;
 				

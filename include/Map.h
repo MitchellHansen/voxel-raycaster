@@ -14,18 +14,19 @@ public:
 			list[55 + dim.x * (55 + dim.z * i)] = 1;
 		}
 
+		// The X walls get red and magenta
 		for (int x = 0; x < dim.x; x += 2) {
 			for (int y = 0; y < dim.y; y += 2) {
 				list[x + dim.x * (y + dim.z * 1)] = 1;
 			}
 		}
-
 		for (int x = 0; x < dim.x; x += 2) {
 			for (int y = 0; y < dim.y; y += 2) {
 				list[x + dim.x * (y + dim.z * 99)] = 2;
 			}
 		}
 
+		// The Z walls get yellow and some other color
 		for (int x = 0; x < dim.x; x += 2) {
 			for (int z = 0; z < dim.z; z += 2) {
 				list[x + dim.x * (99 + dim.z * z)] = 3;
