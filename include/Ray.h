@@ -23,6 +23,9 @@ class Ray {
 		// The 3d voxel position the ray is currently at
 		sf::Vector3<int> voxel;
 
+		// The 2d pixel coordinate
+		sf::Vector2<int> pixel;
+
 		// Reference to the voxel map
 		Map *map;
 

@@ -49,8 +49,8 @@ sf::Color* RayCaster::CastRays(sf::Vector3<float> camera_direction, sf::Vector3<
 		
 		//-resolution.y / 2
 		// Start the loop at the top left, scan right and work down
-		for (int x = 0; x < resolution.x; x++) {
-			for (int y = 0; y < resolution.y; y++) {
+		for (int y = 0; y < resolution.y; y++) {
+			for (int x = 0; x < resolution.x; x++) {
 
 				// The direction the final ray will point.
 				// First take a reference to the base direction to setup the viewport

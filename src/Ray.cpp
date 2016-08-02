@@ -13,6 +13,7 @@ Ray::Ray(
         sf::Vector3<float> camera_position,
         sf::Vector3<float> ray_direction) {
 
+    this->pixel = pixel;
     this->map = map;
     origin = camera_position;
     direction = ray_direction;
@@ -46,6 +47,13 @@ sf::Color Ray::Cast() {
             fabsf((float) (1.0 / cartesian.z))
     );
 
+    //97, 25, 34 is an interesting example of the problems
+    // Ahhh, ya know what? This is a problem with how spherical coords
+    // work when approaching 0 on the chi axis as rotation about
+    // the theta axis is completely useless. A viewing frustum will
+    // be needed unfortunately
+
+
     // Intersection T is the collection of the next intersection points
     // for all 3 axis XYZ.
 
@@ -58,6 +66,11 @@ sf::Color Ray::Cast() {
             delta_t.y + origin.y,
             delta_t.z + origin.z
     );
+
+    if (pixel.x == 0){
+        int i = 0;
+        i++;
+    }
 
     int dist = 0;
 
