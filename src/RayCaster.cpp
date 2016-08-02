@@ -40,8 +40,8 @@ sf::Color* RayCaster::CastRays(sf::Vector3<float> camera_direction, sf::Vector3<
 
 
 		// The radian increment each ray is spaced from one another
-		double y_increment_radians = DegreesToRadians(40.0 / resolution.y);
-		double x_increment_radians = DegreesToRadians(50.0 / resolution.x);
+		double y_increment_radians = DegreesToRadians(60.0 / resolution.y);
+		double x_increment_radians = DegreesToRadians(80.0 / resolution.x);
 
 
 		// A reference to the positive X axis as our base viewport point
