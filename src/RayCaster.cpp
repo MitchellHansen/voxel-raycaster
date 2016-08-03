@@ -33,62 +33,83 @@ RayCaster::~RayCaster() {
 
 sf::Color* RayCaster::CastRays(sf::Vector3<float> camera_direction, sf::Vector3<float> camera_position) {
 
-		// Setup the camera for this cast
-		this->camera_direction = camera_direction;
-		camera_direction_cartesian = Normalize(SphereToCart(camera_direction));
-		this->camera_position = camera_position;
+    // Setup the camera for this cast
+    this->camera_direction = camera_direction;
+    camera_direction_cartesian = Normalize(SphereToCart(camera_direction));
+    this->camera_position = camera_position;
 
 
-		// The radian increment each ray is spaced from one another
-		double y_increment_radians = DegreesToRadians(60.0 / resolution.y);
-		double x_increment_radians = DegreesToRadians(80.0 / resolution.x);
+    // The radian increment each ray is spaced from one another
+    double y_increment_radians = DegreesToRadians(60.0 / resolution.y);
+    double x_increment_radians = DegreesToRadians(80.0 / resolution.x);
 
 
-		// A reference to the positive X axis as our base viewport point
-		sf::Vector3f base_direction(1, 0, 0);
-		
-		//-resolution.y / 2
-		// Start the loop at the top left, scan right and work down
-		for (int y = 0; y < resolution.y; y++) {
-			for (int x = 0; x < resolution.x; x++) {
+    // A reference to the positive X axis as our base viewport point
+    sf::Vector3f base_direction(1, 0, 0);
 
-				// The direction the final ray will point.
-				// First take a reference to the base direction to setup the viewport
-				//Vector3<float> ray_direction = new Vector3<float> (base_direction);
+    int view_plane_distance = 300;
+    sf::Vector3f *view_plane_vectors = new sf::Vector3f[resolution.x * resolution.y];
 
-				// New method to cast rays using the original intended Spherical coords
-				// instead of that malarchy with converting them to cartesian from the formula
+    for (int y = -resolution.y / 2 ; y < resolution.y / 2; y++) {
+        for (int x = -resolution.x / 2; x < resolution.x / 2; x++) {
 
+            view_plane_vectors[(x + resolution.x / 2) + resolution.x * (y + resolution.y / 2)] = Normalize(sf::Vector3f(view_plane_distance, x, y));
+        }
+    }
 
-				sf::Vector3f ray_direction(
-					camera_direction.x,
-					camera_direction.y + (float)(y_increment_radians * y),
-					camera_direction.z + (float)(x_increment_radians * x)
-				);
-
-				sf::Vector3f ray_cartesian = Normalize(SphereToCart(ray_direction));
-				sf::Vector3f cam_cartesian = Normalize(SphereToCart(camera_direction));
-
-				if ((y == -99 || y == 0 || y == 99) && (/*x == 99 || x == 0 || */x == -99)) {
-					std::cout << "X : " << x << "\n";
-					std::cout << "Y : " << y << "\n";
-					std::cout << ray_direction.x << " : " << ray_direction.y << " : " << ray_direction.z << "\n";
-				}
-
-				// Setup the ray
-				Ray r(map, resolution, sf::Vector2i(x, y), camera_position, ray_direction);
-
-				// Cast it
-				sf::Color c = r.Cast();
-				if (c.a == 0)
-					std::cout << "BLACK";
-				image[x + resolution.x*y] = c;
-			}
-		}
+    //-resolution.y / 2
+    // Start the loop at the top left, scan right and work down
+    for (int y = 0; y < resolution.y; y++) {
+        for (int x = 0; x < resolution.x; x++) {
 
 
-		return image;
-	}
+            sf::Vector3f ray = view_plane_vectors[x + resolution.x * y];
+
+
+            // Then rotate y axis, up down
+            ray = sf::Vector3f(
+                    ray.z * sin(camera_direction.y) + ray.x * cos(camera_direction.y),
+                    ray.y,
+                    ray.z * cos(camera_direction.y) - ray.x * sin(camera_direction.y)
+            );
+
+//            // Rotate z axis, left to right.
+            ray = sf::Vector3f(
+                    ray.x * cos(camera_direction.z) - ray.y * sin(camera_direction.z),
+                    ray.x * sin(camera_direction.z) + ray.y * cos(camera_direction.z),
+                    ray.z
+            );
+
+//            sf::Vector3f ray_direction(
+//                camera_direction.x,
+//                camera_direction.y + (float)(y_increment_radians * y),
+//                camera_direction.z + (float)(x_increment_radians * x)
+//            );
+
+            sf::Vector3f ray_cartesian = Normalize(SphereToCart(ray));
+            sf::Vector3f cam_cartesian = Normalize(SphereToCart(camera_direction));
+
+            if ((y == -99 || y == 0 || y == 99) && (/*x == 99 || x == 0 || */x == -99)) {
+                std::cout << "X : " << x << "\n";
+                std::cout << "Y : " << y << "\n";
+                std::cout << ray.x << " : " << ray.y << " : " << ray.z << "\n";
+            }
+
+            // Setup the ray
+            Ray r(map, resolution, sf::Vector2i(x, y), camera_position, ray);
+
+            // Cast it
+            sf::Color c = r.Cast();
+            if (c.a == 0)
+                std::cout << "BLACK";
+            image[x + resolution.x*y] = c;
+        }
+    }
+
+    delete view_plane_vectors;
+
+    return image;
+}
 
 void RayCaster::moveCamera(sf::Vector2f v) {
 	camera_direction.y += v.x;

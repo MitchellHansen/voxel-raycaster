@@ -24,7 +24,7 @@ Ray::Ray(
 sf::Color Ray::Cast() {
 
     // Get the cartesian direction for computing
-    sf::Vector3<float> cartesian = SphereToCart(direction);
+    sf::Vector3<float> cartesian = direction;//SphereToCart(direction);
 
     // Setup the voxel step based on what direction the ray is pointing
     sf::Vector3<int> voxel_step(1, 1, 1);
@@ -47,27 +47,27 @@ sf::Color Ray::Cast() {
             fabsf((float) (1.0 / cartesian.z))
     );
 
-    //97, 25, 34 is an interesting example of the problems
-    // Ahhh, ya know what? This is a problem with how spherical coords
-    // work when approaching 0 on the chi axis as rotation about
-    // the theta axis is completely useless. A viewing frustum will
-    // be needed unfortunately
-
+    // So the way I need to do the camera is this.
+    // 1.) Setup the viewplane and then store the values
+    //          - Camera origin
+    //          - Resolution of the view plane X, Y
+    //          - Focal length to determine FOV
+    //
+    //  2.) For each draw. Get a copy of the view plane
+    //  3.) Rotate around the X axis first, left and right
+    //  4.) Then rotate alond the Y axis, up and down.
+    //  5.) Make sure to limit the camera Y Rotation to 180 and -180 degrees
+    //          - Rays will still go pas 180 for the amount of FOV the camera has!
 
     // Intersection T is the collection of the next intersection points
     // for all 3 axis XYZ.
-
-    // I think this is where the hangup is currently. It's taking the delta_t which is signed
-    // and multiplying it by the voxel_step which is also signed. On top of this. Computing the
-    // camera position by voxel coord is debug only so I need to do the math to account for the
-    // origin being anywhere inside a voxel
     intersection_t = sf::Vector3<float>(
             delta_t.x + origin.x,
             delta_t.y + origin.y,
             delta_t.z + origin.z
     );
 
-    if (pixel.x == 0){
+    if (pixel.y == 200){
         int i = 0;
         i++;
     }
@@ -97,7 +97,7 @@ sf::Color Ray::Cast() {
             }
         }
 
-        // If the voxel went out of bounds
+        // If the ray went out of bounds
         if (voxel.z >= dimensions.z) {
             return sf::Color(0, 0, 255, 50);
         }
@@ -117,9 +117,8 @@ sf::Color Ray::Cast() {
         if (voxel.z < 0) {
             return sf::Color(0, 255, 0, 50);
         }
-        // If we found a voxel
-        // Registers hit on non-zero
 
+        // If we hit a voxel
         switch (map->list[voxel.x + dimensions.x * (voxel.y + dimensions.z * voxel.z)]) {
             case 1:
                 return sf::Color::Red;
@@ -134,11 +133,7 @@ sf::Color Ray::Cast() {
             case 6:
                 return sf::Color(150, 80, 220, 200);
         }
-        //else if (map->list[voxel.x + dimensions.x * (voxel.y + dimensions.z * voxel.z)] != 0){
-        //
-        //		//TODO: Switch that assigns color on voxel data
-        //		return sf::Color::Red;
-        //}
+
         dist++;
 
 
