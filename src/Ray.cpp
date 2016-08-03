@@ -17,47 +17,31 @@ Ray::Ray(
     this->map = map;
     origin = camera_position;
     direction = ray_direction;
-
     dimensions = map->getDimensions();
 }
 
 sf::Color Ray::Cast() {
 
-    // Get the cartesian direction for computing
-    sf::Vector3<float> cartesian = direction;//SphereToCart(direction);
-
     // Setup the voxel step based on what direction the ray is pointing
     sf::Vector3<int> voxel_step(1, 1, 1);
-    voxel_step.x *= (cartesian.x > 0) - (cartesian.x < 0);
-    voxel_step.y *= (cartesian.y > 0) - (cartesian.y < 0);
-    voxel_step.z *= (cartesian.z > 0) - (cartesian.z < 0);
+    voxel_step.x *= (direction.x > 0) - (direction.x < 0);
+    voxel_step.y *= (direction.y > 0) - (direction.y < 0);
+    voxel_step.z *= (direction.z > 0) - (direction.z < 0);
 
     // Setup the voxel coords from the camera origin
     voxel = sf::Vector3<int>(
-            (int) origin.x,
-            (int) origin.y,
-            (int) origin.z
+            floorf(origin.x),
+            floorf(origin.y),
+            floorf(origin.z)
     );
 
     // Delta T is the units a ray must travel along an axis in order to
     // traverse an integer split
     delta_t = sf::Vector3<float>(
-            fabsf((float) (1.0 / cartesian.x)),
-            fabsf((float) (1.0 / cartesian.y)),
-            fabsf((float) (1.0 / cartesian.z))
+            fabsf(1.0f / direction.x),
+            fabsf(1.0f / direction.y),
+            fabsf(1.0f / direction.z)
     );
-
-    // So the way I need to do the camera is this.
-    // 1.) Setup the viewplane and then store the values
-    //          - Camera origin
-    //          - Resolution of the view plane X, Y
-    //          - Focal length to determine FOV
-    //
-    //  2.) For each draw. Get a copy of the view plane
-    //  3.) Rotate around the X axis first, left and right
-    //  4.) Then rotate alond the Y axis, up and down.
-    //  5.) Make sure to limit the camera Y Rotation to 180 and -180 degrees
-    //          - Rays will still go pas 180 for the amount of FOV the camera has!
 
     // Intersection T is the collection of the next intersection points
     // for all 3 axis XYZ.
@@ -67,13 +51,9 @@ sf::Color Ray::Cast() {
             delta_t.z + origin.z
     );
 
-    if (pixel.y == 200){
-        int i = 0;
-        i++;
-    }
-
     int dist = 0;
 
+    // Andrew Woo's raycasting algo
     do {
         if ((intersection_t.x) < (intersection_t.y)) {
             if ((intersection_t.x) < (intersection_t.z)) {
@@ -139,6 +119,7 @@ sf::Color Ray::Cast() {
 
     } while (dist < 200);
 
+    // Ray timeout color
     return sf::Color::Cyan;
 }
 

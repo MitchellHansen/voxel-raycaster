@@ -10,6 +10,8 @@ public:
 			 sf::Vector2<int> viewport_resolution);
 	~RayCaster();
 
+    void setFOV(float fov);
+    void setResolution(sf::Vector2<int> resolution);
 
 	sf::Color* CastRays(sf::Vector3<float> camera_direction, sf::Vector3<float> camera_position);
 	void moveCamera(sf::Vector2f v);
@@ -33,5 +35,12 @@ private:
 
 	// The world-space position of the camera
 	sf::Vector3<float> camera_position;
+
+    // The distance in units the view plane is from the iris point
+    int view_plane_distance = 300;
+
+    // Precalculated values for the view plane rays
+    sf::Vector3f *view_plane_vectors;
+
 };
 

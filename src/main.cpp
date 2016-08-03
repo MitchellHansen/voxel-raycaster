@@ -157,12 +157,10 @@ int main() {
 		// Cast the rays and get the image
 		sf::Color* pixel_colors = ray_caster.CastRays(cam_dir, cam_pos);
 
-		/*for (int i = 0; i < img_size; i++) {
-			pixel_colors[i] = sf::Color::Green;
-		}*/
-
+        // Cast it to an array of Uint8's
 		auto out = (sf::Uint8*)pixel_colors;
-		window_texture.update(out);
+
+        window_texture.update(out);
 		window_sprite.setTexture(window_texture);
 		window.draw(window_sprite);
 

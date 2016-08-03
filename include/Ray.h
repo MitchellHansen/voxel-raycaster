@@ -7,7 +7,7 @@ class Ray {
 
 	private:
 
-			// The Tail of the vector
+        // The Tail of the vector
 		sf::Vector3<float> origin;
 
 		// Direction / Length of the vector
