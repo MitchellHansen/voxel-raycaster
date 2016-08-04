@@ -6,8 +6,8 @@
 #include "RayCaster.h"
 #include <Map.h>
 
-const int WINDOW_X = 400;
-const int WINDOW_Y = 400;
+const int WINDOW_X = 600;
+const int WINDOW_Y = 600;
 
 
 float elap_time(){
@@ -52,7 +52,7 @@ int main() {
 	window_sprite.setPosition(0, 0);
 
 	// State values
-	sf::Vector3i map_dim(100, 100, 100);
+	sf::Vector3i map_dim(200, 200, 200);
 	sf::Vector2i view_res(WINDOW_X, WINDOW_Y);
 	sf::Vector3f cam_dir(1.0f, 0.0f, 1.57f);
 	sf::Vector3f cam_pos(50, 50, 50);

@@ -37,7 +37,7 @@ private:
 	sf::Vector3<float> camera_position;
 
     // The distance in units the view plane is from the iris point
-    int view_plane_distance = 300;
+    int view_plane_distance = 200;
 
     // Precalculated values for the view plane rays
     sf::Vector3f *view_plane_vectors;

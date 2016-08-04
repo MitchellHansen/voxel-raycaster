@@ -38,17 +38,17 @@ sf::Color Ray::Cast() {
     // Delta T is the units a ray must travel along an axis in order to
     // traverse an integer split
     delta_t = sf::Vector3<float>(
-            fabsf(1.0f / direction.x),
-            fabsf(1.0f / direction.y),
-            fabsf(1.0f / direction.z)
+        fabsf(1.0f / direction.x),
+        fabsf(1.0f / direction.y),
+        fabsf(1.0f / direction.z)
     );
 
     // Intersection T is the collection of the next intersection points
     // for all 3 axis XYZ.
     intersection_t = sf::Vector3<float>(
-            delta_t.x + origin.x,
-            delta_t.y + origin.y,
-            delta_t.z + origin.z
+        delta_t.x,
+        delta_t.y,
+        delta_t.z
     );
 
     int dist = 0;
@@ -99,7 +99,8 @@ sf::Color Ray::Cast() {
         }
 
         // If we hit a voxel
-        switch (map->list[voxel.x + dimensions.x * (voxel.y + dimensions.z * voxel.z)]) {
+        int index = voxel.x + dimensions.x * (voxel.y + dimensions.z * voxel.z);
+        switch (map->list[index]) {
             case 1:
                 return sf::Color::Red;
             case 2:
@@ -107,11 +108,11 @@ sf::Color Ray::Cast() {
             case 3:
                 return sf::Color::Yellow;
             case 4:
-                return sf::Color(40, 230, 96, 200);
+                return sf::Color(80, 0, 150, 255);
             case 5:
-                return sf::Color(80, 120, 96, 100);
+                return sf::Color(255, 120, 255, 255);
             case 6:
-                return sf::Color(150, 80, 220, 200);
+                return sf::Color(150, 80, 220, 255);
         }
 
         dist++;

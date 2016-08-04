@@ -10,7 +10,7 @@ public:
 			list[i] = 0;
 		}
 
-		for (int i = 50; i < 52; i++) {
+		for (int i = 51; i < 52; i++) {
 			list[55 + dim.x * (55 + dim.z * i)] = 1;
 		}
 
