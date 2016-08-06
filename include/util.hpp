@@ -68,6 +68,19 @@ inline sf::Vector3f Normalize(sf::Vector3f in) {
 
 }
 
+
+inline float DotProduct(sf::Vector3f a, sf::Vector3f b){
+	return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+inline float Magnitude(sf::Vector3f in){
+	return sqrt(in.x * in.x + in.y * in.y + in.z * in.z);
+}
+
+inline float AngleBetweenVectors(sf::Vector3f a, sf::Vector3f b){
+	return acos(DotProduct(a, b) / (Magnitude(a) * Magnitude(b)));
+}
+
 inline float DegreesToRadians(float in) {
 	return in * PI / 180.0f;
 }

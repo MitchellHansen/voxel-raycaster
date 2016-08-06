@@ -51,27 +51,34 @@ sf::Color Ray::Cast() {
         delta_t.z
     );
 
+
     int dist = 0;
+    int face = -1;
+    // X:0, Y:1, Z:2
 
     // Andrew Woo's raycasting algo
     do {
         if ((intersection_t.x) < (intersection_t.y)) {
             if ((intersection_t.x) < (intersection_t.z)) {
 
+                face = 0;
                 voxel.x += voxel_step.x;
                 intersection_t.x = intersection_t.x + delta_t.x;
             } else {
 
+                face = 2;
                 voxel.z += voxel_step.z;
                 intersection_t.z = intersection_t.z + delta_t.z;
             }
         } else {
             if ((intersection_t.y) < (intersection_t.z)) {
 
+                face = 1;
                 voxel.y += voxel_step.y;
                 intersection_t.y = intersection_t.y + delta_t.y;
             } else {
 
+                face = 2;
                 voxel.z += voxel_step.z;
                 intersection_t.z = intersection_t.z + delta_t.z;
             }
@@ -100,19 +107,43 @@ sf::Color Ray::Cast() {
 
         // If we hit a voxel
         int index = voxel.x + dimensions.x * (voxel.y + dimensions.z * voxel.z);
-        switch (map->list[index]) {
+        int voxel_data = map->list[index];
+
+        float alpha = 0;
+        if (face == 0) {
+
+            alpha = AngleBetweenVectors(sf::Vector3f(1, 0, 0), map->global_light);
+            alpha = fmod(alpha, 0.785) * 2;
+
+        } else if (face == 1) {
+
+            alpha = AngleBetweenVectors(sf::Vector3f(0, 1, 0), map->global_light);
+            alpha = fmod(alpha, 0.785) * 2;
+
+        } else if (face == 2){
+
+            //alpha = 1.57 / 2;
+            alpha = AngleBetweenVectors(sf::Vector3f(0, 0, 1), map->global_light);
+            alpha = fmod(alpha, 0.785) * 2;
+        }
+
+        alpha *= 162;
+
+        switch (voxel_data) {
             case 1:
-                return sf::Color::Red;
+                //  AngleBew0 - 1.57 * 162 = 0 - 255
+
+                return sf::Color(255, 0, 0, alpha);
             case 2:
-                return sf::Color::Magenta;
+                return sf::Color(255, 10, 0, alpha);
             case 3:
-                return sf::Color::Yellow;
+                return sf::Color(255, 0, 255, alpha);
             case 4:
-                return sf::Color(80, 0, 150, 255);
+                return sf::Color(80, 0, 150, alpha);
             case 5:
-                return sf::Color(255, 120, 255, 255);
+                return sf::Color(255, 120, 255, alpha);
             case 6:
-                return sf::Color(150, 80, 220, 255);
+                return sf::Color(150, 80, 220, alpha);
         }
 
         dist++;

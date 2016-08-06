@@ -6,8 +6,8 @@
 #include "RayCaster.h"
 #include <Map.h>
 
-const int WINDOW_X = 600;
-const int WINDOW_Y = 600;
+const int WINDOW_X = 200;
+const int WINDOW_Y = 200;
 
 
 float elap_time(){
@@ -27,23 +27,44 @@ float elap_time(){
 sf::Sprite window_sprite;
 sf::Texture window_texture;
 
+// Y: -1.57 is straight up
+// Y: 1.57 is straight down
+
+void test_ray_reflection(){
+
+    sf::Vector3f r(0.588, -0.78, -0.196);
+    sf::Vector3f i(0, 0.928, 0.37);
+
+    // is this needed? free spin but bounded 0 < z < pi
+    if (i.z > PI)
+        i.z -= PI;
+    else if (i.z < 0)
+        i.z += PI;
+
+    std::cout << AngleBetweenVectors(r, i);
+
+
+
+    return;
+}
+
 int main() {
 
-	// Initialize the render window
-	sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
+    // Initialize the render window
+    sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
 
-	// The step size in milliseconds between calls to Update()
-	// Lets set it to 16.6 milliseonds (60FPS)
-	float step_size = 0.0166f;
+    // The step size in milliseconds between calls to Update()
+    // Lets set it to 16.6 milliseonds (60FPS)
+    float step_size = 0.0166f;
 
-	// Timekeeping values for the loop
-	double  frame_time = 0.0, 
-			elapsed_time = 0.0, 
-			delta_time = 0.0, 
-			accumulator_time = 0.0, 
-			current_time = 0.0;
+    // Timekeeping values for the loop
+    double  frame_time = 0.0,
+            elapsed_time = 0.0,
+            delta_time = 0.0,
+            accumulator_time = 0.0,
+            current_time = 0.0;
 
-	fps_counter fps;
+    fps_counter fps;
 
 	// ============================= RAYCASTER SETUP ==================================
 	
@@ -52,7 +73,7 @@ int main() {
 	window_sprite.setPosition(0, 0);
 
 	// State values
-	sf::Vector3i map_dim(200, 200, 200);
+	sf::Vector3i map_dim(50, 50, 50);
 	sf::Vector2i view_res(WINDOW_X, WINDOW_Y);
 	sf::Vector3f cam_dir(1.0f, 0.0f, 1.57f);
 	sf::Vector3f cam_pos(50, 50, 50);
@@ -147,10 +168,12 @@ int main() {
 			// Take away a step from the accumulator
 			accumulator_time -= step_size;
 
+
 			// And update the application for the amount of time alotted for one step
 			// Update(step_size);
 		}
 
+        map->moveLight(sf::Vector2f(0.3, 0));
 		
 		window.clear(sf::Color::Black);
 
