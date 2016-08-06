@@ -86,23 +86,23 @@ sf::Color Ray::Cast() {
 
         // If the ray went out of bounds
         if (voxel.z >= dimensions.z) {
-            return sf::Color(0, 0, 255, 50);
+            return sf::Color(172, 245, 251, 200);
         }
         if (voxel.x >= dimensions.x) {
-            return sf::Color(0, 0, 255, 100);
+			return sf::Color(172, 245, 251, 200);
         }
         if (voxel.y >= dimensions.x) {
-            return sf::Color(0, 0, 255, 150);
+			return sf::Color(172, 245, 251, 200);
         }
 
         if (voxel.x < 0) {
-            return sf::Color(0, 255, 0, 150);
+			return sf::Color(172, 245, 251, 200);
         }
         if (voxel.y < 0) {
-            return sf::Color(0, 255, 0, 100);
+			return sf::Color(172, 245, 251, 200);
         }
         if (voxel.z < 0) {
-            return sf::Color(0, 255, 0, 50);
+			return sf::Color(172, 245, 251, 200);
         }
 
         // If we hit a voxel

@@ -5,9 +5,10 @@
 #include "util.hpp"
 #include "RayCaster.h"
 #include <Map.h>
+#include "Curses.h"
 
-const int WINDOW_X = 200;
-const int WINDOW_Y = 200;
+const int WINDOW_X = 150;
+const int WINDOW_Y = 150;
 
 
 float elap_time(){
@@ -51,7 +52,10 @@ void test_ray_reflection(){
 int main() {
 
     // Initialize the render window
+	Curses curse(sf::Vector2i(5, 5), sf::Vector2i(WINDOW_X, WINDOW_Y));
     sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
+	
+
 
     // The step size in milliseconds between calls to Update()
     // Lets set it to 16.6 milliseonds (60FPS)
@@ -77,13 +81,16 @@ int main() {
 	sf::Vector2i view_res(WINDOW_X, WINDOW_Y);
 	sf::Vector3f cam_dir(1.0f, 0.0f, 1.57f);
 	sf::Vector3f cam_pos(50, 50, 50);
-
+	sf::Vector3f cam_vec(0, 0, 0);
 	Map* map = new Map(map_dim);
 	RayCaster ray_caster(map, map_dim, view_res);
 
 
 	// ===============================================================================
 
+	// Mouse capture
+	sf::Vector2i deltas;
+	sf::Vector2i fixed(window.getSize());
 
 	while (window.isOpen()) {
 
@@ -115,33 +122,80 @@ int main() {
 					std::cout << "X:" << cam_dir.x << " Y:" << cam_dir.y << " Z:" << cam_dir.z << std::endl;
 				}
 
-				// CAMERA POSITION
-				if (event.key.code == sf::Keyboard::Q) {
-					cam_pos.z -= 1;
-					std::cout << "X:" << cam_pos.x << " Y:" << cam_pos.y << " Z:" << cam_pos.z << std::endl;
-				}
-				if (event.key.code == sf::Keyboard::E) {
-					cam_pos.z += 1;
-					std::cout << "X:" << cam_pos.x << " Y:" << cam_pos.y << " Z:" << cam_pos.z << std::endl;
-				}
-				if (event.key.code == sf::Keyboard::W) {
-					cam_pos.y += 1;
-					std::cout << "X:" << cam_pos.x << " Y:" << cam_pos.y << " Z:" << cam_pos.z << std::endl;
-				}
-				if (event.key.code == sf::Keyboard::S) {
-					cam_pos.y -= 1;
-					std::cout << "X:" << cam_pos.x << " Y:" << cam_pos.y << " Z:" << cam_pos.z << std::endl;
-				}
-				if (event.key.code == sf::Keyboard::A) {
-					cam_pos.x += 1;
-					std::cout << "X:" << cam_pos.x << " Y:" << cam_pos.y << " Z:" << cam_pos.z << std::endl;
-				}
-				if (event.key.code == sf::Keyboard::D) {
-					cam_pos.x -= 1;
-					std::cout << "X:" << cam_pos.x << " Y:" << cam_pos.y << " Z:" << cam_pos.z << std::endl;
-				}
+				//// CAMERA POSITION
+				//if (event.key.code == sf::Keyboard::Q) {
+				//	cam_pos.z -= 1;
+				//	std::cout << "X:" << cam_pos.x << " Y:" << cam_pos.y << " Z:" << cam_pos.z << std::endl;
+				//}
+				//if (event.key.code == sf::Keyboard::E) {
+				//	cam_pos.z += 1;
+				//	std::cout << "X:" << cam_pos.x << " Y:" << cam_pos.y << " Z:" << cam_pos.z << std::endl;
+				//}
+				//if (event.key.code == sf::Keyboard::W) {
+				//	cam_pos.y += 1;
+				//	std::cout << "X:" << cam_pos.x << " Y:" << cam_pos.y << " Z:" << cam_pos.z << std::endl;
+				//}
+				//if (event.key.code == sf::Keyboard::S) {
+				//	cam_pos.y -= 1;
+				//	std::cout << "X:" << cam_pos.x << " Y:" << cam_pos.y << " Z:" << cam_pos.z << std::endl;
+				//}
+				//if (event.key.code == sf::Keyboard::A) {
+				//	cam_pos.x += 1;
+				//	std::cout << "X:" << cam_pos.x << " Y:" << cam_pos.y << " Z:" << cam_pos.z << std::endl;
+				//}
+				//if (event.key.code == sf::Keyboard::D) {
+				//	cam_pos.x -= 1;
+				//	std::cout << "X:" << cam_pos.x << " Y:" << cam_pos.y << " Z:" << cam_pos.z << std::endl;
+				//}
 			}
 		}
+
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
+			cam_vec.z = 1;
+		}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::E)) {
+			cam_vec.z = -1;
+		}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
+			cam_vec.y = 1;
+		}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
+			cam_vec.y = -1;
+		}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
+			cam_vec.x = 1;
+		}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
+			cam_vec.x = -1;
+		}
+
+		deltas = fixed - sf::Mouse::getPosition();
+		if (deltas != sf::Vector2i(0, 0))
+			sf::Mouse::setPosition(fixed);
+
+		cam_dir.y -= deltas.y / 300.0f;
+		cam_dir.z -= deltas.x / 300.0f;
+
+		cam_pos.x += cam_vec.x / 10.0;
+		cam_pos.y += cam_vec.y / 10.0;
+		cam_pos.z += cam_vec.z / 10.0;
+
+		if (cam_vec.x > 0.0f)
+			cam_vec.x -= 0.1;
+		else if (cam_vec.x < 0.0f)
+			cam_vec.x += 0.1;
+
+		if (cam_vec.y > 0.0f)
+			cam_vec.y -= 0.1;
+		else if (cam_vec.y < 0.0f)
+			cam_vec.y += 0.1;
+
+		if (cam_vec.z > 0.0f)
+			cam_vec.z -= 0.1;
+		else if (cam_vec.z < 0.0f)
+			cam_vec.z += 0.1;
+
+		std::cout << cam_vec.x << " : " << cam_vec.y << " : " << cam_vec.z << std::endl;
 
 		// Get the elapsed time from the start of the application
 		elapsed_time = elap_time();
@@ -168,17 +222,29 @@ int main() {
 			// Take away a step from the accumulator
 			accumulator_time -= step_size;
 
-
+			curse.Update(delta_time);
 			// And update the application for the amount of time alotted for one step
 			// Update(step_size);
 		}
 
-        map->moveLight(sf::Vector2f(0.3, 0));
+		
+
+       // map->moveLight(sf::Vector2f(0.3, 0));
 		
 		window.clear(sf::Color::Black);
 
 		// Cast the rays and get the image
 		sf::Color* pixel_colors = ray_caster.CastRays(cam_dir, cam_pos);
+
+		for (int i = 0; i < WINDOW_X * WINDOW_Y; i++) {
+			
+			Curses::Tile t(sf::Vector2i(i % WINDOW_X, i / WINDOW_X));
+			Curses::Slot s(L'\u0045', pixel_colors[i], sf::Color::Black);
+			t.push_back(s);
+			curse.setTile(t);
+
+		}
+
 
         // Cast it to an array of Uint8's
 		auto out = (sf::Uint8*)pixel_colors;
@@ -186,6 +252,9 @@ int main() {
         window_texture.update(out);
 		window_sprite.setTexture(window_texture);
 		window.draw(window_sprite);
+
+
+		curse.Render();
 
 		// Give the frame counter the frame time and draw the average frame time
 		fps.frame(delta_time);
