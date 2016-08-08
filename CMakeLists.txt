@@ -2,11 +2,11 @@ set(PNAME Game)
 
 set(SFML_ROOT root CACHE STRING "User specified path")
 
-set(SFML_VERSION 2.3)
+set(SFML_VERSION 2.1)
 
 set(SFML_COMPONENTS graphics window system network audio)
 
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.0)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 
 project(${PNAME})
@@ -16,7 +16,7 @@ include_directories(${SFML_INCLUDE_DIR}/include)
 include_directories(include)
 file(GLOB SOURCES "src/*.cpp")
 
-add_executable(${PNAME} ${SOURCES})
+add_executable(${PNAME} ${SOURCES} include/Vector3.cpp include/Vector3.h)
 
 target_link_libraries(${PNAME} ${SFML_LIBRARIES} ${SFML_DEPENDENCIES})
 
