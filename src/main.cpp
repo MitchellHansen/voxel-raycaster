@@ -6,9 +6,51 @@
 #include "RayCaster.h"
 #include <Map.h>
 #include "Curses.h"
+#include <OpenCL/opencl.h>
 
 const int WINDOW_X = 150;
 const int WINDOW_Y = 150;
+
+
+
+int main(){
+
+    // Get the number of platforms
+    cl_uint platformIdCount = 0;
+    clGetPlatformIDs(0, nullptr, &platformIdCount);
+
+    // Fetch the platforms
+    std::vector<cl_platform_id> platformIds (platformIdCount);
+    clGetPlatformIDs(platformIdCount, platformIds.data(), nullptr);
+
+    // get the number of devices, fetch them, choose the first one
+    cl_uint deviceIdCount = 0;
+    clGetDeviceIDs (platformIds [0], CL_DEVICE_TYPE_ALL, 0, nullptr,
+                    &deviceIdCount);
+    std::vector<cl_device_id> deviceIds (deviceIdCount);
+    clGetDeviceIDs (platformIds [0], CL_DEVICE_TYPE_ALL, deviceIdCount,
+                    deviceIds.data (), nullptr);
+
+    int error = 0;
+
+    // Set the context's properties
+    const cl_context_properties contextProperties [] = {
+            CL_CONTEXT_PLATFORM,
+            reinterpret_cast<cl_context_properties> (platformIds [0]),
+            0, 0
+    };
+
+    cl_context context = clCreateContext (
+            contextProperties, deviceIdCount,
+            deviceIds.data (), nullptr,
+            nullptr, &error);
+
+
+};
+
+
+
+
 
 
 float elap_time(){
@@ -49,7 +91,7 @@ void test_ray_reflection(){
     return;
 }
 
-int main() {
+int main2() {
 
     // Initialize the render window
 	Curses curse(sf::Vector2i(5, 5), sf::Vector2i(WINDOW_X, WINDOW_Y));

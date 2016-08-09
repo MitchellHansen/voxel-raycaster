@@ -12,13 +12,19 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 project(${PNAME})
 find_package(SFML ${SFML_VERSION} COMPONENTS ${SFML_COMPONENTS} REQUIRED)
 
-include_directories(${SFML_INCLUDE_DIR}/include)
+
+include_directories(${SFML_INCLUDE_DIR})
 include_directories(include)
 file(GLOB SOURCES "src/*.cpp")
+add_executable(${PNAME} ${SOURCES})
 
-add_executable(${PNAME} ${SOURCES} include/Vector3.cpp include/Vector3.h)
+# Handle OpenCL
+find_package(OpenCL REQUIRED)
+include_directories(${OpenCL_INCLUDE_DIRS})
+link_directories(${OpenCL_LIBRARY})
 
 target_link_libraries(${PNAME} ${SFML_LIBRARIES} ${SFML_DEPENDENCIES})
+target_link_libraries (Game ${OpenCL_LIBRARY})
 
 set_property(TARGET ${PNAME} PROPERTY CXX_STANDARD 11) # Use C++11
 

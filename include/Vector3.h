@@ -130,11 +130,10 @@ public:
     typedef Vector3<int>   Vector3i;
     typedef Vector3<float> Vector3f;
 
-}
+
 
 #endif 
 
-};
 
 
-#endif
+
