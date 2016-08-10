@@ -1,30 +1,39 @@
+# Check versions
+message(STATUS "CMake version: ${CMAKE_VERSION}")
+cmake_minimum_required(VERSION 3.1)
+
+# Set the project name
 set(PNAME Game)
-
-set(SFML_ROOT root CACHE STRING "User specified path")
-
-set(SFML_VERSION 2.1)
-
-set(SFML_COMPONENTS graphics window system network audio)
-
-cmake_minimum_required(VERSION 3.0)
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
-
 project(${PNAME})
-find_package(SFML ${SFML_VERSION} COMPONENTS ${SFML_COMPONENTS} REQUIRED)
 
+# Set up variables, and find SFML
+#set(SFML_ROOT root CACHE STRING "User specified path")
+set(SFML_COMPONENTS graphics window system network audio)
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+find_package(SFML 2.1 COMPONENTS ${SFML_COMPONENTS} REQUIRED)
+message(STATUS "SFML found: ${SFML_FOUND}")
 
+# Find OpenCL
+find_package( OpenCL REQUIRED )
+message(STATUS "OpenCL found: ${OPENCL_FOUND}")
+
+# Find OpenGL
+find_package( OpenGL REQUIRED)
+message(STATUS "OpenGL found: ${OPENGL_FOUND}")
+
+# Include the directories for the main programs headers, and SFML's headers
 include_directories(${SFML_INCLUDE_DIR})
 include_directories(include)
+
+# Set the .cpp sources
 file(GLOB SOURCES "src/*.cpp")
 add_executable(${PNAME} ${SOURCES})
 
-# Handle OpenCL
-find_package(OpenCL REQUIRED)
-include_directories(${OpenCL_INCLUDE_DIRS})
-link_directories(${OpenCL_LIBRARY})
-
+# Link CL, GL, and SFML
 target_link_libraries(${PNAME} ${SFML_LIBRARIES} ${SFML_DEPENDENCIES})
-target_link_libraries (Game ${OpenCL_LIBRARY})
+target_link_libraries (${PNAME} ${OpenCL_LIBRARY})
+target_link_libraries (${PNAME} ${OpenGL_LIBRARY})
 
+# Setup to use C++11
 set_property(TARGET ${PNAME} PROPERTY CXX_STANDARD 11) # Use C++11
 
