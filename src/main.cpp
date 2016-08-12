@@ -1,15 +1,13 @@
-#include <SFML/Graphics.hpp>
 #include <iostream>
 #include <chrono>
-#include "util.hpp"
-#include "RayCaster.h"
-#include <Map.h>
-#include "Curses.h"
-# include <GL/glew.h>
 #include <fstream>
 #include <sstream>
+#include <SFML/Graphics.hpp>
+#include <GL/glew.h>
 
 #ifdef linux
+#include <CL/cl.h>
+#include <CL/opencl.h>
 
 #elif defined _WIN32
 #include <CL/cl.h>
@@ -20,9 +18,13 @@
 # include <OpenGL/OpenGL.h>
 # include <OpenCL/opencl.h>
 
-
-
 #endif
+
+#include "Map.h"
+#include "Curses.h"
+#include "util.hpp"
+#include "RayCaster.h"
+
 
 
 const int WINDOW_X = 150;
@@ -177,6 +179,14 @@ int main(){
 
         std::cout << "Err: clBuildProgram returned: " << error << std::endl;
         std::cout << log << std::endl;
+        return error;
+    }
+
+    // Done initializing the kernel
+    cl_kernel finished_kernel = clCreateKernel(kernel_program, "kernel_name", &error);
+
+    if (error != 0){
+        std::cout << "Err: clCreateKernel returned: " << error << std::endl;
         return error;
     }
 
