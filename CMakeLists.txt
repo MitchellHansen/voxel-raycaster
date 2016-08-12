@@ -21,8 +21,10 @@ message(STATUS "OpenCL found: ${OPENCL_FOUND}")
 find_package( OpenGL REQUIRED)
 message(STATUS "OpenGL found: ${OPENGL_FOUND}")
 
-# Include the directories for the main programs headers, and SFML's headers
+# Include the directories for the main program, GL, CL and SFML's headers
 include_directories(${SFML_INCLUDE_DIR})
+include_directories(${OpenCL_INCLUDE_DIRS})
+include_directories(${OpenGL_INCLUDE_DIRS})
 include_directories(include)
 
 # Set the .cpp sources
@@ -30,9 +32,9 @@ file(GLOB SOURCES "src/*.cpp")
 add_executable(${PNAME} ${SOURCES})
 
 # Link CL, GL, and SFML
-target_link_libraries(${PNAME} ${SFML_LIBRARIES} ${SFML_DEPENDENCIES})
+target_link_libraries (${PNAME} ${SFML_LIBRARIES} ${SFML_DEPENDENCIES})
 target_link_libraries (${PNAME} ${OpenCL_LIBRARY})
-target_link_libraries (${PNAME} ${OpenGL_LIBRARY})
+target_link_libraries (${PNAME} ${OPENGL_LIBRARIES})
 
 # Setup to use C++11
 set_property(TARGET ${PNAME} PROPERTY CXX_STANDARD 11) # Use C++11
