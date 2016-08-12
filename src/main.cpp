@@ -6,6 +6,8 @@
 #include <Map.h>
 #include "Curses.h"
 # include <GL/glew.h>
+#include <fstream>
+#include <sstream>
 
 #ifdef linux
 
@@ -18,18 +20,36 @@
 # include <OpenGL/OpenGL.h>
 # include <OpenCL/opencl.h>
 
+
+
 #endif
 
 
 const int WINDOW_X = 150;
 const int WINDOW_Y = 150;
 
+std::string read_file(std::string file_name){
+    std::ifstream input_file(file_name);
+
+    if (!input_file.is_open()){
+        std::cout << file_name << " could not be opened" << std::endl;
+        return nullptr;
+    }
+
+    std::stringstream buf;
+    buf << input_file.rdbuf();
+    return buf.str();
+}
+
 
 int main(){
-
+    char buffer[256];
+    char *val = getcwd(buffer, sizeof(buffer));
+    if (val) {
+        std::cout << buffer << std::endl;
+    }
     // ===================================================================== //
-    // ==== Opencl
-
+    // ==== Opencl setup
 
     int error = 0;
 
@@ -44,8 +64,7 @@ int main(){
 
     // get the number of devices, fetch them, choose the first one
     cl_uint deviceIdCount = 0;
-    std::vector<cl_device_id> deviceIds (deviceIdCount);
-
+    std::vector<cl_device_id> deviceIds;
     // Try to get a GPU first
     error = clGetDeviceIDs (platformIds [0], CL_DEVICE_TYPE_GPU, 0, nullptr,
                     &deviceIdCount);
@@ -53,12 +72,18 @@ int main(){
     if (deviceIdCount == 0) {
         std::cout << "couldn't aquire a GPU, falling back to CPU" << std::endl;
         error = clGetDeviceIDs(platformIds[0], CL_DEVICE_TYPE_CPU, 0, nullptr, &deviceIdCount);
+        deviceIds.resize(deviceIdCount);
         error = clGetDeviceIDs(platformIds[0], CL_DEVICE_TYPE_CPU, deviceIdCount, deviceIds.data(), NULL);
     } else {
         std::cout << "aquired GPU cl target" << std::endl;
+        deviceIds.resize(deviceIdCount);
         clGetDeviceIDs (platformIds[0], CL_DEVICE_TYPE_GPU, deviceIdCount, deviceIds.data (), nullptr);
     }
 
+    if (error != 0){
+        std::cout << "Err: clGetDeviceIDs returned: " << error << std::endl;
+        return error;
+    }
 
     // Hurray for standards!
     // Setup the context properties to grab the current GL context
@@ -98,11 +123,62 @@ int main(){
             &error
     );
 
-    // And the cl command queue
-    auto commandQueue = clCreateCommandQueue(context, deviceIds[0], 0, NULL);
+    if (error != 0){
+        std::cout << "Err: clCreateContext returned: " << error << std::endl;
+        return error;
+    }
 
+    // And the cl command queue
+    auto commandQueue = clCreateCommandQueue(context, deviceIds[0], 0, &error);
+
+    if (error != 0){
+        std::cout << "Err: clCreateCommandQueue returned: " << error << std::endl;
+        return error;
+    }
 
     // At this point the shared GL/CL context is up and running
+    // ====================================================================== //
+    // ========== Kernel setup & compilation
+
+    // Load in the kernel, and c stringify it
+    std::string kernel_source;
+    kernel_source = read_file("../kernels/kernel.txt");
+    const char* kernel_source_c_str = kernel_source.c_str();
+    size_t kernel_source_size = strlen(kernel_source_c_str);
+
+
+    // Load the source into CL's data structure
+    cl_program kernel_program = clCreateProgramWithSource(
+            context, 1,
+            &kernel_source_c_str,
+            &kernel_source_size, &error
+    );
+
+    if (error != 0){
+        std::cout << "Err: clCreateProgramWithSource returned: " << error << std::endl;
+        return error;
+    }
+
+
+    // Try and build the program
+    error = clBuildProgram(kernel_program, 1, &deviceIds[0], NULL, NULL, NULL);
+
+    // Check to see if it errored out
+    if (error == CL_BUILD_PROGRAM_FAILURE){
+
+        // Get the size of the queued log
+        size_t log_size;
+        clGetProgramBuildInfo(kernel_program, deviceIds[0], CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
+        char *log = new char[log_size];
+
+        // Grab the log
+        clGetProgramBuildInfo(kernel_program, deviceIds[0], CL_PROGRAM_BUILD_LOG, log_size, log, NULL);
+
+
+        std::cout << "Err: clBuildProgram returned: " << error << std::endl;
+        std::cout << log << std::endl;
+        return error;
+    }
 
 };
 
