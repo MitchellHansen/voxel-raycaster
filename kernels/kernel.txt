@@ -1,32 +1,17 @@
-__constant sampler_t sampler =
-      CLK_NORMALIZED_COORDS_FALSE
-    | CLK_ADDRESS_CLAMP_TO_EDGE
-    | CLK_FILTER_NEAREST;
-
-__constant int FILTER_SIZE = 10;
-
-float FilterValue (__constant const float* filterWeights,
-    const int x, const int y)
+__kernel void hello(__global char* string)
 {
-    return filterWeights[(x+FILTER_SIZE) + (y+FILTER_SIZE)*(FILTER_SIZE*2 + 1)];
+string[0] = 'H';
+string[1] = 'e';
+string[2] = 'l';
+string[3] = 'l';
+string[4] = 'o';
+string[5] = ',';
+string[6] = ' ';
+string[7] = 'W';
+string[8] = 'o';
+string[9] = 'r';
+string[10] = 'l';
+string[11] = 'd';
+string[12] = '!';
+string[13] = '\0';
 }
-
-__kernel void Filter (
-    __read_only image2d_t input,
-    __constant float* filterWeights,
-    __write_only image2d_t output)
-{
-    const int2 pos = {get_global_id(0), get_global_id(1)};
-
-    float4 sum = (float4)(0.0f);
-    for(int y = -FILTER_SIZE; y <= FILTER_SIZE; y++) {
-        for(int x = -FILTER_SIZE; x <= FILTER_SIZE; x++) {
-            sum += FilterValue(filterWeights, x, y)
-                * read_imagef(input, sampler, pos + (int2)(x,y));
-        }
-    }
-
-    write_imagef (output, (int2)(pos.x, pos.y), sum);
-}
-
-

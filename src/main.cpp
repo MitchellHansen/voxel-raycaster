@@ -18,6 +18,8 @@
 #elif defined TARGET_OS_MAC
 # include <OpenGL/OpenGL.h>
 # include <OpenCL/opencl.h>
+#include <OpenCL/cl_gl_ext.h>
+#include <OpenCL/cl_ext.h>
 
 #endif
 #include "TestPlatform.cpp"
@@ -25,77 +27,20 @@
 #include "Curses.h"
 #include "util.hpp"
 #include "RayCaster.h"
-
+#include "Clapper.h"
 
 const int WINDOW_X = 150;
 const int WINDOW_Y = 150;
 
-std::string read_file(std::string file_name){
-    std::ifstream input_file(file_name);
-
-    if (!input_file.is_open()){
-        std::cout << file_name << " could not be opened" << std::endl;
-        return nullptr;
-    }
-
-    std::stringstream buf;
-    buf << input_file.rdbuf();
-    return buf.str();
-}
 
 
 int main(){
 
-    // ====================================================================== //
-    // ========== Kernel setup & compilation
+    Clapper c;
+    c.acquire_platform_and_device();
+    c.create_shared_context();
 
-    // Load in the kernel, and c stringify it
-    std::string kernel_source;
-    kernel_source = read_file("../kernels/kernel.txt");
-    const char* kernel_source_c_str = kernel_source.c_str();
-    size_t kernel_source_size = strlen(kernel_source_c_str);
-
-
-    // Load the source into CL's data structure
-    cl_program kernel_program = clCreateProgramWithSource(
-            context, 1,
-            &kernel_source_c_str,
-            &kernel_source_size, &error
-    );
-
-    if (error != 0){
-        std::cout << "Err: clCreateProgramWithSource returned: " << error << std::endl;
-        return error;
-    }
-
-
-    // Try and build the program
-    error = clBuildProgram(kernel_program, 1, &deviceIds[0], NULL, NULL, NULL);
-
-    // Check to see if it errored out
-    if (error == CL_BUILD_PROGRAM_FAILURE){
-
-        // Get the size of the queued log
-        size_t log_size;
-        clGetProgramBuildInfo(kernel_program, deviceIds[0], CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
-        char *log = new char[log_size];
-
-        // Grab the log
-        clGetProgramBuildInfo(kernel_program, deviceIds[0], CL_PROGRAM_BUILD_LOG, log_size, log, NULL);
-
-
-        std::cout << "Err: clBuildProgram returned: " << error << std::endl;
-        std::cout << log << std::endl;
-        return error;
-    }
-
-    // Done initializing the kernel
-    cl_kernel finished_kernel = clCreateKernel(kernel_program, "kernel_name", &error);
-
-    if (error != 0){
-        std::cout << "Err: clCreateKernel returned: " << error << std::endl;
-        return error;
-    }
+    c.compile_kernel("../kernels/kernel.txt", true, "hello");
 
 };
 
@@ -124,23 +69,6 @@ sf::Texture window_texture;
 // Y: -1.57 is straight up
 // Y: 1.57 is straight down
 
-void test_ray_reflection(){
-
-    sf::Vector3f r(0.588, -0.78, -0.196);
-    sf::Vector3f i(0, 0.928, 0.37);
-
-    // is this needed? free spin but bounded 0 < z < pi
-    if (i.z > PI)
-        i.z -= PI;
-    else if (i.z < 0)
-        i.z += PI;
-
-    std::cout << AngleBetweenVectors(r, i);
-
-
-
-    return;
-}
 
 int main0() {
 

@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdio>
 #include <cstring>
-#include <CL/cl_ext.h>
+#include <OpenCL/cl_ext.h>
 #include <iostream>
 #include <vector>
 
@@ -10,7 +10,6 @@
 #elif defined _WIN32
 
 #elif defined TARGET_OS_MAC
-# include <GL/glew.h>
 # include <OpenGL/OpenGL.h>
 # include <OpenCL/opencl.h>
 #endif

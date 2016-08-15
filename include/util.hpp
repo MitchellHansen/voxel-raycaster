@@ -2,6 +2,8 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <math.h>
+#include <fstream>
+#include <sstream>
 
 const double PI = 3.141592653589793238463;
 const float  PI_F = 3.14159265358979f;
@@ -87,4 +89,17 @@ inline float DegreesToRadians(float in) {
 
 inline float RadiansToDegrees(float in) {
 	return in * 180.0f / PI;
+}
+
+inline std::string read_file(std::string file_name){
+	std::ifstream input_file(file_name);
+
+	if (!input_file.is_open()){
+		std::cout << file_name << " could not be opened" << std::endl;
+		return nullptr;
+	}
+
+	std::stringstream buf;
+	buf << input_file.rdbuf();
+	return buf.str();
 }
