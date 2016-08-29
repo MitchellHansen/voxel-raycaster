@@ -27,7 +27,7 @@
 #include "Curses.h"
 #include "util.hpp"
 #include "RayCaster.h"
-#include "Clapper.h"
+#include "CL_Wrapper.h"
 
 const int WINDOW_X = 150;
 const int WINDOW_Y = 150;
@@ -36,7 +36,7 @@ const int WINDOW_Y = 150;
 
 int main(){
 
-    Clapper c;
+    CL_Wrapper c;
     c.acquire_platform_and_device();
     c.create_shared_context();
 
