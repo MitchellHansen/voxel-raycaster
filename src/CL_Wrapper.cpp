@@ -157,10 +157,11 @@ int CL_Wrapper::create_command_queue(){
 int CL_Wrapper::compile_kernel(std::string kernel_source, bool is_path, std::string kernel_name) {
 
     const char* source;
+    std::string tmp;
 
     if (is_path){
         //Load in the kernel, and c stringify it
-        std::string tmp = read_file(kernel_source);
+        tmp = read_file(kernel_source);
         source = tmp.c_str();
     } else {
         source = kernel_source.c_str();
@@ -208,44 +209,51 @@ int CL_Wrapper::compile_kernel(std::string kernel_source, bool is_path, std::str
 }
 
 int CL_Wrapper::set_kernel_arg(
-        cl_kernel kernel,
+        std::string kernel_name,
         int index,
-        int size,
-        void* buffer,
-        std::string kernel_name){
+        std::string buffer_name){
 
+    error = clSetKernelArg(
+            kernel_map.at(kernel_name),
+            index,
+            sizeof(cl_mem),
+            (void *)&buffer_map.at(buffer_name));
 
+    if (assert(error, "clSetKernelArg"))
+        return -1;
 
+    return 0;
 
+}
 
-};
-int CL_Wrapper::store_buffer(cl_mem, std::string buffer_name){
-    buffer_map.emplace(std::make_pair(buffer_name, cl_mem));
-};
+int CL_Wrapper::store_buffer(cl_mem buffer, std::string buffer_name){
+    buffer_map.emplace(std::make_pair(buffer_name, buffer));
+}
 
 int CL_Wrapper::run_kernel(std::string kernel_name){
 
-    WORKER_SIZE = 10;
+    const int WORKER_SIZE = 1;
     size_t global_work_size[1] = { WORKER_SIZE };
 
-    cl_mem kernel = kernel_map.at(kernel_name);
+    cl_kernel kernel = kernel_map.at(kernel_name);
 
     error = clEnqueueNDRangeKernel(
             command_queue, kernel,
             1, NULL, global_work_size,
             NULL, 0, NULL, NULL);
 
-    if (assert(error, "clCreateCommandQueue"))
+    if (assert(error, "clEnqueueNDRangeKernel"))
         return -1;
 
 
-};
+}
 
 
 
 cl_device_id CL_Wrapper::getDeviceID(){ return device_id; };
 cl_platform_id CL_Wrapper::getPlatformID(){ return platform_id; };
 cl_context CL_Wrapper::getContext(){ return context; };
+cl_kernel CL_Wrapper::getKernel(std::string kernel_name ){ return kernel_map.at(kernel_name); }
 
 bool CL_Wrapper::assert(int error_code, std::string function_name){
 

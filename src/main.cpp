@@ -41,6 +41,18 @@ int main(){
     c.create_shared_context();
 
     c.compile_kernel("../kernels/kernel.txt", true, "hello");
+    c.compile_kernel("../kernels/minimal_kernel.c", true, "min_kern");
+
+    std::string in = "hello!!!!!!!!!!!!!!!!!!!!!";
+    cl_mem buff = clCreateBuffer(
+            c.getContext(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+            sizeof(char) * in.size(), &in, NULL);
+
+    c.store_buffer(buff, "buffer_1");
+
+    //c.set_kernel_arg("min_kern", 0, "buffer_1");
+    c.run_kernel("min_kern");
+
 
 };
 

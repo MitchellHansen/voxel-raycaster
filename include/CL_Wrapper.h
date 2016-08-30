@@ -37,7 +37,7 @@ public:
     int create_shared_context();
     int create_command_queue();
     int compile_kernel(std::string kernel_source, bool is_path, std::string kernel_name);
-	int set_kernel_arg(cl_kernel kernel, int index, int size, void* buffer, std::string kernel_name);
+	int set_kernel_arg(std::string kernel_name, int index, std::string buffer_name);
 	int store_buffer(cl_mem, std::string buffer_name);
 	int run_kernel(std::string kernel_name);
 
@@ -45,6 +45,7 @@ public:
     cl_device_id getDeviceID();
     cl_platform_id getPlatformID();
     cl_context getContext();
+    cl_kernel getKernel(std::string kernel_name);
 
 private:
 
