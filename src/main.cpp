@@ -47,7 +47,7 @@ int main(){
     std::string in = "hello!!!!!!!!!!!!!!!!!!!!!";
     cl_mem buff = clCreateBuffer(
             c.getContext(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
-            sizeof(char) * 128, NULL, NULL);
+            sizeof(char) * 128, &in[0], NULL);
 
     c.store_buffer(buff, "buffer_1");
 
