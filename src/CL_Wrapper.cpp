@@ -232,14 +232,15 @@ int CL_Wrapper::store_buffer(cl_mem buffer, std::string buffer_name){
 
 int CL_Wrapper::run_kernel(std::string kernel_name){
 
-    const int WORKER_SIZE = 1;
+    const int WORKER_SIZE = 10;
     size_t global_work_size[1] = { WORKER_SIZE };
 
     cl_kernel kernel = kernel_map.at(kernel_name);
 
+    //error = clEnqueueTask(command_queue, kernel, 0, NULL, NULL);
     error = clEnqueueNDRangeKernel(
             command_queue, kernel,
-            1, NULL, global_work_size,
+           1, NULL, global_work_size,
             NULL, 0, NULL, NULL);
 
     if (assert(error, "clEnqueueNDRangeKernel"))
