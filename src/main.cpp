@@ -4,7 +4,6 @@
 #include <sstream>
 #include <SFML/Graphics.hpp>
 
-
 #ifdef linux
 #include <CL/cl.h>
 #include <CL/opencl.h>
@@ -47,11 +46,90 @@ int main(){
     std::string in = "hello!!!!!!!!!!!!!!!!!!!!!";
     cl_mem buff = clCreateBuffer(
             c.getContext(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
-            sizeof(char) * 128, &in[0], NULL);
+            sizeof(char) * 128, &in[0], NULL
+    );
+
+    char map[100 * 100 * 100];
+
+    for (int i = 0; i < 100*100*100; i++){
+        map[i] = '+';
+    }
+
+    map[0] = 'a';
+
+    cl_mem map_buff = clCreateBuffer(
+            c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            sizeof(char) * 100*100*100, map, NULL
+    );
+
+    int dim[3] = {101, 100, 99};
+
+    cl_mem dim_buff = clCreateBuffer(
+            c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            sizeof(int) * 3, dim, NULL
+    );
+
+    int res[2] = {100, 99};
+
+    cl_mem res_buff = clCreateBuffer(
+            c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            sizeof(int) * 2, res, NULL
+    );
+
+    double y_increment_radians = DegreesToRadians(50.0 / res[1]);
+    double x_increment_radians = DegreesToRadians(80.0 / res[0]);
+
+    // SFML 2.4 has Vector4 datatypes.......
+    sf::Vector3f* view_plane_vectors = new sf::Vector3f[res[0] * res[1]];
+    for (int y = -res[1] / 2 ; y < res[1] / 2; y++) {
+        for (int x = -res[0] / 2; x < res[0] / 2; x++) {
+
+            // The base ray direction to slew from
+            sf::Vector3f ray(1, 0, 0);
+
+            // Y axis, pitch
+            ray = sf::Vector3f(
+                    ray.z * sin(y_increment_radians * y) + ray.x * cos(y_increment_radians * y),
+                    ray.y,
+                    ray.z * cos(y_increment_radians * y) - ray.x * sin(y_increment_radians * y)
+            );
+
+            // Z axis, yaw
+            ray = sf::Vector3f(
+                    ray.x * cos(x_increment_radians * x) - ray.y * sin(x_increment_radians * x),
+                    ray.x * sin(x_increment_radians * x) + ray.y * cos(x_increment_radians * x),
+                    ray.z
+            );
+
+            int index = (x + res[0] / 2) + res[0] * (y + res[1] / 2);
+            view_plane_vectors[index] = Normalize(ray);
+        }
+    }
+
+    int ind = 1;
+    std::cout << "\nX: " << view_plane_vectors[ind].x
+              << "\nY: " << view_plane_vectors[ind].y
+              << "\nZ: " << view_plane_vectors[ind].z;
+
+    std::cout << "\n======================" << std::endl;
+
+    cl_mem view_matrix_buff = clCreateBuffer(
+            c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            sizeof(float) * 3 * res[0] * res[1], &view_plane_vectors[0], NULL
+    );
 
     c.store_buffer(buff, "buffer_1");
+    c.store_buffer(map_buff, "map_buffer");
+    c.store_buffer(dim_buff, "dim_buffer");
+    c.store_buffer(res_buff, "res_buffer");
+    c.store_buffer(view_matrix_buff, "view_matrix_buffer");
 
     c.set_kernel_arg("min_kern", 0, "buffer_1");
+    c.set_kernel_arg("min_kern", 1, "map_buffer");
+    c.set_kernel_arg("min_kern", 2, "dim_buffer");
+    c.set_kernel_arg("min_kern", 3, "res_buffer");
+    c.set_kernel_arg("min_kern", 4, "view_matrix_buffer");
+
     c.run_kernel("min_kern");
 
 
