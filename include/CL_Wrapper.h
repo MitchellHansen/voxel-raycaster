@@ -42,17 +42,20 @@ public:
 	int run_kernel(std::string kernel_name);
 
 
+	bool assert(int error_code, std::string function_name);
+
     cl_device_id getDeviceID();
     cl_platform_id getPlatformID();
     cl_context getContext();
     cl_kernel getKernel(std::string kernel_name);
+	cl_command_queue getCommandQueue();
 
 private:
 
     int error = 0;
 	bool initialized = false;
 
-    bool assert(int error_code, std::string function_name);
+
     cl_platform_id platform_id;
 	cl_device_id device_id;
     cl_context context;

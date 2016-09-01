@@ -254,7 +254,8 @@ int CL_Wrapper::run_kernel(std::string kernel_name){
 cl_device_id CL_Wrapper::getDeviceID(){ return device_id; };
 cl_platform_id CL_Wrapper::getPlatformID(){ return platform_id; };
 cl_context CL_Wrapper::getContext(){ return context; };
-cl_kernel CL_Wrapper::getKernel(std::string kernel_name ){ return kernel_map.at(kernel_name); }
+cl_kernel CL_Wrapper::getKernel(std::string kernel_name ){ return kernel_map.at(kernel_name); };
+cl_command_queue CL_Wrapper::getCommandQueue(){ return command_queue; };
 
 bool CL_Wrapper::assert(int error_code, std::string function_name){
 

@@ -15,6 +15,7 @@
 #include <windows.h>
 
 #elif defined TARGET_OS_MAC
+#include <OpenGL/gl.h>
 # include <OpenGL/OpenGL.h>
 # include <OpenCL/opencl.h>
 #include <OpenCL/cl_gl_ext.h>
@@ -30,111 +31,6 @@
 
 const int WINDOW_X = 150;
 const int WINDOW_Y = 150;
-
-
-
-int main(){
-
-    CL_Wrapper c;
-    c.acquire_platform_and_device();
-    c.create_shared_context();
-    c.create_command_queue();
-
-    c.compile_kernel("../kernels/kernel.c", true, "hello");
-    c.compile_kernel("../kernels/minimal_kernel.c", true, "min_kern");
-
-    std::string in = "hello!!!!!!!!!!!!!!!!!!!!!";
-    cl_mem buff = clCreateBuffer(
-            c.getContext(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
-            sizeof(char) * 128, &in[0], NULL
-    );
-
-    char map[100 * 100 * 100];
-
-    for (int i = 0; i < 100*100*100; i++){
-        map[i] = '+';
-    }
-
-    map[0] = 'a';
-
-    cl_mem map_buff = clCreateBuffer(
-            c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-            sizeof(char) * 100*100*100, map, NULL
-    );
-
-    int dim[3] = {101, 100, 99};
-
-    cl_mem dim_buff = clCreateBuffer(
-            c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-            sizeof(int) * 3, dim, NULL
-    );
-
-    int res[2] = {100, 99};
-
-    cl_mem res_buff = clCreateBuffer(
-            c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-            sizeof(int) * 2, res, NULL
-    );
-
-    double y_increment_radians = DegreesToRadians(50.0 / res[1]);
-    double x_increment_radians = DegreesToRadians(80.0 / res[0]);
-
-    // SFML 2.4 has Vector4 datatypes.......
-    sf::Vector3f* view_plane_vectors = new sf::Vector3f[res[0] * res[1]];
-    for (int y = -res[1] / 2 ; y < res[1] / 2; y++) {
-        for (int x = -res[0] / 2; x < res[0] / 2; x++) {
-
-            // The base ray direction to slew from
-            sf::Vector3f ray(1, 0, 0);
-
-            // Y axis, pitch
-            ray = sf::Vector3f(
-                    ray.z * sin(y_increment_radians * y) + ray.x * cos(y_increment_radians * y),
-                    ray.y,
-                    ray.z * cos(y_increment_radians * y) - ray.x * sin(y_increment_radians * y)
-            );
-
-            // Z axis, yaw
-            ray = sf::Vector3f(
-                    ray.x * cos(x_increment_radians * x) - ray.y * sin(x_increment_radians * x),
-                    ray.x * sin(x_increment_radians * x) + ray.y * cos(x_increment_radians * x),
-                    ray.z
-            );
-
-            int index = (x + res[0] / 2) + res[0] * (y + res[1] / 2);
-            view_plane_vectors[index] = Normalize(ray);
-        }
-    }
-
-    int ind = 1;
-    std::cout << "\nX: " << view_plane_vectors[ind].x
-              << "\nY: " << view_plane_vectors[ind].y
-              << "\nZ: " << view_plane_vectors[ind].z;
-
-    std::cout << "\n======================" << std::endl;
-
-    cl_mem view_matrix_buff = clCreateBuffer(
-            c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-            sizeof(float) * 3 * res[0] * res[1], &view_plane_vectors[0], NULL
-    );
-
-    c.store_buffer(buff, "buffer_1");
-    c.store_buffer(map_buff, "map_buffer");
-    c.store_buffer(dim_buff, "dim_buffer");
-    c.store_buffer(res_buff, "res_buffer");
-    c.store_buffer(view_matrix_buff, "view_matrix_buffer");
-
-    c.set_kernel_arg("min_kern", 0, "buffer_1");
-    c.set_kernel_arg("min_kern", 1, "map_buffer");
-    c.set_kernel_arg("min_kern", 2, "dim_buffer");
-    c.set_kernel_arg("min_kern", 3, "res_buffer");
-    c.set_kernel_arg("min_kern", 4, "view_matrix_buffer");
-
-    c.run_kernel("min_kern");
-
-
-};
-
 
 
 
@@ -161,14 +57,172 @@ sf::Texture window_texture;
 // Y: 1.57 is straight down
 
 
-int main0() {
+int main() {
 
-    // Initialize the render window
-	Curses curse(sf::Vector2i(5, 5), sf::Vector2i(WINDOW_X, WINDOW_Y));
     sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
-	
 
 
+    sf::Sprite s;
+    sf::Texture t;
+
+    {
+        CL_Wrapper c;
+        c.acquire_platform_and_device();
+        c.create_shared_context();
+        c.create_command_queue();
+
+        c.compile_kernel("../kernels/kernel.c", true, "hello");
+        c.compile_kernel("../kernels/minimal_kernel.c", true, "min_kern");
+
+        std::string in = "hello!!!!!!!!!!!!!!!!!!!!!";
+        cl_mem buff = clCreateBuffer(
+                c.getContext(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+                sizeof(char) * 128, &in[0], NULL
+        );
+
+        char map[100 * 100 * 100];
+
+        for (int i = 0; i < 100 * 100 * 100; i++) {
+            map[i] = '+';
+        }
+
+        map[0] = 'a';
+
+        cl_mem map_buff = clCreateBuffer(
+                c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                sizeof(char) * 100 * 100 * 100, map, NULL
+        );
+
+        int dim[3] = {101, 100, 99};
+
+        cl_mem dim_buff = clCreateBuffer(
+                c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                sizeof(int) * 3, dim, NULL
+        );
+
+        int res[2] = {100, 99};
+
+        cl_mem res_buff = clCreateBuffer(
+                c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                sizeof(int) * 2, res, NULL
+        );
+
+        double y_increment_radians = DegreesToRadians(50.0 / res[1]);
+        double x_increment_radians = DegreesToRadians(80.0 / res[0]);
+
+        // SFML 2.4 has Vector4 datatypes.......
+
+        float view_matrix[res[0] * res[1] * 4];
+        for (int y = -res[1] / 2; y < res[1] / 2; y++) {
+            for (int x = -res[0] / 2; x < res[0] / 2; x++) {
+
+                // The base ray direction to slew from
+                sf::Vector3f ray(1, 0, 0);
+
+                // Y axis, pitch
+                ray = sf::Vector3f(
+                        ray.z * sin(y_increment_radians * y) + ray.x * cos(y_increment_radians * y),
+                        ray.y,
+                        ray.z * cos(y_increment_radians * y) - ray.x * sin(y_increment_radians * y)
+                );
+
+                // Z axis, yaw
+                ray = sf::Vector3f(
+                        ray.x * cos(x_increment_radians * x) - ray.y * sin(x_increment_radians * x),
+                        ray.x * sin(x_increment_radians * x) + ray.y * cos(x_increment_radians * x),
+                        ray.z
+                );
+
+                int index = (x + res[0] / 2) + res[0] * (y + res[1] / 2);
+                ray = Normalize(ray);
+                view_matrix[index * 4 + 0] = ray.x;
+                view_matrix[index * 4 + 1] = ray.y;
+                view_matrix[index * 4 + 2] = ray.z;
+                view_matrix[index * 4 + 3] = 0;
+            }
+        }
+
+//    int ind = 4;
+//    std::cout << "\nX: " << view_matrix[ind]
+//              << "\nY: " << view_matrix[ind + 1]
+//              << "\nZ: " << view_matrix[ind + 2]
+//              << "\npad: " << view_matrix[ind + 3];
+//
+//    std::cout << "\n======================" << std::endl;
+
+        cl_mem view_matrix_buff = clCreateBuffer(
+                c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                sizeof(float) * 3 * res[0] * res[1], view_matrix, NULL
+        );
+
+
+        float cam_dir[4] = {1, 0, 0, 0};
+
+        cl_mem cam_dir_buff = clCreateBuffer(
+                c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                sizeof(float) * 4, cam_dir, NULL
+        );
+
+        float cam_pos[4] = {25, 25, 25, 0};
+
+        cl_mem cam_pos_buff = clCreateBuffer(
+                c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                sizeof(float) * 4, cam_pos, NULL
+        );
+
+
+        c.store_buffer(buff, "buffer_1");
+        c.store_buffer(map_buff, "map_buffer");
+        c.store_buffer(dim_buff, "dim_buffer");
+        c.store_buffer(res_buff, "res_buffer");
+        c.store_buffer(view_matrix_buff, "view_matrix_buffer");
+        c.store_buffer(cam_dir_buff, "cam_dir_buffer");
+        c.store_buffer(cam_pos_buff, "cam_pos_buffer");
+
+        c.set_kernel_arg("min_kern", 0, "buffer_1");
+        c.set_kernel_arg("min_kern", 1, "map_buffer");
+        c.set_kernel_arg("min_kern", 2, "dim_buffer");
+        c.set_kernel_arg("min_kern", 3, "res_buffer");
+        c.set_kernel_arg("min_kern", 4, "view_matrix_buffer");
+        c.set_kernel_arg("min_kern", 5, "cam_dir_buffer");
+        c.set_kernel_arg("min_kern", 6, "cam_pos_buffer");
+
+        c.run_kernel("min_kern");
+
+
+        unsigned char* pixel_array = new sf::Uint8[WINDOW_X * WINDOW_Y * 4];
+
+        for (int i = 0; i < 100 * 100 * 4; i += 4) {
+
+            pixel_array[i] = i % 255; // R?
+            pixel_array[i + 1] = 70; // G?
+            pixel_array[i + 2] = 100; // B?
+            pixel_array[i + 3] = 100; // A?
+        }
+
+        t.create(100, 100);
+        t.update(pixel_array);
+
+        int error;
+
+        cl_mem image_buff = clCreateFromGLTexture(c.getContext(), CL_MEM_WRITE_ONLY, GL_TEXTURE_2D, 0, t.getNativeHandle(), &error);
+        if (c.assert(error, "clCreateFromGLTexture"))
+            return -1;
+
+        error = clEnqueueAcquireGLObjects(c.getCommandQueue(), 1, &image_buff, 0, 0, 0);
+        if (c.assert(error, "clEnqueueAcquireGLObjects"))
+            return -1;
+
+        //c.run_kernel("min_kern");
+
+        error = clEnqueueReleaseGLObjects(c.getCommandQueue(), 1, &image_buff, 0, NULL, NULL);
+        if (c.assert(error, "clEnqueueReleaseGLObjects"))
+            return -1;
+
+        s.setTexture(t);
+
+
+    }
     // The step size in milliseconds between calls to Update()
     // Lets set it to 16.6 milliseonds (60FPS)
     float step_size = 0.0166f;
@@ -183,7 +237,7 @@ int main0() {
     fps_counter fps;
 
 	// ============================= RAYCASTER SETUP ==================================
-	
+
 	// Setup the sprite and texture
 	window_texture.create(WINDOW_X, WINDOW_Y);
 	window_sprite.setPosition(0, 0);
@@ -264,21 +318,6 @@ int main0() {
 		cam_pos.y += cam_vec.y / 1.0;
 		cam_pos.z += cam_vec.z / 1.0;
 
-//		if (cam_vec.x > 0.0f)
-//			cam_vec.x -= 0.1;
-//		else if (cam_vec.x < 0.0f)
-//			cam_vec.x += 0.1;
-//
-//		if (cam_vec.y > 0.0f)
-//			cam_vec.y -= 0.1;
-//		else if (cam_vec.y < 0.0f)
-//			cam_vec.y += 0.1;
-//
-//		if (cam_vec.z > 0.0f)
-//			cam_vec.z -= 0.1;
-//		else if (cam_vec.z < 0.0f)
-//			cam_vec.z += 0.1;
-
 		std::cout << cam_vec.x << " : " << cam_vec.y << " : " << cam_vec.z << std::endl;
 
 
@@ -292,30 +331,16 @@ int main0() {
 		while ((accumulator_time - step_size) >= step_size) {
             accumulator_time -= step_size;
 
-
             // Update cycle
-            curse.Update(delta_time);
-
-
         }
 
         // Fps cycle
         // map->moveLight(sf::Vector2f(0.3, 0));
-		
+
 		window.clear(sf::Color::Black);
 
 		// Cast the rays and get the image
 		sf::Color* pixel_colors = ray_caster.CastRays(cam_dir, cam_pos);
-
-		for (int i = 0; i < WINDOW_X * WINDOW_Y; i++) {
-			
-			Curses::Tile t(sf::Vector2i(i % WINDOW_X, i / WINDOW_X));
-			Curses::Slot s(L'\u0045', pixel_colors[i], sf::Color::Black);
-			t.push_back(s);
-			curse.setTile(t);
-
-		}
-
 
         // Cast it to an array of Uint8's
 		auto out = (sf::Uint8*)pixel_colors;
@@ -324,18 +349,15 @@ int main0() {
 		window_sprite.setTexture(window_texture);
 		window.draw(window_sprite);
 
-
-		curse.Render();
-
 		// Give the frame counter the frame time and draw the average frame time
 		fps.frame(delta_time);
 		fps.draw(&window);
 
+
+        window.draw(s);
+        
 		window.display();
-
-
 
 	}
 	return 0;
-
 }
