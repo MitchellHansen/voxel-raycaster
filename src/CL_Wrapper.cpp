@@ -230,10 +230,10 @@ int CL_Wrapper::store_buffer(cl_mem buffer, std::string buffer_name){
     buffer_map.emplace(std::make_pair(buffer_name, buffer));
 }
 
-int CL_Wrapper::run_kernel(std::string kernel_name){
+int CL_Wrapper::run_kernel(std::string kernel_name, const int work_size){
 
     const int WORKER_SIZE = 10;
-    size_t global_work_size[1] = { WORKER_SIZE };
+    size_t global_work_size[1] = { static_cast<size_t>(work_size) };
 
     cl_kernel kernel = kernel_map.at(kernel_name);
 

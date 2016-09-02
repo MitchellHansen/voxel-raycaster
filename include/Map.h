@@ -34,6 +34,12 @@ public:
 	char *list;
 	sf::Vector3i dimensions;
 
+	void setVoxel(sf::Vector3i position, int val){
+
+		list[position.x + dimensions.x * (position.y + dimensions.z * position.z)] = val;
+
+	};
+
 	void moveLight(sf::Vector2f in);
 	sf::Vector3f global_light;
 

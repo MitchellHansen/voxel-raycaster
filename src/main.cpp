@@ -29,8 +29,8 @@
 #include "RayCaster.h"
 #include "CL_Wrapper.h"
 
-const int WINDOW_X = 150;
-const int WINDOW_Y = 150;
+const int WINDOW_X = 100;
+const int WINDOW_Y = 100;
 
 
 
@@ -75,6 +75,8 @@ int main() {
 
     sf::Vector3i map_dim(100, 100, 100);
     Map* map = new Map(map_dim);
+
+    map->setVoxel(sf::Vector3i(77, 50, 85), 5);
 
     cl_mem map_buff = clCreateBuffer(
             c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
@@ -129,6 +131,9 @@ int main() {
         }
     }
 
+    int ind = 367;
+    printf("%i === %f, %f, %f\n", ind, view_matrix[ind * 4 + 0], view_matrix[ind * 4 + 1], view_matrix[ind * 4 + 2]);
+
     cl_mem view_matrix_buff = clCreateBuffer(
             c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
             sizeof(float) * 3 * view_res.x * view_res.y, view_matrix, NULL
@@ -142,7 +147,7 @@ int main() {
     );
 
 
-    sf::Vector3f cam_pos(50, 50, 50);
+    sf::Vector3f cam_pos(55, 50, 50);
     cl_mem cam_pos_buff = clCreateBuffer(
             c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
             sizeof(float) * 4, &cam_pos, NULL
@@ -194,15 +199,18 @@ int main() {
     c.set_kernel_arg("min_kern", 5, "cam_pos_buffer");
     c.set_kernel_arg("min_kern", 6, "image_buffer");
 
+    const int size = 100 * 100;
+    c.run_kernel("min_kern", size);
 
-    c.run_kernel("min_kern");
+
+    clFinish(c.getCommandQueue());
 
     error = clEnqueueReleaseGLObjects(c.getCommandQueue(), 1, &image_buff, 0, NULL, NULL);
     if (c.assert(error, "clEnqueueReleaseGLObjects"))
         return -1;
 
     s.setTexture(t);
-    
+
     // The step size in milliseconds between calls to Update()
     // Lets set it to 16.6 milliseonds (60FPS)
     float step_size = 0.0166f;
@@ -223,9 +231,6 @@ int main() {
 	window_sprite.setPosition(0, 0);
 
 	// State values
-
-
-
 
 	sf::Vector3f cam_vec(0, 0, 0);
 

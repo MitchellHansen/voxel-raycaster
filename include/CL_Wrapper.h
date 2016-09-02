@@ -39,7 +39,7 @@ public:
     int compile_kernel(std::string kernel_source, bool is_path, std::string kernel_name);
 	int set_kernel_arg(std::string kernel_name, int index, std::string buffer_name);
 	int store_buffer(cl_mem, std::string buffer_name);
-	int run_kernel(std::string kernel_name);
+	int run_kernel(std::string kernel_name, const int work_size);
 
 
 	bool assert(int error_code, std::string function_name);
