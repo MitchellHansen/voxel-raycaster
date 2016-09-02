@@ -65,164 +65,144 @@ int main() {
     sf::Sprite s;
     sf::Texture t;
 
-    {
-        CL_Wrapper c;
-        c.acquire_platform_and_device();
-        c.create_shared_context();
-        c.create_command_queue();
+    CL_Wrapper c;
+    c.acquire_platform_and_device();
+    c.create_shared_context();
+    c.create_command_queue();
 
-        c.compile_kernel("../kernels/kernel.c", true, "hello");
-        c.compile_kernel("../kernels/minimal_kernel.c", true, "min_kern");
+    c.compile_kernel("../kernels/kernel.c", true, "hello");
+    c.compile_kernel("../kernels/minimal_kernel.c", true, "min_kern");
 
-        std::string in = "hello!!!!!!!!!!!!!!!!!!!!!";
-        cl_mem buff = clCreateBuffer(
-                c.getContext(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
-                sizeof(char) * 128, &in[0], NULL
-        );
+    sf::Vector3i map_dim(100, 100, 100);
+    Map* map = new Map(map_dim);
 
-        char map[100 * 100 * 100];
+    cl_mem map_buff = clCreateBuffer(
+            c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            sizeof(char) * map_dim.x * map_dim.y * map_dim.z, map->list, NULL
+    );
 
-        for (int i = 0; i < 100 * 100 * 100; i++) {
-            map[i] = '+';
+    cl_mem dim_buff = clCreateBuffer(
+            c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            sizeof(int) * 3, &map_dim, NULL
+    );
+
+    sf::Vector2i view_res(WINDOW_X, WINDOW_Y);
+
+    cl_mem res_buff = clCreateBuffer(
+            c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            sizeof(int) * 2, &view_res, NULL
+    );
+
+
+    double y_increment_radians = DegreesToRadians(50.0 / view_res.y);
+    double x_increment_radians = DegreesToRadians(80.0 / view_res.x);
+
+    // SFML 2.4 has Vector4 datatypes.......
+
+    float view_matrix[view_res.x * view_res.y * 4];
+    for (int y = -view_res.y / 2; y < view_res.y / 2; y++) {
+        for (int x = -view_res.x / 2; x < view_res.x / 2; x++) {
+
+            // The base ray direction to slew from
+            sf::Vector3f ray(1, 0, 0);
+
+            // Y axis, pitch
+            ray = sf::Vector3f(
+                    ray.z * sin(y_increment_radians * y) + ray.x * cos(y_increment_radians * y),
+                    ray.y,
+                    ray.z * cos(y_increment_radians * y) - ray.x * sin(y_increment_radians * y)
+            );
+
+            // Z axis, yaw
+            ray = sf::Vector3f(
+                    ray.x * cos(x_increment_radians * x) - ray.y * sin(x_increment_radians * x),
+                    ray.x * sin(x_increment_radians * x) + ray.y * cos(x_increment_radians * x),
+                    ray.z
+            );
+
+            int index = (x + view_res.x / 2) + view_res.x * (y + view_res.y / 2);
+            ray = Normalize(ray);
+            view_matrix[index * 4 + 0] = ray.x;
+            view_matrix[index * 4 + 1] = ray.y;
+            view_matrix[index * 4 + 2] = ray.z;
+            view_matrix[index * 4 + 3] = 0;
         }
-
-        map[0] = 'a';
-
-        cl_mem map_buff = clCreateBuffer(
-                c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                sizeof(char) * 100 * 100 * 100, map, NULL
-        );
-
-        int dim[3] = {101, 100, 99};
-
-        cl_mem dim_buff = clCreateBuffer(
-                c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                sizeof(int) * 3, dim, NULL
-        );
-
-        int res[2] = {100, 99};
-
-        cl_mem res_buff = clCreateBuffer(
-                c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                sizeof(int) * 2, res, NULL
-        );
-
-        double y_increment_radians = DegreesToRadians(50.0 / res[1]);
-        double x_increment_radians = DegreesToRadians(80.0 / res[0]);
-
-        // SFML 2.4 has Vector4 datatypes.......
-
-        float view_matrix[res[0] * res[1] * 4];
-        for (int y = -res[1] / 2; y < res[1] / 2; y++) {
-            for (int x = -res[0] / 2; x < res[0] / 2; x++) {
-
-                // The base ray direction to slew from
-                sf::Vector3f ray(1, 0, 0);
-
-                // Y axis, pitch
-                ray = sf::Vector3f(
-                        ray.z * sin(y_increment_radians * y) + ray.x * cos(y_increment_radians * y),
-                        ray.y,
-                        ray.z * cos(y_increment_radians * y) - ray.x * sin(y_increment_radians * y)
-                );
-
-                // Z axis, yaw
-                ray = sf::Vector3f(
-                        ray.x * cos(x_increment_radians * x) - ray.y * sin(x_increment_radians * x),
-                        ray.x * sin(x_increment_radians * x) + ray.y * cos(x_increment_radians * x),
-                        ray.z
-                );
-
-                int index = (x + res[0] / 2) + res[0] * (y + res[1] / 2);
-                ray = Normalize(ray);
-                view_matrix[index * 4 + 0] = ray.x;
-                view_matrix[index * 4 + 1] = ray.y;
-                view_matrix[index * 4 + 2] = ray.z;
-                view_matrix[index * 4 + 3] = 0;
-            }
-        }
-
-//    int ind = 4;
-//    std::cout << "\nX: " << view_matrix[ind]
-//              << "\nY: " << view_matrix[ind + 1]
-//              << "\nZ: " << view_matrix[ind + 2]
-//              << "\npad: " << view_matrix[ind + 3];
-//
-//    std::cout << "\n======================" << std::endl;
-
-        cl_mem view_matrix_buff = clCreateBuffer(
-                c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                sizeof(float) * 3 * res[0] * res[1], view_matrix, NULL
-        );
-
-
-        float cam_dir[4] = {1, 0, 0, 0};
-
-        cl_mem cam_dir_buff = clCreateBuffer(
-                c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                sizeof(float) * 4, cam_dir, NULL
-        );
-
-        float cam_pos[4] = {25, 25, 25, 0};
-
-        cl_mem cam_pos_buff = clCreateBuffer(
-                c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                sizeof(float) * 4, cam_pos, NULL
-        );
-
-
-        c.store_buffer(buff, "buffer_1");
-        c.store_buffer(map_buff, "map_buffer");
-        c.store_buffer(dim_buff, "dim_buffer");
-        c.store_buffer(res_buff, "res_buffer");
-        c.store_buffer(view_matrix_buff, "view_matrix_buffer");
-        c.store_buffer(cam_dir_buff, "cam_dir_buffer");
-        c.store_buffer(cam_pos_buff, "cam_pos_buffer");
-
-        c.set_kernel_arg("min_kern", 0, "buffer_1");
-        c.set_kernel_arg("min_kern", 1, "map_buffer");
-        c.set_kernel_arg("min_kern", 2, "dim_buffer");
-        c.set_kernel_arg("min_kern", 3, "res_buffer");
-        c.set_kernel_arg("min_kern", 4, "view_matrix_buffer");
-        c.set_kernel_arg("min_kern", 5, "cam_dir_buffer");
-        c.set_kernel_arg("min_kern", 6, "cam_pos_buffer");
-
-        c.run_kernel("min_kern");
-
-
-        unsigned char* pixel_array = new sf::Uint8[WINDOW_X * WINDOW_Y * 4];
-
-        for (int i = 0; i < 100 * 100 * 4; i += 4) {
-
-            pixel_array[i] = i % 255; // R?
-            pixel_array[i + 1] = 70; // G?
-            pixel_array[i + 2] = 100; // B?
-            pixel_array[i + 3] = 100; // A?
-        }
-
-        t.create(100, 100);
-        t.update(pixel_array);
-
-        int error;
-
-        cl_mem image_buff = clCreateFromGLTexture(c.getContext(), CL_MEM_WRITE_ONLY, GL_TEXTURE_2D, 0, t.getNativeHandle(), &error);
-        if (c.assert(error, "clCreateFromGLTexture"))
-            return -1;
-
-        error = clEnqueueAcquireGLObjects(c.getCommandQueue(), 1, &image_buff, 0, 0, 0);
-        if (c.assert(error, "clEnqueueAcquireGLObjects"))
-            return -1;
-
-        //c.run_kernel("min_kern");
-
-        error = clEnqueueReleaseGLObjects(c.getCommandQueue(), 1, &image_buff, 0, NULL, NULL);
-        if (c.assert(error, "clEnqueueReleaseGLObjects"))
-            return -1;
-
-        s.setTexture(t);
-
-
     }
+
+    cl_mem view_matrix_buff = clCreateBuffer(
+            c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            sizeof(float) * 3 * view_res.x * view_res.y, view_matrix, NULL
+    );
+
+    sf::Vector3f cam_dir(1.0f, 0.0f, 1.57f);
+
+    cl_mem cam_dir_buff = clCreateBuffer(
+            c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            sizeof(float) * 4, &cam_dir, NULL
+    );
+
+
+    sf::Vector3f cam_pos(50, 50, 50);
+    cl_mem cam_pos_buff = clCreateBuffer(
+            c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            sizeof(float) * 4, &cam_pos, NULL
+    );
+
+
+    unsigned char* pixel_array = new sf::Uint8[WINDOW_X * WINDOW_Y * 4];
+
+    for (int i = 0; i < 100 * 100 * 4; i += 4) {
+
+        pixel_array[i] = 255; // R?
+        pixel_array[i + 1] = 255; // G?
+        pixel_array[i + 2] = 255; // B?
+        pixel_array[i + 3] = 100; // A?
+    }
+
+    t.create(100, 100);
+    t.update(pixel_array);
+
+
+    int error;
+
+    cl_mem image_buff = clCreateFromGLTexture(
+            c.getContext(), CL_MEM_WRITE_ONLY, GL_TEXTURE_2D,
+            0, t.getNativeHandle(), &error);
+
+    if (c.assert(error, "clCreateFromGLTexture"))
+        return -1;
+
+    error = clEnqueueAcquireGLObjects(c.getCommandQueue(), 1, &image_buff, 0, 0, 0);
+    if (c.assert(error, "clEnqueueAcquireGLObjects"))
+        return -1;
+
+
+
+    c.store_buffer(map_buff, "map_buffer");
+    c.store_buffer(dim_buff, "dim_buffer");
+    c.store_buffer(res_buff, "res_buffer");
+    c.store_buffer(view_matrix_buff, "view_matrix_buffer");
+    c.store_buffer(cam_dir_buff, "cam_dir_buffer");
+    c.store_buffer(cam_pos_buff, "cam_pos_buffer");
+    c.store_buffer(image_buff, "image_buffer");
+
+    c.set_kernel_arg("min_kern", 0, "map_buffer");
+    c.set_kernel_arg("min_kern", 1, "dim_buffer");
+    c.set_kernel_arg("min_kern", 2, "res_buffer");
+    c.set_kernel_arg("min_kern", 3, "view_matrix_buffer");
+    c.set_kernel_arg("min_kern", 4, "cam_dir_buffer");
+    c.set_kernel_arg("min_kern", 5, "cam_pos_buffer");
+    c.set_kernel_arg("min_kern", 6, "image_buffer");
+
+
+    c.run_kernel("min_kern");
+
+    error = clEnqueueReleaseGLObjects(c.getCommandQueue(), 1, &image_buff, 0, NULL, NULL);
+    if (c.assert(error, "clEnqueueReleaseGLObjects"))
+        return -1;
+
+    s.setTexture(t);
+    
     // The step size in milliseconds between calls to Update()
     // Lets set it to 16.6 milliseonds (60FPS)
     float step_size = 0.0166f;
@@ -243,12 +223,12 @@ int main() {
 	window_sprite.setPosition(0, 0);
 
 	// State values
-	sf::Vector3i map_dim(100, 100, 100);
-	sf::Vector2i view_res(WINDOW_X, WINDOW_Y);
-	sf::Vector3f cam_dir(1.0f, 0.0f, 1.57f);
-	sf::Vector3f cam_pos(50, 50, 50);
+
+
+
+
 	sf::Vector3f cam_vec(0, 0, 0);
-	Map* map = new Map(map_dim);
+
 	RayCaster ray_caster(map, map_dim, view_res);
 
 
@@ -355,7 +335,7 @@ int main() {
 
 
         window.draw(s);
-        
+
 		window.display();
 
 	}
