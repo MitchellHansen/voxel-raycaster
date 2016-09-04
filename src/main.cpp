@@ -9,9 +9,12 @@
 #include <CL/opencl.h>
 
 #elif defined _WIN32
+#include <windows.h>
 #include <CL/cl_gl.h>
 #include <CL/cl.h>
 #include <CL/opencl.h>
+#include <GL/GL.h>
+
 #include <windows.h>
 
 #elif defined TARGET_OS_MAC
@@ -66,12 +69,13 @@ int main() {
     sf::Texture t;
 
     CL_Wrapper c;
+	query_platform_devices();
     c.acquire_platform_and_device();
     c.create_shared_context();
     c.create_command_queue();
 
-    c.compile_kernel("../kernels/kernel.c", true, "hello");
-    c.compile_kernel("../kernels/minimal_kernel.c", true, "min_kern");
+    //c.compile_kernel("../kernels/kernel.cl", true, "hello");
+	c.compile_kernel("../kernels/minimal_kernel.cl", true, "min_kern");
 
     sf::Vector3i map_dim(MAP_X, MAP_Y, MAP_Z);
     Map* map = new Map(map_dim);
@@ -101,7 +105,7 @@ int main() {
 
     // SFML 2.4 has Vector4 datatypes.......
 
-    float view_matrix[view_res.x * view_res.y * 4];
+    float* view_matrix = new float[WINDOW_X * WINDOW_Y * 4];
     for (int y = -view_res.y / 2; y < view_res.y / 2; y++) {
         for (int x = -view_res.x / 2; x < view_res.x / 2; x++) {
 

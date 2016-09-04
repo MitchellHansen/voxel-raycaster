@@ -48,17 +48,17 @@ __kernel void min_kern(
 
     // Setup the voxel coords from the camera origin
     int3 voxel = {
-            floorf(cam_pos->x),
-            floorf(cam_pos->y),
-            floorf(cam_pos->z)
+            floor(cam_pos->x),
+            floor(cam_pos->y),
+            floor(cam_pos->z)
     };
 
     // Delta T is the units a ray must travel along an axis in order to
     // traverse an integer split
     float3 delta_t = {
-            fabsf(1.0f / ray_dir.x),
-            fabsf(1.0f / ray_dir.y),
-            fabsf(1.0f / ray_dir.z)
+            fabs(1.0f / ray_dir.x),
+            fabs(1.0f / ray_dir.y),
+            fabs(1.0f / ray_dir.z)
     };
 
     // Intersection T is the collection of the next intersection points

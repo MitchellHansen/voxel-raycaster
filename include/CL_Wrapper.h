@@ -25,6 +25,7 @@ struct device {
     cl_uint clock_frequency;
     char version[128];
     cl_platform_id platform;
+	cl_uint comp_units;
 };
 
 class CL_Wrapper {

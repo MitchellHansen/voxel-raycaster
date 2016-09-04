@@ -44,10 +44,11 @@ int CL_Wrapper::acquire_platform_and_device(){
 
             d.id = deviceIds[q];
 
-            clGetDeviceInfo(d.id, CL_DEVICE_PLATFORM, 128, &d.platform, NULL);
-            clGetDeviceInfo(d.id, CL_DEVICE_VERSION, 128, &d.version, NULL);
-            clGetDeviceInfo(d.id, CL_DEVICE_TYPE, 128, &d.type, NULL);
-            clGetDeviceInfo(d.id, CL_DEVICE_MAX_CLOCK_FREQUENCY, 128, &d.clock_frequency, NULL);
+            clGetDeviceInfo(d.id, CL_DEVICE_PLATFORM, sizeof(cl_platform_id), &d.platform, NULL);
+            clGetDeviceInfo(d.id, CL_DEVICE_VERSION, sizeof(char) * 128, &d.version, NULL);
+            clGetDeviceInfo(d.id, CL_DEVICE_TYPE, sizeof(cl_device_type), &d.type, NULL);
+            clGetDeviceInfo(d.id, CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(cl_uint), &d.clock_frequency, NULL);
+			clGetDeviceInfo(d.id, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cl_uint), &d.comp_units, NULL);
 
             plt_ids.at(d.platform).push_back(d);
         }
@@ -58,7 +59,8 @@ int CL_Wrapper::acquire_platform_and_device(){
     // falling back to the cpu with the fastest clock if we weren't able to find one
 
     device current_best_device;
-    current_best_device.clock_frequency = 0; // Set this to 0 so the first run always selects a new device
+	current_best_device.type = -1; // Set this to -1 so the first run always selects a new device
+
 
     for (auto kvp: plt_ids){
 
@@ -72,7 +74,10 @@ int CL_Wrapper::acquire_platform_and_device(){
             if (device.type == CL_DEVICE_TYPE_GPU && current_best_device.type != CL_DEVICE_TYPE_GPU){
                 current_best_device = device;
             }
-            else if (device.clock_frequency > current_best_device.clock_frequency){
+			else if (device.comp_units > current_best_device.comp_units) {
+				current_best_device = device;
+			}
+            else if (current_best_device.type != CL_DEVICE_TYPE_GPU && device.clock_frequency > current_best_device.clock_frequency){
                 current_best_device = device;
             }
         }
@@ -108,7 +113,7 @@ int CL_Wrapper::create_shared_context() {
 	//};
 	HGLRC hGLRC = wglGetCurrentContext();
 	HDC hDC = wglGetCurrentDC();
-	cl_context_properties context_properties[] = { CL_CONTEXT_PLATFORM, (cl_context_properties)platformIds[1], CL_GL_CONTEXT_KHR, (cl_context_properties)hGLRC, CL_WGL_HDC_KHR, (cl_context_properties)hDC, 0 };
+	cl_context_properties context_properties[] = { CL_CONTEXT_PLATFORM, (cl_context_properties)platform_id, CL_GL_CONTEXT_KHR, (cl_context_properties)hGLRC, CL_WGL_HDC_KHR, (cl_context_properties)hDC, 0 };
 
 
 #elif defined TARGET_OS_MAC
@@ -206,6 +211,8 @@ int CL_Wrapper::compile_kernel(std::string kernel_source, bool is_path, std::str
         return -1;
 
     kernel_map.emplace(std::make_pair(kernel_name, kernel));
+
+	return 1;
 }
 
 int CL_Wrapper::set_kernel_arg(
@@ -228,6 +235,7 @@ int CL_Wrapper::set_kernel_arg(
 
 int CL_Wrapper::store_buffer(cl_mem buffer, std::string buffer_name){
     buffer_map.emplace(std::make_pair(buffer_name, buffer));
+	return 1;
 }
 
 int CL_Wrapper::run_kernel(std::string kernel_name, const int work_size){
@@ -246,7 +254,7 @@ int CL_Wrapper::run_kernel(std::string kernel_name, const int work_size){
     if (assert(error, "clEnqueueNDRangeKernel"))
         return -1;
 
-
+	return 1;
 }
 
 

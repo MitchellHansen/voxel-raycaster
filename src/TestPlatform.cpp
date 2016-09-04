@@ -1,13 +1,16 @@
 #pragma once
 #include <cstdio>
 #include <cstring>
-#include <OpenCL/cl_ext.h>
 #include <iostream>
 #include <vector>
 
 #ifdef linux
 
 #elif defined _WIN32
+#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
+#include <CL/cl_gl.h>
+#include <CL/cl.h>
+#include <CL/opencl.h>
 
 #elif defined TARGET_OS_MAC
 # include <OpenGL/OpenGL.h>
@@ -111,6 +114,21 @@ inline int query_platform_devices() {
 
 			clGetDeviceInfo(devices[i], CL_DEVICE_VERSION, 128, buf, NULL);
 			fprintf(stdout, "%s\n", buf);
+
+
+			//cl_device_type a;
+			//clGetDeviceInfo(devices[i], CL_DEVICE_TYPE, 128, &a, NULL);
+			//std::cout << a << std::endl;
+
+			//cl_uint b;
+			//clGetDeviceInfo(devices[i], CL_DEVICE_MAX_CLOCK_FREQUENCY, 128, &b, NULL);
+			//std::cout << b << std::endl;
+
+			//cl_uint c;
+			//clGetDeviceInfo(devices[i], CL_DEVICE_MAX_COMPUTE_UNITS, 128, &c, NULL);
+			//std::cout << c << std::endl;
+			
+			std::cout << devices[i] << std::endl;
 		}
 
 		free(devices);
