@@ -149,7 +149,7 @@ sf::Color Ray::Cast() {
         dist++;
 
 
-    } while (dist < 200);
+    } while (dist < 600);
 
     // Ray timeout color
     return sf::Color::Cyan;

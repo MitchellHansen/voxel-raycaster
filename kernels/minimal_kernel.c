@@ -112,7 +112,7 @@ __kernel void min_kern(
             return;
         }
         if (voxel.y >= map_dim->x) {
-            write_imagef(image, pixel, (float4)(.00, .99, .00, 1));
+            write_imagef(image, pixel, (float4)(.00, .44, .00, 1));
             return;
         }
 
@@ -133,7 +133,7 @@ __kernel void min_kern(
         int index = voxel.x + map_dim->x * (voxel.y + map_dim->z * voxel.z);
         int voxel_data = map[index];
 
-        if (id == 100)
+        if (id == 240000)
             printf("%i, %i, %i\n", voxel.x, voxel.y, voxel.z);
 
         switch (voxel_data) {
@@ -141,7 +141,9 @@ __kernel void min_kern(
                 write_imagef(image, pixel, (float4)(.50, .00, .00, 1));
                 return;
             case 2:
-                write_imagef(image, pixel, (float4)(.00, .50, .00, 1.00));
+                write_imagef(image, pixel, (float4)(.00, .50, .40, 1.00));
+                if (id == 249000)
+                    printf("%i\n", voxel_data);
                 return;
             case 3:
                 write_imagef(image, pixel, (float4)(.00, .00, .50, 1.00));
@@ -158,7 +160,7 @@ __kernel void min_kern(
         }
 
         dist++;
-    } while (dist < 200);
+    } while (dist < 600);
 
 
     write_imagef(image, pixel, (float4)(.00, .00, .00, .00));

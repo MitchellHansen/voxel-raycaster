@@ -29,12 +29,12 @@
 #include "RayCaster.h"
 #include "CL_Wrapper.h"
 
-const int WINDOW_X = 100;
-const int WINDOW_Y = 100;
+const int WINDOW_X = 500;
+const int WINDOW_Y = 500;
 
-
-
-
+const int MAP_X = 500;
+const int MAP_Y = 500;
+const int MAP_Z = 500;
 
 float elap_time(){
 	static std::chrono::time_point<std::chrono::system_clock> start;
@@ -73,7 +73,7 @@ int main() {
     c.compile_kernel("../kernels/kernel.c", true, "hello");
     c.compile_kernel("../kernels/minimal_kernel.c", true, "min_kern");
 
-    sf::Vector3i map_dim(100, 100, 100);
+    sf::Vector3i map_dim(MAP_X, MAP_Y, MAP_Z);
     Map* map = new Map(map_dim);
 
     map->setVoxel(sf::Vector3i(77, 50, 85), 5);
@@ -139,7 +139,7 @@ int main() {
             sizeof(float) * 3 * view_res.x * view_res.y, view_matrix, NULL
     );
 
-    sf::Vector3f cam_dir(1.0f, 0.0f, 1.57f);
+    sf::Vector3f cam_dir(1.0f, 0.0f, 1.00f);
 
     cl_mem cam_dir_buff = clCreateBuffer(
             c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
@@ -156,7 +156,7 @@ int main() {
 
     unsigned char* pixel_array = new sf::Uint8[WINDOW_X * WINDOW_Y * 4];
 
-    for (int i = 0; i < 100 * 100 * 4; i += 4) {
+    for (int i = 0; i < WINDOW_X * WINDOW_Y * 4; i += 4) {
 
         pixel_array[i] = 255; // R?
         pixel_array[i + 1] = 255; // G?
@@ -164,7 +164,7 @@ int main() {
         pixel_array[i + 3] = 100; // A?
     }
 
-    t.create(100, 100);
+    t.create(WINDOW_X, WINDOW_Y);
     t.update(pixel_array);
 
 
@@ -199,7 +199,7 @@ int main() {
     c.set_kernel_arg("min_kern", 5, "cam_pos_buffer");
     c.set_kernel_arg("min_kern", 6, "image_buffer");
 
-    const int size = 100 * 100;
+    const int size = WINDOW_X * WINDOW_Y;
     c.run_kernel("min_kern", size);
 
 
@@ -325,20 +325,20 @@ int main() {
 		window.clear(sf::Color::Black);
 
 		// Cast the rays and get the image
-		sf::Color* pixel_colors = ray_caster.CastRays(cam_dir, cam_pos);
+		//sf::Color* pixel_colors = ray_caster.CastRays(cam_dir, cam_pos);
 
         // Cast it to an array of Uint8's
-		auto out = (sf::Uint8*)pixel_colors;
+		//auto out = (sf::Uint8*)pixel_colors;
 
-        window_texture.update(out);
-		window_sprite.setTexture(window_texture);
-		window.draw(window_sprite);
+        //window_texture.update(out);
+		//window_sprite.setTexture(window_texture);
+		//window.draw(window_sprite);
 
 		// Give the frame counter the frame time and draw the average frame time
 		fps.frame(delta_time);
 		fps.draw(&window);
 
-
+        s.setPosition(0, 0);
         window.draw(s);
 
 		window.display();
