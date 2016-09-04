@@ -12,7 +12,6 @@ __kernel void min_kern(
 
     int2 pixel = {id % resolution->x, id / resolution->x};
 
-
     float3 ray_dir = projection_matrix[pixel.x + resolution->x * pixel.y];
     //printf("%i === %f, %f, %f\n", id, ray_dir.x, ray_dir.y, ray_dir.z);
 
@@ -133,34 +132,36 @@ __kernel void min_kern(
         int index = voxel.x + map_dim->x * (voxel.y + map_dim->z * voxel.z);
         int voxel_data = map[index];
 
-        if (id == 240000)
-            printf("%i, %i, %i\n", voxel.x, voxel.y, voxel.z);
+        //if (id == 240000)
+            //printf("%i, %i, %i\n", voxel.x, voxel.y, voxel.z);
 
-        switch (voxel_data) {
-            case 1:
-                write_imagef(image, pixel, (float4)(.50, .00, .00, 1));
-                return;
-            case 2:
-                write_imagef(image, pixel, (float4)(.00, .50, .40, 1.00));
-                if (id == 249000)
-                    printf("%i\n", voxel_data);
-                return;
-            case 3:
-                write_imagef(image, pixel, (float4)(.00, .00, .50, 1.00));
-                return;
-            case 4:
-                write_imagef(image, pixel, (float4)(.25, .00, .25, 1.00));
-                return;
-            case 5:
-                write_imagef(image, pixel, (float4)(.10, .30, .80, 1.00));
-                return;
-            case 6:
-                write_imagef(image, pixel, (float4)(.30, .80, .10, 1.00));
-                return;
-        }
+		if (voxel_data != 0) {
+			switch (voxel_data) {
+			case 1:
+				write_imagef(image, pixel, (float4)(.50, .00, .00, 1));
+				return;
+			case 2:
+				write_imagef(image, pixel, (float4)(.00, .50, .40, 1.00));
+				//if (id == 249000)
+				   // printf("%i\n", voxel_data);
+				return;
+			case 3:
+				write_imagef(image, pixel, (float4)(.00, .00, .50, 1.00));
+				return;
+			case 4:
+				write_imagef(image, pixel, (float4)(.25, .00, .25, 1.00));
+				return;
+			case 5:
+				write_imagef(image, pixel, (float4)(.10, .30, .80, 1.00));
+				return;
+			case 6:
+				write_imagef(image, pixel, (float4)(.30, .80, .10, 1.00));
+				return;
+			}
+		}
 
         dist++;
-    } while (dist < 600);
+    } while (dist < 2500);
 
 
     write_imagef(image, pixel, (float4)(.00, .00, .00, .00));

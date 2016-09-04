@@ -15,7 +15,11 @@ public:
         for (int x = 0; x < dim.x; x++) {
             for (int y = 0; y < dim.y; y++) {
                 for (int z = 0; z < dim.z; z++) {
-                    if (rand() % 100 < 1)
+
+					if (dim.z < 30) {
+						list[x + dim.x * (y + dim.z * z)] = 3;
+					}
+                    else if (rand() % 1000 < 1)
                         list[x + dim.x * (y + dim.z * z)] = rand() % 6;
                     else
                         list[x + dim.x * (y + dim.z * z)] = 0;

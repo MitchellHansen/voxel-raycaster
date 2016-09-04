@@ -32,12 +32,12 @@
 #include "RayCaster.h"
 #include "CL_Wrapper.h"
 
-const int WINDOW_X = 500;
-const int WINDOW_Y = 500;
+const int WINDOW_X = 1000;
+const int WINDOW_Y = 1000;
 
-const int MAP_X = 500;
-const int MAP_Y = 500;
-const int MAP_Z = 500;
+const int MAP_X = 1000;
+const int MAP_Y = 1000;
+const int MAP_Z = 1000;
 
 float elap_time(){
 	static std::chrono::time_point<std::chrono::system_clock> start;
@@ -76,11 +76,13 @@ int main() {
 
     //c.compile_kernel("../kernels/kernel.cl", true, "hello");
 	c.compile_kernel("../kernels/minimal_kernel.cl", true, "min_kern");
-
+	
+	std::cout << "map...";
     sf::Vector3i map_dim(MAP_X, MAP_Y, MAP_Z);
     Map* map = new Map(map_dim);
-
-    map->setVoxel(sf::Vector3i(77, 50, 85), 5);
+	std::cout << "done...";
+    
+	map->setVoxel(sf::Vector3i(77, 50, 85), 5);
 
     cl_mem map_buff = clCreateBuffer(
             c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
@@ -105,6 +107,7 @@ int main() {
 
     // SFML 2.4 has Vector4 datatypes.......
 
+	std::cout << "view matrix...";
     float* view_matrix = new float[WINDOW_X * WINDOW_Y * 4];
     for (int y = -view_res.y / 2; y < view_res.y / 2; y++) {
         for (int x = -view_res.x / 2; x < view_res.x / 2; x++) {
@@ -134,7 +137,7 @@ int main() {
             view_matrix[index * 4 + 3] = 0;
         }
     }
-
+	std::cout << "done\n";
     int ind = 367;
     printf("%i === %f, %f, %f\n", ind, view_matrix[ind * 4 + 0], view_matrix[ind * 4 + 1], view_matrix[ind * 4 + 2]);
 
@@ -146,14 +149,14 @@ int main() {
     sf::Vector3f cam_dir(1.0f, 0.0f, 1.00f);
 
     cl_mem cam_dir_buff = clCreateBuffer(
-            c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            c.getContext(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
             sizeof(float) * 4, &cam_dir, NULL
     );
 
 
     sf::Vector3f cam_pos(55, 50, 50);
     cl_mem cam_pos_buff = clCreateBuffer(
-            c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            c.getContext(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
             sizeof(float) * 4, &cam_pos, NULL
     );
 
@@ -181,9 +184,7 @@ int main() {
     if (c.assert(error, "clCreateFromGLTexture"))
         return -1;
 
-    error = clEnqueueAcquireGLObjects(c.getCommandQueue(), 1, &image_buff, 0, 0, 0);
-    if (c.assert(error, "clEnqueueAcquireGLObjects"))
-        return -1;
+
 
 
 
@@ -204,14 +205,8 @@ int main() {
     c.set_kernel_arg("min_kern", 6, "image_buffer");
 
     const int size = WINDOW_X * WINDOW_Y;
-    c.run_kernel("min_kern", size);
 
 
-    clFinish(c.getCommandQueue());
-
-    error = clEnqueueReleaseGLObjects(c.getCommandQueue(), 1, &image_buff, 0, NULL, NULL);
-    if (c.assert(error, "clEnqueueReleaseGLObjects"))
-        return -1;
 
     s.setTexture(t);
 
@@ -339,12 +334,25 @@ int main() {
 		//window.draw(window_sprite);
 
 		// Give the frame counter the frame time and draw the average frame time
-		fps.frame(delta_time);
-		fps.draw(&window);
+
+
+
+		error = clEnqueueAcquireGLObjects(c.getCommandQueue(), 1, &image_buff, 0, 0, 0);
+		if (c.assert(error, "clEnqueueAcquireGLObjects"))
+			return -1;
+		c.run_kernel("min_kern", size);
+
+		clFinish(c.getCommandQueue());
+
+		error = clEnqueueReleaseGLObjects(c.getCommandQueue(), 1, &image_buff, 0, NULL, NULL);
+		if (c.assert(error, "clEnqueueReleaseGLObjects"))
+			return -1;
 
         s.setPosition(0, 0);
         window.draw(s);
-
+		
+		fps.frame(delta_time);
+		fps.draw(&window);
 		window.display();
 
 	}
