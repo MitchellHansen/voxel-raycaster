@@ -9,17 +9,8 @@ __kernel void min_kern(
 ){
 
     size_t id = get_global_id(0);
-
     int2 pixel = {id % resolution->x, id / resolution->x};
-
     float3 ray_dir = projection_matrix[pixel.x + resolution->x * pixel.y];
-    //printf("%i === %f, %f, %f\n", id, ray_dir.x, ray_dir.y, ray_dir.z);
-
-    // Y axis, pitch
-    //ray_dir.x = ray_dir.z * sin(cam_dir->y) + ray_dir.x * cos(cam_dir->y);
-    //ray_dir.y = ray_dir.y;
-    //ray_dir.z = ray_dir.z * cos(cam_dir->y) - ray_dir.x * sin(cam_dir->y);
-
 
     ray_dir = (float3)(
             ray_dir.z * sin(cam_dir->y) + ray_dir.x * cos(cam_dir->y),
@@ -27,17 +18,11 @@ __kernel void min_kern(
             ray_dir.z * cos(cam_dir->y) - ray_dir.x * sin(cam_dir->y)
     );
 
-    // Z axis, yaw
-    //ray_dir.x = ray_dir.x * cos(cam_dir->z) - ray_dir.y * sin(cam_dir->z);
-    //ray_dir.y = ray_dir.x * sin(cam_dir->z) + ray_dir.y * cos(cam_dir->z);
-    //ray_dir.z = ray_dir.z;
-
     ray_dir = (float3)(
             ray_dir.x * cos(cam_dir->z) - ray_dir.y * sin(cam_dir->z),
             ray_dir.x * sin(cam_dir->z) + ray_dir.y * cos(cam_dir->z),
             ray_dir.z
     );
-
 
     // Setup the voxel step based on what direction the ray is pointing
     int3 voxel_step = {1, 1, 1};
@@ -68,7 +53,12 @@ __kernel void min_kern(
             delta_t.z
     };
 
+	int2 randoms = { 3, 7 };
+	uint seed = randoms.x + id;
+	uint t = seed ^ (seed << 11);
+	uint result = randoms.y ^ (randoms.y >> 19) ^ (t ^ (t >> 8));
 
+	int max_dist = 500 + result % 50;
     int dist = 0;
     int face = -1;
     // X:0, Y:1, Z:2
@@ -90,13 +80,9 @@ __kernel void min_kern(
 		int3 overshoot = voxel.xyz <= map_dim->xyz;
 		int3 undershoot = voxel > 0;
 
-		//if (id == 240000)
-		//	printf("%i, %i, %i\n", overshoot.x, overshoot.y, overshoot.z);
 
-		//if (id == 240000)
-		//	printf("%i, %i, %i\n", undershoot.x, undershoot.y, undershoot.z);
 		
-		if (overshoot.x == 0|| overshoot.y == 0 || overshoot.z == 0){
+		if (overshoot.x == 0 || overshoot.y == 0 || overshoot.z == 0){
 			write_imagef(image, pixel, (float4)(.50 * abs(overshoot.x), .50 * abs(overshoot.y), .50 * abs(overshoot.z), 1));
 			return;
 		}
@@ -104,27 +90,6 @@ __kernel void min_kern(
 			write_imagef(image, pixel, (float4)(.1 * abs(undershoot.x), .80 * abs(undershoot.y), .20 * abs(undershoot.z), 1));
 			return;
 		}
-        //if (voxel.x >= map_dim->x) {
-        //    write_imagef(image, pixel, (float4)(.00, .00, .99, 1));
-        //    return;
-        //}
-        //if (voxel.y >= map_dim->x) {
-        //    write_imagef(image, pixel, (float4)(.00, .44, .00, 1));
-        //    return;
-        //}
-
-        //if (voxel.x < 0) {
-        //    write_imagef(image, pixel, (float4)(.99, .00, .99, 1));
-        //    return;
-        //}
-        //if (voxel.y < 0) {
-        //    write_imagef(image, pixel, (float4)(.99, .99, .00, 1));
-        //    return;
-        //}
-        //if (voxel.z < 0) {
-        //    write_imagef(image, pixel, (float4)(.00, .99, .99, 1));
-        //    return;
-        //}
 
         // If we hit a voxel
         int index = voxel.x + map_dim->x * (voxel.y + map_dim->z * voxel.z);
@@ -158,16 +123,8 @@ __kernel void min_kern(
 		}
 
         dist++;
-    } while (dist < 2500);
-
+    } while (dist < max_dist);
 
     write_imagef(image, pixel, (float4)(.00, .00, .00, .00));
     return;
-
-    //printf("%i %i -- ", id, map[id]);
-    //printf("%i, %i, %i\n", map_dim->x, map_dim->y, map_dim->z);
-    //printf("\n%i\nX: %f\nY: %f\nZ: %f\n", id, projection_matrix[id].x, projection_matrix[id].y, projection_matrix[id].z);
-    //printf("%f, %f, %f\n", cam_dir->x, cam_dir->y, cam_dir->z);
-    //printf("%f, %f, %f\n", cam_pos->x, cam_pos->y, cam_pos->z);
-
 }

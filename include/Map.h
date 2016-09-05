@@ -14,7 +14,7 @@ public:
 
         for (int x = 0; x < dim.x / 10; x++) {
             for (int y = 0; y < dim.y / 10; y++) {
-                for (int z = 0; z < dim.z / 10; z++) {
+				for (int z = 0; z < dim.z; z++) {
                     if (rand() % 1000 < 1)
                         list[x + dim.x * (y + dim.z * z)] = rand() % 6;
                 }
