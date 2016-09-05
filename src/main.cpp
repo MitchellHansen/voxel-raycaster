@@ -35,9 +35,9 @@
 const int WINDOW_X = 1000;
 const int WINDOW_Y = 1000;
 
-const int MAP_X = 1000;
-const int MAP_Y = 1000;
-const int MAP_Z = 1000;
+const int MAP_X = 1024;
+const int MAP_Y = 1024;
+const int MAP_Z = 256;
 
 float elap_time(){
 	static std::chrono::time_point<std::chrono::system_clock> start;
@@ -157,11 +157,26 @@ int main() {
 
 
     sf::Vector3f cam_pos(55, 50, 50);
+
     cl_mem cam_pos_buff = clCreateBuffer(
             c.getContext(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
             sizeof(float) * 4, &cam_pos, NULL
     );
 
+	// {r, g, b, i, x, y, z, x', y', z'}
+	float light[] = { 0.4, 0.8, 0.1, 1, 50, 50, 50, 1.1, 0.4, 0.7};
+
+	cl_mem light_buff = clCreateBuffer(
+		c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+		sizeof(float) * 10, light, NULL
+	);
+
+	int light_count = 1;
+
+	cl_mem light_cnt_buff = clCreateBuffer(
+		c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+		sizeof(int), &light_count, NULL
+	);
 
     unsigned char* pixel_array = new sf::Uint8[WINDOW_X * WINDOW_Y * 4];
 
@@ -186,16 +201,14 @@ int main() {
     if (c.assert(error, "clCreateFromGLTexture"))
         return -1;
 
-
-
-
-
     c.store_buffer(map_buff, "map_buffer");
     c.store_buffer(dim_buff, "dim_buffer");
     c.store_buffer(res_buff, "res_buffer");
     c.store_buffer(view_matrix_buff, "view_matrix_buffer");
     c.store_buffer(cam_dir_buff, "cam_dir_buffer");
     c.store_buffer(cam_pos_buff, "cam_pos_buffer");
+	c.store_buffer(light_buff, "light_buffer");
+	c.store_buffer(light_cnt_buff, "light_count_buffer");
     c.store_buffer(image_buff, "image_buffer");
 
     c.set_kernel_arg("min_kern", 0, "map_buffer");
@@ -204,11 +217,11 @@ int main() {
     c.set_kernel_arg("min_kern", 3, "view_matrix_buffer");
     c.set_kernel_arg("min_kern", 4, "cam_dir_buffer");
     c.set_kernel_arg("min_kern", 5, "cam_pos_buffer");
-    c.set_kernel_arg("min_kern", 6, "image_buffer");
+	c.set_kernel_arg("min_kern", 6, "light_buffer");
+	c.set_kernel_arg("min_kern", 7, "light_count_buffer");
+	c.set_kernel_arg("min_kern", 8, "image_buffer");
 
     const int size = WINDOW_X * WINDOW_Y;
-
-
 
     s.setTexture(t);
 
