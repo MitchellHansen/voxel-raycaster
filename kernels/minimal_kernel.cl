@@ -73,67 +73,64 @@ __kernel void min_kern(
     int face = -1;
     // X:0, Y:1, Z:2
 
+
+	int3 mask = { 0, 0, 0 };
+
     // Andrew Woo's raycasting algo
     do {
-        if ((intersection_t.x) < (intersection_t.y)) {
-            if ((intersection_t.x) < (intersection_t.z)) {
 
-                face = 0;
-                voxel.x += voxel_step.x;
-                intersection_t.x = intersection_t.x + delta_t.x;
-            } else {
+		mask = intersection_t.xyz <= min(intersection_t.yzx, intersection_t.zxy);
+		float3 thing = delta_t * fabs(convert_float3(mask.xyz));
+		intersection_t += delta_t * fabs(convert_float3(mask.xyz));
+		voxel.xyz += voxel_step.xyz * mask.xyz;
 
-                face = 2;
-                voxel.z += voxel_step.z;
-                intersection_t.z = intersection_t.z + delta_t.z;
-            }
-        } else {
-            if ((intersection_t.y) < (intersection_t.z)) {
 
-                face = 1;
-                voxel.y += voxel_step.y;
-                intersection_t.y = intersection_t.y + delta_t.y;
-            } else {
-
-                face = 2;
-                voxel.z += voxel_step.z;
-                intersection_t.z = intersection_t.z + delta_t.z;
-            }
-        }
 
         // If the ray went out of bounds
-        if (voxel.z >= map_dim->z) {
-            write_imagef(image, pixel, (float4)(.5, .50, .00, 1));
-            return;
-        }
-        if (voxel.x >= map_dim->x) {
-            write_imagef(image, pixel, (float4)(.00, .00, .99, 1));
-            return;
-        }
-        if (voxel.y >= map_dim->x) {
-            write_imagef(image, pixel, (float4)(.00, .44, .00, 1));
-            return;
-        }
+		int3 overshoot = voxel.xyz <= map_dim->xyz;
+		int3 undershoot = voxel > 0;
 
-        if (voxel.x < 0) {
-            write_imagef(image, pixel, (float4)(.99, .00, .99, 1));
-            return;
-        }
-        if (voxel.y < 0) {
-            write_imagef(image, pixel, (float4)(.99, .99, .00, 1));
-            return;
-        }
-        if (voxel.z < 0) {
-            write_imagef(image, pixel, (float4)(.00, .99, .99, 1));
-            return;
-        }
+		//if (id == 240000)
+		//	printf("%i, %i, %i\n", overshoot.x, overshoot.y, overshoot.z);
+
+		//if (id == 240000)
+		//	printf("%i, %i, %i\n", undershoot.x, undershoot.y, undershoot.z);
+		
+		if (overshoot.x == 0|| overshoot.y == 0 || overshoot.z == 0){
+			write_imagef(image, pixel, (float4)(.50 * abs(overshoot.x), .50 * abs(overshoot.y), .50 * abs(overshoot.z), 1));
+			return;
+		}
+		if (undershoot.x == 0 || undershoot.y == 0 || undershoot.z == 0) {
+			write_imagef(image, pixel, (float4)(.1 * abs(undershoot.x), .80 * abs(undershoot.y), .20 * abs(undershoot.z), 1));
+			return;
+		}
+        //if (voxel.x >= map_dim->x) {
+        //    write_imagef(image, pixel, (float4)(.00, .00, .99, 1));
+        //    return;
+        //}
+        //if (voxel.y >= map_dim->x) {
+        //    write_imagef(image, pixel, (float4)(.00, .44, .00, 1));
+        //    return;
+        //}
+
+        //if (voxel.x < 0) {
+        //    write_imagef(image, pixel, (float4)(.99, .00, .99, 1));
+        //    return;
+        //}
+        //if (voxel.y < 0) {
+        //    write_imagef(image, pixel, (float4)(.99, .99, .00, 1));
+        //    return;
+        //}
+        //if (voxel.z < 0) {
+        //    write_imagef(image, pixel, (float4)(.00, .99, .99, 1));
+        //    return;
+        //}
 
         // If we hit a voxel
         int index = voxel.x + map_dim->x * (voxel.y + map_dim->z * voxel.z);
         int voxel_data = map[index];
 
-        //if (id == 240000)
-            //printf("%i, %i, %i\n", voxel.x, voxel.y, voxel.z);
+
 
 		if (voxel_data != 0) {
 			switch (voxel_data) {

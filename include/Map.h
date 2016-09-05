@@ -8,21 +8,15 @@ class Map {
 public: 
 	Map(sf::Vector3i dim) {
 		list = new char[dim.x * dim.y * dim.z];
-		for (int i = 0; i < dim.x * dim.y * dim.x; i++) {
-			list[i] = 0;
-		}
+		//for (int i = 0; i < dim.x * dim.y * dim.x; i++) {
+		//	list[i] = 0;
+		//}
 
-        for (int x = 0; x < dim.x; x++) {
-            for (int y = 0; y < dim.y; y++) {
-                for (int z = 0; z < dim.z; z++) {
-
-					if (dim.z < 30) {
-						list[x + dim.x * (y + dim.z * z)] = 3;
-					}
-                    else if (rand() % 1000 < 1)
+        for (int x = 0; x < dim.x / 10; x++) {
+            for (int y = 0; y < dim.y / 10; y++) {
+                for (int z = 0; z < dim.z / 10; z++) {
+                    if (rand() % 1000 < 1)
                         list[x + dim.x * (y + dim.z * z)] = rand() % 6;
-                    else
-                        list[x + dim.x * (y + dim.z * z)] = 0;
                 }
             }
         }

@@ -19,6 +19,10 @@ public:
 		}
 
 		void frame(double delta_time){
+			if (frame_count == 100){
+				frame_count = 0;
+				fps_average = 0;
+			}
 				frame_count++;
 				fps_average += (delta_time - fps_average) / frame_count;
 		}

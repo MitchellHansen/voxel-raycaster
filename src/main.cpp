@@ -62,20 +62,22 @@ sf::Texture window_texture;
 
 int main() {
 
-    sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
+	sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
 
 
-    sf::Sprite s;
-    sf::Texture t;
+	sf::Sprite s;
+	sf::Texture t;
 
-    CL_Wrapper c;
+	CL_Wrapper c;
 	query_platform_devices();
-    c.acquire_platform_and_device();
-    c.create_shared_context();
-    c.create_command_queue();
+	c.acquire_platform_and_device();
+	c.create_shared_context();
+	c.create_command_queue();
 
-    //c.compile_kernel("../kernels/kernel.cl", true, "hello");
-	c.compile_kernel("../kernels/minimal_kernel.cl", true, "min_kern");
+	//c.compile_kernel("../kernels/kernel.cl", true, "hello");
+	if (c.compile_kernel("../kernels/minimal_kernel.cl", true, "min_kern") < 0) {
+		std::cin.get();
+	}
 	
 	std::cout << "map...";
     sf::Vector3i map_dim(MAP_X, MAP_Y, MAP_Z);
@@ -252,6 +254,14 @@ int main() {
 			// If the user tries to exit the application via the GUI
 			if (event.type == sf::Event::Closed)
 				window.close();
+			if (event.type == sf::Event::KeyPressed) {
+				if (event.key.code == sf::Keyboard::Space) {
+					if (mouse_enabled)
+						mouse_enabled = false;
+					else
+						mouse_enabled = true;
+				}
+			}
 		}
 
 		cam_vec.x = 0;
@@ -289,15 +299,16 @@ int main() {
             cam_vec.y = -0.1f;
         }
 
-		deltas = fixed - sf::Mouse::getPosition();
-		if (deltas != sf::Vector2i(0, 0) && mouse_enabled == true) {
+		if (mouse_enabled) {
+			deltas = fixed - sf::Mouse::getPosition();
+			if (deltas != sf::Vector2i(0, 0) && mouse_enabled == true) {
 
-			// Mouse movement
-			sf::Mouse::setPosition(fixed);
-			cam_dir.y -= deltas.y / 300.0f;
-			cam_dir.z -= deltas.x / 300.0f;
+				// Mouse movement
+				sf::Mouse::setPosition(fixed);
+				cam_dir.y -= deltas.y / 300.0f;
+				cam_dir.z -= deltas.x / 300.0f;
+			}
 		}
-
 		cam_pos.x += cam_vec.x / 1.0;
 		cam_pos.y += cam_vec.y / 1.0;
 		cam_pos.z += cam_vec.z / 1.0;
@@ -355,6 +366,7 @@ int main() {
 		fps.draw(&window);
 		window.display();
 
+		//std::cin.get();
 	}
 	return 0;
 }
