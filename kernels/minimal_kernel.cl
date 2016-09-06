@@ -1,15 +1,15 @@
 
 
-float4 white_light(float4 input, float3 light, int3 mask) {
+uint4 white_light(uint4 input, float3 light, int3 mask) {
 
 	input.w = input.w + acos(
 		dot(
 			normalize(light),
 			normalize(fabs(convert_float3(mask)))
 			)
-		) / 2;
+		) * 50;
 
-	return input;
+	return (input);
 
 }
 
@@ -25,8 +25,11 @@ __kernel void min_kern(
         __write_only image2d_t image
 ){
 
+
     size_t id = get_global_id(0);
     int2 pixel = {id % resolution->x, id / resolution->x};
+    //int2 pixel = {1, 1};
+
     float3 ray_dir = projection_matrix[pixel.x + resolution->x * pixel.y];
 
     ray_dir = (float3)(
@@ -34,11 +37,27 @@ __kernel void min_kern(
             ray_dir.y,
             ray_dir.z * cos(cam_dir->y) - ray_dir.x * sin(cam_dir->y)
     );
+//
+//    float a = cam_dir->x;
+//    float b = cam_dir->y;
+//    float c = cam_dir->z;
+//
+//    ray_dir.x = ray_dir.z * sin(b) + ray_dir.x * cos(b);
+//    ray_dir.y = ray_dir.y;
+//    ray_dir.z = ray_dir.z * cos(b) - ray_dir.x * sin(b);
+//
+//
+//    float3 ray_dir2 = (float3)(
+//    ray_dir.x * cos(c) - ray_dir.y * sin(c),
+//    ray_dir.x * sin(c) + ray_dir.y * cos(c),
+//    ray_dir.z);
+//
+//    printf("%f, %f, %f", ray_dir2.x, ray_dir2.y, ray_dir2.z);
 
     ray_dir = (float3)(
-            ray_dir.x * cos(cam_dir->z) - ray_dir.y * sin(cam_dir->z),
-            ray_dir.x * sin(cam_dir->z) + ray_dir.y * cos(cam_dir->z),
-            ray_dir.z
+          ray_dir.x * cos(cam_dir->z) - ray_dir.y * sin(cam_dir->z),
+          ray_dir.x * sin(cam_dir->z) + ray_dir.y * cos(cam_dir->z),
+          ray_dir.z
     );
 
     // Setup the voxel step based on what direction the ray is pointing
@@ -83,11 +102,11 @@ __kernel void min_kern(
 		int3 undershoot = voxel > 0;
 
 		if (overshoot.x == 0 || overshoot.y == 0 || overshoot.z == 0 || undershoot.x == 0 || undershoot.y == 0){
-			write_imagef(image, pixel, (float4)(.73, .81, .89, 1.0));
+			write_imageui(image, pixel, (uint4)(50, 50, 50, 255));
 			return;
 		}
 		if (undershoot.z == 0) {
-			write_imagef(image, pixel, (float4)(.14, .30, .50, 1.0));
+			write_imageui(image, pixel, (uint4)(14, 30, 50, 255));
 			return;
 		}
 
@@ -98,23 +117,23 @@ __kernel void min_kern(
 		if (voxel_data != 0) {
 			switch (voxel_data) {
 			case 1:
-				write_imagef(image, pixel, (float4)(.50, .00, .00, 1));
+				write_imageui(image, pixel, (uint4)(50, 0, 0, 255));
 				return;
 			case 2:
-				write_imagef(image, pixel, (float4)(.00, .50, .40, 1.00));
+				write_imageui(image, pixel, (uint4)(0, 50, 40, 255));
 				return;
 			case 3:
-				write_imagef(image, pixel, (float4)(.00, .00, .50, 1.00));
+				write_imageui(image, pixel, (uint4)(0, 0, 50, 255));
 				return;
 			case 4:
-				write_imagef(image, pixel, (float4)(.25, .00, .25, 1.00));
+				write_imageui(image, pixel, (uint4)(25, 0, 25, 255));
 				return;
 			case 5:
-				//write_imagef(image, pixel, (float4)(.25, .00, .25, 1.00));
-				write_imagef(image, pixel, white_light((float4)(.25, .32, .14, 0.2), (float3)(lights[7], lights[8], lights[9]), mask));
+				//write_imageui(image, pixel, (uint4)(200, 200, 200, 255));
+				write_imageui(image, pixel, white_light((uint4)(225, 232, 214, 100), (float3)(lights[7], lights[8], lights[9]), mask));
 				return;
 			case 6:
-				write_imagef(image, pixel, (float4)(.30, .80, .10, 1.00));
+				write_imageui(image, pixel, (uint4)(30, 80, 10, 255));
 				return;
 			}
 		}
@@ -122,6 +141,6 @@ __kernel void min_kern(
         dist++;
     } while (dist < max_dist);
 
-    write_imagef(image, pixel, (float4)(.73, .81, .89, 1.0));
+    write_imageui(image, pixel, (uint4)(73, 81, 89, 255));
     return;
 }
