@@ -18,7 +18,7 @@ __kernel void min_kern(
         global int3* map_dim,
         global int2* resolution,
         global float3* projection_matrix,
-        global float3* cam_dir,
+        global float2* cam_dir,
         global float3* cam_pos,
 		global float* lights,
 		global int* light_count,
@@ -26,18 +26,18 @@ __kernel void min_kern(
 ){
 
     size_t id = get_global_id(0);
-    int2 pixel = {id % resolution->x, id / resolution->x};
-    float3 ray_dir = projection_matrix[pixel.x + resolution->x * pixel.y];
+    int2 pixel = {id % (*resolution).x, id / (*resolution).x};
+    float3 ray_dir = projection_matrix[pixel.x + (*resolution).x * pixel.y];
 
     ray_dir = (float3)(
-            ray_dir.z * sin(cam_dir->y) + ray_dir.x * cos(cam_dir->y),
+            ray_dir.z * sin((*cam_dir).x) + ray_dir.x * cos((*cam_dir).x),
             ray_dir.y,
-            ray_dir.z * cos(cam_dir->y) - ray_dir.x * sin(cam_dir->y)
+            ray_dir.z * cos((*cam_dir).x) - ray_dir.x * sin((*cam_dir).x)
     );
 
     ray_dir = (float3)(
-            ray_dir.x * cos(cam_dir->z) - ray_dir.y * sin(cam_dir->z),
-            ray_dir.x * sin(cam_dir->z) + ray_dir.y * cos(cam_dir->z),
+            ray_dir.x * cos((*cam_dir).y) - ray_dir.y * sin((*cam_dir).y),
+            ray_dir.x * sin((*cam_dir).y) + ray_dir.y * cos((*cam_dir).y),
             ray_dir.z
     );
 
@@ -92,7 +92,7 @@ __kernel void min_kern(
 		}
 
         // If we hit a voxel
-        int index = voxel.x + map_dim->x * (voxel.y + map_dim->z * voxel.z);
+        int index = voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * voxel.z);
         int voxel_data = map[index];
 
 		if (voxel_data != 0) {

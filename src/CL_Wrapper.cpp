@@ -233,6 +233,38 @@ int CL_Wrapper::set_kernel_arg(
 
 }
 
+int CL_Wrapper::create_buffer(std::string buffer_name, cl_uint size, void* data, cl_mem_flags flags) {
+
+	cl_mem buff = clCreateBuffer(
+		getContext(), flags,
+		size, data, &error
+		);
+
+	if (assert(error, "clCreateBuffer"))
+		return -1;
+
+	store_buffer(buff, buffer_name);
+
+	return 1;
+
+}
+
+int CL_Wrapper::create_buffer(std::string buffer_name, cl_uint size, void* data) {
+	
+	cl_mem buff = clCreateBuffer(
+		getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+		size, data, &error
+	);
+
+	if (assert(error, "clCreateBuffer"))
+		return -1;
+
+	store_buffer(buff, buffer_name);
+
+	return 1;
+
+}
+
 int CL_Wrapper::store_buffer(cl_mem buffer, std::string buffer_name){
     buffer_map.emplace(std::make_pair(buffer_name, buffer));
 	return 1;

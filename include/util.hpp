@@ -40,6 +40,16 @@ private:
 };
 
 
+inline sf::Vector3f SphereToCart(sf::Vector2f i) {
+
+	auto r = sf::Vector3f(
+		(1 * sin(i.y) * cos(i.x)),
+		(1 * sin(i.y) * sin(i.x)),
+		(1 * cos(i.y))
+		);
+	return r;
+};
+
 inline sf::Vector3f SphereToCart(sf::Vector3f i) {
 
 	auto r = sf::Vector3f(

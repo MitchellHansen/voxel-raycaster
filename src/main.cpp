@@ -31,9 +31,12 @@
 #include "util.hpp"
 #include "RayCaster.h"
 #include "CL_Wrapper.h"
+#include "Vector4.hpp"
+#include <Camera.h>
 
 const int WINDOW_X = 1000;
 const int WINDOW_Y = 1000;
+const int WORK_SIZE = WINDOW_X * WINDOW_Y;
 
 const int MAP_X = 1024;
 const int MAP_Y = 1024;
@@ -65,9 +68,7 @@ int main() {
 	sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
 
 
-	sf::Sprite s;
-	sf::Texture t;
-
+	// Setup CL, instantiate and pass in values to the kernel
 	CL_Wrapper c;
 	query_platform_devices();
 	c.acquire_platform_and_device();
@@ -82,35 +83,21 @@ int main() {
 	std::cout << "map...";
     sf::Vector3i map_dim(MAP_X, MAP_Y, MAP_Z);
     Map* map = new Map(map_dim);
-	std::cout << "done...";
     
-	map->setVoxel(sf::Vector3i(77, 50, 85), 5);
+	c.create_buffer("map_buffer", sizeof(char) * map_dim.x * map_dim.y * map_dim.z, map->list);
+	c.create_buffer("dim_buffer", sizeof(int) * 3, &map_dim);
 
-    cl_mem map_buff = clCreateBuffer(
-            c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-            sizeof(char) * map_dim.x * map_dim.y * map_dim.z, map->list, NULL
-    );
-
-    cl_mem dim_buff = clCreateBuffer(
-            c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-            sizeof(int) * 3, &map_dim, NULL
-    );
-
-    sf::Vector2i view_res(WINDOW_X, WINDOW_Y);
-
-    cl_mem res_buff = clCreateBuffer(
-            c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-            sizeof(int) * 2, &view_res, NULL
-    );
-
+	sf::Vector2i view_res(WINDOW_X, WINDOW_Y);
+	c.create_buffer("res_buffer", sizeof(int) * 2, &view_res);
+  	
 
     double y_increment_radians = DegreesToRadians(50.0 / view_res.y);
     double x_increment_radians = DegreesToRadians(80.0 / view_res.x);
 
-    // SFML 2.4 has Vector4 datatypes.......
-
 	std::cout << "view matrix...";
-    float* view_matrix = new float[WINDOW_X * WINDOW_Y * 4];
+  
+	sf::Vector4f* view_matrix = new sf::Vector4f[WINDOW_X * WINDOW_Y * 4];
+
     for (int y = -view_res.y / 2; y < view_res.y / 2; y++) {
         for (int x = -view_res.x / 2; x < view_res.x / 2; x++) {
 
@@ -133,51 +120,34 @@ int main() {
 
             int index = (x + view_res.x / 2) + view_res.x * (y + view_res.y / 2);
             ray = Normalize(ray);
-            view_matrix[index * 4 + 0] = ray.x;
-            view_matrix[index * 4 + 1] = ray.y;
-            view_matrix[index * 4 + 2] = ray.z;
-            view_matrix[index * 4 + 3] = 0;
+
+            view_matrix[index] = sf::Vector4f(
+				ray.x,
+				ray.y,
+				ray.z,
+				0
+			);
         }
     }
-	std::cout << "done\n";
-    int ind = 367;
-    printf("%i === %f, %f, %f\n", ind, view_matrix[ind * 4 + 0], view_matrix[ind * 4 + 1], view_matrix[ind * 4 + 2]);
 
-    cl_mem view_matrix_buff = clCreateBuffer(
-            c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-            sizeof(float) * 3 * view_res.x * view_res.y, view_matrix, NULL
-    );
+	c.create_buffer("view_matrix_buffer", sizeof(float) * 4 * view_res.x * view_res.y, view_matrix);
 
-    sf::Vector3f cam_dir(1.0f, 0.0f, 1.00f);
-
-    cl_mem cam_dir_buff = clCreateBuffer(
-            c.getContext(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-            sizeof(float) * 4, &cam_dir, NULL
-    );
-
-
-    sf::Vector3f cam_pos(55, 50, 50);
-
-    cl_mem cam_pos_buff = clCreateBuffer(
-            c.getContext(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-            sizeof(float) * 4, &cam_pos, NULL
-    );
-
+	Camera camera(
+		sf::Vector3f(55, 50, 50),
+		sf::Vector2f(0.0f, 1.00f)
+	);
+	
+	c.create_buffer("cam_dir_buffer", sizeof(float) * 4, camera.get_direction_pointer(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+	c.create_buffer("cam_pos_buffer", sizeof(float) * 4, camera.get_position_pointer(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+    
 	// {r, g, b, i, x, y, z, x', y', z'}
 	float light[] = { 0.4, 0.8, 0.1, 1, 50, 50, 50, 1.1, 0.4, 0.7};
-
-	cl_mem light_buff = clCreateBuffer(
-		c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-		sizeof(float) * 10, light, NULL
-	);
+	c.create_buffer("light_buffer", sizeof(float) * 10, light);
 
 	int light_count = 1;
+	c.create_buffer("light_count_buffer", sizeof(int), &light_count);
 
-	cl_mem light_cnt_buff = clCreateBuffer(
-		c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-		sizeof(int), &light_count, NULL
-	);
-
+	// The drawing canvas
     unsigned char* pixel_array = new sf::Uint8[WINDOW_X * WINDOW_Y * 4];
 
     for (int i = 0; i < WINDOW_X * WINDOW_Y * 4; i += 4) {
@@ -188,12 +158,11 @@ int main() {
         pixel_array[i + 3] = 100; // A?
     }
 
+	sf::Texture t;
     t.create(WINDOW_X, WINDOW_Y);
     t.update(pixel_array);
 
-
     int error;
-
     cl_mem image_buff = clCreateFromGLTexture(
             c.getContext(), CL_MEM_WRITE_ONLY, GL_TEXTURE_2D,
             0, t.getNativeHandle(), &error);
@@ -201,14 +170,6 @@ int main() {
     if (c.assert(error, "clCreateFromGLTexture"))
         return -1;
 
-    c.store_buffer(map_buff, "map_buffer");
-    c.store_buffer(dim_buff, "dim_buffer");
-    c.store_buffer(res_buff, "res_buffer");
-    c.store_buffer(view_matrix_buff, "view_matrix_buffer");
-    c.store_buffer(cam_dir_buff, "cam_dir_buffer");
-    c.store_buffer(cam_pos_buff, "cam_pos_buffer");
-	c.store_buffer(light_buff, "light_buffer");
-	c.store_buffer(light_cnt_buff, "light_count_buffer");
     c.store_buffer(image_buff, "image_buffer");
 
     c.set_kernel_arg("min_kern", 0, "map_buffer");
@@ -221,9 +182,9 @@ int main() {
 	c.set_kernel_arg("min_kern", 7, "light_count_buffer");
 	c.set_kernel_arg("min_kern", 8, "image_buffer");
 
-    const int size = WINDOW_X * WINDOW_Y;
-
-    s.setTexture(t);
+	sf::Sprite s;
+	s.setTexture(t);
+	s.setPosition(0, 0);
 
     // The step size in milliseconds between calls to Update()
     // Lets set it to 16.6 milliseonds (60FPS)
@@ -257,6 +218,8 @@ int main() {
 	sf::Vector2i deltas;
 	sf::Vector2i fixed(window.getSize());
 	bool mouse_enabled = true;
+
+	sf::Vector3f cam_mov_vec;
 
 	while (window.isOpen()) {
 
@@ -299,18 +262,8 @@ int main() {
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
 			cam_vec.x = -1;
 		}
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
-            cam_dir.z = -0.1f;
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
-            cam_vec.z = +0.1f;
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
-            cam_vec.y = +0.1f;
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
-            cam_vec.y = -0.1f;
-        }
+
+		camera.add_static_impulse(cam_vec);
 
 		if (mouse_enabled) {
 			deltas = fixed - sf::Mouse::getPosition();
@@ -318,16 +271,12 @@ int main() {
 
 				// Mouse movement
 				sf::Mouse::setPosition(fixed);
-				cam_dir.y -= deltas.y / 300.0f;
-				cam_dir.z -= deltas.x / 300.0f;
+				camera.slew_camera(sf::Vector2f(
+					deltas.y / 300.0f,
+					deltas.x / 300.0f
+				));
 			}
 		}
-		cam_pos.x += cam_vec.x / 1.0;
-		cam_pos.y += cam_vec.y / 1.0;
-		cam_pos.z += cam_vec.z / 1.0;
-
-		std::cout << cam_vec.x << " : " << cam_vec.y << " : " << cam_vec.z << std::endl;
-
 
         // Time keeping
 		elapsed_time = elap_time();
@@ -339,32 +288,20 @@ int main() {
 		while ((accumulator_time - step_size) >= step_size) {
             accumulator_time -= step_size;
 
-            // Update cycle
+			
+            // ==== DELTA TIME LOCKED ====
+			camera.update();
+
         }
 
-        // Fps cycle
-        // map->moveLight(sf::Vector2f(0.3, 0));
+        // ==== FPS LOCKED ====
 
-		window.clear(sf::Color::Black);
-
-		// Cast the rays and get the image
-		//sf::Color* pixel_colors = ray_caster.CastRays(cam_dir, cam_pos);
-
-        // Cast it to an array of Uint8's
-		//auto out = (sf::Uint8*)pixel_colors;
-
-        //window_texture.update(out);
-		//window_sprite.setTexture(window_texture);
-		//window.draw(window_sprite);
-
-		// Give the frame counter the frame time and draw the average frame time
-
-
-
+		// Run the raycast
 		error = clEnqueueAcquireGLObjects(c.getCommandQueue(), 1, &image_buff, 0, 0, 0);
 		if (c.assert(error, "clEnqueueAcquireGLObjects"))
 			return -1;
-		c.run_kernel("min_kern", size);
+
+		c.run_kernel("min_kern", WORK_SIZE);
 
 		clFinish(c.getCommandQueue());
 
@@ -372,14 +309,19 @@ int main() {
 		if (c.assert(error, "clEnqueueReleaseGLObjects"))
 			return -1;
 
-        s.setPosition(0, 0);
-        window.draw(s);
 		
+		// ==== RENDER ====
+
+		window.clear(sf::Color::Black);
+
+        window.draw(s);
+
+		// Give the frame counter the frame time and draw the average frame time
 		fps.frame(delta_time);
 		fps.draw(&window);
+
 		window.display();
 
-		//std::cin.get();
 	}
 	return 0;
 }

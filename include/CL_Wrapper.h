@@ -38,11 +38,12 @@ public:
     int create_shared_context();
     int create_command_queue();
     int compile_kernel(std::string kernel_source, bool is_path, std::string kernel_name);
+	int create_buffer(std::string buffer_name, cl_uint size, void* data);
+	int create_buffer(std::string buffer_name, cl_uint size, void* data, cl_mem_flags flags);
 	int set_kernel_arg(std::string kernel_name, int index, std::string buffer_name);
 	int store_buffer(cl_mem, std::string buffer_name);
 	int run_kernel(std::string kernel_name, const int work_size);
-
-
+	
 	bool assert(int error_code, std::string function_name);
 
     cl_device_id getDeviceID();
