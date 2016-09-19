@@ -59,9 +59,8 @@ int CL_Wrapper::acquire_platform_and_device(){
     // falling back to the cpu with the fastest clock if we weren't able to find one
 
     device current_best_device;
-	current_best_device.type = 0; // Set this to -1 so the first run always selects a new device
-    current_best_device.clock_frequency = 0;
-    current_best_device.comp_units = 0;
+	current_best_device.type = -1; // Set this to -1 so the first run always selects a new device
+
 
     for (auto kvp: plt_ids){
 
@@ -87,7 +86,7 @@ int CL_Wrapper::acquire_platform_and_device(){
     platform_id = current_best_device.platform;
     device_id = current_best_device.id;
 
-    return 1;
+    return 0;
 };
 
 int CL_Wrapper::create_shared_context() {
@@ -241,7 +240,7 @@ int CL_Wrapper::store_buffer(cl_mem buffer, std::string buffer_name){
 
 int CL_Wrapper::run_kernel(std::string kernel_name, const int work_size){
 
-    const int WORKER_SIZE = 1;
+    const int WORKER_SIZE = 10;
     size_t global_work_size[1] = { static_cast<size_t>(work_size) };
 
     cl_kernel kernel = kernel_map.at(kernel_name);

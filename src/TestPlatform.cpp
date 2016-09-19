@@ -3,8 +3,6 @@
 #include <cstring>
 #include <iostream>
 #include <vector>
-#include <OpenCL/opencl.h>
-
 
 #ifdef linux
 
@@ -15,8 +13,8 @@
 #include <CL/opencl.h>
 
 #elif defined TARGET_OS_MAC
-#include <OpenGL/OpenGL.h>
-
+# include <OpenGL/OpenGL.h>
+# include <OpenCL/opencl.h>
 #endif
 
 
@@ -53,6 +51,7 @@ int IsExtensionSupported(
 #endif
 
 inline int test_for_gl_cl_sharing() {
+
 
     int err = 0;
 

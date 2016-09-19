@@ -25,15 +25,15 @@
 #include <OpenCL/cl_ext.h>
 
 #endif
+#include "TestPlatform.cpp"
 #include "Map.h"
 #include "Curses.h"
 #include "util.hpp"
 #include "RayCaster.h"
 #include "CL_Wrapper.h"
 
-const int WINDOW_X = 200;
-const int WINDOW_Y = 200;
-const int WORK_SIZE = WINDOW_X * WINDOW_Y;
+const int WINDOW_X = 1000;
+const int WINDOW_Y = 1000;
 
 const int MAP_X = 1024;
 const int MAP_Y = 1024;
@@ -69,6 +69,7 @@ int main() {
 	sf::Texture t;
 
 	CL_Wrapper c;
+	query_platform_devices();
 	c.acquire_platform_and_device();
 	c.create_shared_context();
 	c.create_command_queue();
@@ -139,18 +140,19 @@ int main() {
         }
     }
 	std::cout << "done\n";
+    int ind = 367;
+    printf("%i === %f, %f, %f\n", ind, view_matrix[ind * 4 + 0], view_matrix[ind * 4 + 1], view_matrix[ind * 4 + 2]);
 
     cl_mem view_matrix_buff = clCreateBuffer(
             c.getContext(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-            sizeof(float) * 4 * view_res.x * view_res.y, view_matrix, NULL
+            sizeof(float) * 3 * view_res.x * view_res.y, view_matrix, NULL
     );
 
-    //sf::Vector3f cam_dir(1.0f, 0.0f, 1.00f);
+    sf::Vector3f cam_dir(1.0f, 0.0f, 1.00f);
 
-    float cam_dir[] = {1.0f, 0.0f, 1.57f, 0.0f};
     cl_mem cam_dir_buff = clCreateBuffer(
             c.getContext(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-            sizeof(float) * 4, cam_dir, NULL
+            sizeof(float) * 4, &cam_dir, NULL
     );
 
 
@@ -219,10 +221,9 @@ int main() {
 	c.set_kernel_arg("min_kern", 7, "light_count_buffer");
 	c.set_kernel_arg("min_kern", 8, "image_buffer");
 
+    const int size = WINDOW_X * WINDOW_Y;
 
-
-    s.setTexture(t, true);
-    s.setPosition(0, 0);
+    s.setTexture(t);
 
     // The step size in milliseconds between calls to Update()
     // Lets set it to 16.6 milliseonds (60FPS)
@@ -299,7 +300,7 @@ int main() {
 			cam_vec.x = -1;
 		}
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
-            //cam_dir.z = -0.1f;
+            cam_dir.z = -0.1f;
         }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
             cam_vec.z = +0.1f;
@@ -317,15 +318,15 @@ int main() {
 
 				// Mouse movement
 				sf::Mouse::setPosition(fixed);
-				cam_dir[1] -= deltas.y / 300.0f;
-				cam_dir[2] -= deltas.x / 300.0f;
+				cam_dir.y -= deltas.y / 300.0f;
+				cam_dir.z -= deltas.x / 300.0f;
 			}
 		}
 		cam_pos.x += cam_vec.x / 1.0;
 		cam_pos.y += cam_vec.y / 1.0;
 		cam_pos.z += cam_vec.z / 1.0;
 
-		//std::cout << cam_vec.x << " : " << cam_vec.y << " : " << cam_vec.z << std::endl;
+		std::cout << cam_vec.x << " : " << cam_vec.y << " : " << cam_vec.z << std::endl;
 
 
         // Time keeping
@@ -363,7 +364,7 @@ int main() {
 		error = clEnqueueAcquireGLObjects(c.getCommandQueue(), 1, &image_buff, 0, 0, 0);
 		if (c.assert(error, "clEnqueueAcquireGLObjects"))
 			return -1;
-		c.run_kernel("min_kern", WORK_SIZE);
+		c.run_kernel("min_kern", size);
 
 		clFinish(c.getCommandQueue());
 
@@ -371,6 +372,7 @@ int main() {
 		if (c.assert(error, "clEnqueueReleaseGLObjects"))
 			return -1;
 
+        s.setPosition(0, 0);
         window.draw(s);
 		
 		fps.frame(delta_time);
