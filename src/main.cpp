@@ -65,6 +65,12 @@ sf::Texture window_texture;
 
 int main() {
 
+	//Map m(sf::Vector3i (50, 50, 50));
+	//return 1;
+
+
+
+
 	sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
 
 
@@ -137,8 +143,8 @@ int main() {
 		sf::Vector2f(0.0f, 1.00f)
 	);
 	
-	c.create_buffer("cam_dir_buffer", sizeof(float) * 4, camera.get_direction_pointer(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
-	c.create_buffer("cam_pos_buffer", sizeof(float) * 4, camera.get_position_pointer(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+	c.create_buffer("cam_dir_buffer", sizeof(float) * 4, (void*)camera.get_direction_pointer(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+	c.create_buffer("cam_pos_buffer", sizeof(float) * 4, (void*)camera.get_position_pointer(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
     
 	// {r, g, b, i, x, y, z, x', y', z'}
 	float light[] = { 0.4, 0.8, 0.1, 1, 50, 50, 50, 1.1, 0.4, 0.7};
@@ -211,7 +217,15 @@ int main() {
 
 	RayCaster ray_caster(map, map_dim, view_res);
 
+	sf::Vector2f *dp = camera.get_direction_pointer();
+	debug_text cam_text_x(1, 30, &dp->x, "X: ");
+	debug_text cam_text_y(2, 30, &dp->y, "Y: ");
 
+	sf::Vector3f *mp = camera.get_movement_pointer();
+	debug_text cam_text_mov_x(4, 30, &mp->x, "X: ");
+	debug_text cam_text_mov_y(5, 30, &mp->y, "Y: ");
+	debug_text cam_text_mov_z(6, 30, &mp->y, "Z: ");
+	//debug_text cam_text_z(3, 30, &p->z);
 	// ===============================================================================
 
 	// Mouse capture
@@ -245,22 +259,25 @@ int main() {
 		cam_vec.z = 0;
 
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
-			cam_vec.z = 1;
+			camera.add_relative_impulse(Camera::DIRECTION::DOWN);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::E)) {
-			cam_vec.z = -1;
+			camera.add_relative_impulse(Camera::DIRECTION::UP);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
-			cam_vec.y = 1;
+			camera.add_relative_impulse(Camera::DIRECTION::FORWARD);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
-			cam_vec.y = -1;
+			camera.add_relative_impulse(Camera::DIRECTION::REARWARD);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
-			cam_vec.x = 1;
+			camera.add_relative_impulse(Camera::DIRECTION::LEFT);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
-			cam_vec.x = -1;
+			camera.add_relative_impulse(Camera::DIRECTION::RIGHT);
+		}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::T)) {
+			camera.set_position(sf::Vector3f(20, 20, 20));
 		}
 
 		camera.add_static_impulse(cam_vec);
@@ -288,13 +305,12 @@ int main() {
 		while ((accumulator_time - step_size) >= step_size) {
             accumulator_time -= step_size;
 
-			
             // ==== DELTA TIME LOCKED ====
-			camera.update();
-
         }
 
         // ==== FPS LOCKED ====
+		camera.update(delta_time);
+
 
 		// Run the raycast
 		error = clEnqueueAcquireGLObjects(c.getCommandQueue(), 1, &image_buff, 0, 0, 0);
@@ -320,6 +336,15 @@ int main() {
 		fps.frame(delta_time);
 		fps.draw(&window);
 
+		cam_text_x.draw(&window);
+		cam_text_y.draw(&window);
+
+		cam_text_mov_x.draw(&window);
+		cam_text_mov_y.draw(&window);
+		cam_text_mov_z.draw(&window);
+
+		//cam_text_z.draw(&window);
+			
 		window.display();
 
 	}

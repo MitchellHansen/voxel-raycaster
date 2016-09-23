@@ -6,10 +6,68 @@
 #include <iostream>
 #include <functional>
 #include <cmath>
+#include <deque>
 
 class Map {
 public: 
+
+	// In addition to traversing the voxel hierarchy, we must also be able to
+	// tell which block a given voxel resides in.This is accomplished us -
+	// ing 32 - bit page headers spread amongst the child descriptors.Page
+	// headers are placed at every 8 kilobyte boundary, and each contains
+	// a relative pointer to the block info section.By placing the begin -
+	// ning of the child descriptor array at such a boundary, we can always
+	// find a page header by simply clearing the lowest bits of any child
+	// descriptor pointer.
+	struct page_header {
+		int bitmask;
+	};
+
+	struct leaf_node {
+		long bitmask;
+	};
+
+
+	short scale;
+
+	void generate_octree() {
+
+		uint64_t *octree = new uint64_t[200];
+
+
+		long tree_node = 0;
+
+		std::vector<long> page_array;
+		
+		// Page placed every 8 kilobytes
+		// contains a relative pointer to the block info section
+		uint32_t page = 255;
+		
+		// Child pointer points to the first non-leaf child of this node
+		uint16_t child_pointer = 20;
+
+
+		uint32_t pointer = page | child_pointer;
+
+
+	};
+
 	Map(sf::Vector3i dim) {
+
+		//generate_octree();
+		//return;
+
+
+
+
+
+
+
+
+
+
+
+
 		dimensions = dim;
 		std::mt19937 gen;
 		std::uniform_real_distribution<double> dis(-1.0, 1.0);
@@ -147,20 +205,25 @@ public:
 		}
 
 
-    //    for (int x = 0; x < dim.x / 10; x++) {
-    //        for (int y = 0; y < dim.y / 10; y++) {
-	//			  for (int z = 0; z < dim.z; z++) {
-    //                if (rand() % 1000 < 1)
-    //                    list[x + dim.x * (y + dim.z * z)] = rand() % 6;
-    //            }
-    //        }
-    //    }
+        for (int x = 0; x < dim.x / 10; x++) {
+            for (int y = 0; y < dim.y / 10; y++) {
+				  for (int z = 0; z < dim.z; z++) {
+                    if (rand() % 1000 < 1)
+                        list[x + dim.x * (y + dim.z * z)] = rand() % 6;
+                }
+            }
+        }
 
 		
 	}
 
 	~Map() {
 	}
+
+
+
+
+
 
 	sf::Vector3i getDimensions();
 	char *list;

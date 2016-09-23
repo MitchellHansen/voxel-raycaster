@@ -19,15 +19,42 @@ int Camera::set_position(sf::Vector3f position) {
 	this->position = position;
 	return 1;
 }
-
+	
 int Camera::add_static_impulse(sf::Vector3f impulse) {
 	movement += impulse;
 	return 1;
 }
 
 int Camera::add_relative_impulse(DIRECTION impulse_direction) {
+	
+	// No sense in doing fancy dot products, adding Pi's will suffice
+	// Always add PI/2 to X initially to avoid negative case
+	sf::Vector2f dir;
 
-	SphereToCart(direction);
+	switch (impulse_direction) {
+	
+	case DIRECTION::UP:
+		dir = sf::Vector2f(direction.y, direction.x + PI);
+		break;
+	case DIRECTION::DOWN:
+		dir = sf::Vector2f(direction.y, direction.x);
+		break;
+	case DIRECTION::LEFT:
+		dir = sf::Vector2f(direction.y + PI + PI / 2, PI / 2);
+		break;
+	case DIRECTION::RIGHT:
+		dir = sf::Vector2f(direction.y + PI / 2, PI / 2);
+		break;
+	case DIRECTION::FORWARD:
+		dir = sf::Vector2f(direction.y, direction.x + PI / 2);
+		break;
+	case DIRECTION::REARWARD:
+		dir = sf::Vector2f(direction.y + PI, (direction.x * -1) + PI / 2 );
+		break;
+
+	}
+
+	movement += SphereToCart(dir);
 
 	return 1;
 }
@@ -37,20 +64,30 @@ int Camera::slew_camera(sf::Vector2f input) {
 	return 1;
 }
 
-int Camera::update() {
+int Camera::update(double delta_time) {
 	
-	position += movement;
+	// so vector multiplication broke?
+	// have to do it component wise
+	double multiplier = 50;
+
+	position.x += movement.x * delta_time * multiplier;
+	position.y += movement.y * delta_time * multiplier;
+	position.z += movement.z * delta_time * multiplier;
 	
-	movement *= friction_coefficient;
+	movement *= (float)(friction_coefficient * delta_time * multiplier);
 	
 	return 1;
 }
 
-void* Camera::get_direction_pointer() {
+sf::Vector2f* Camera::get_direction_pointer() {
 	return &direction;
 }
 
-void* Camera::get_position_pointer() {
+sf::Vector3f* Camera::get_movement_pointer() {
+	return &movement;
+}
+
+sf::Vector3f* Camera::get_position_pointer() {
 	return &position;
 }
 

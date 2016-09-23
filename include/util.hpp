@@ -39,6 +39,32 @@ private:
 		double fps_average = 0;
 };
 
+struct debug_text {
+public:
+	debug_text(int slot, int pixel_spacing, void* data_, std::string prefix_) : data(data_), prefix(prefix_) {
+		if (!f.loadFromFile("../assets/fonts/Arial.ttf")) {
+			std::cout << "couldn't find the fall back Arial font in ../assets/fonts/" << std::endl;
+		}
+		else {
+			t.setFont(f);
+			t.setCharacterSize(20);
+			t.setPosition(20, slot * pixel_spacing);
+		}
+
+	}
+
+	void draw(sf::RenderWindow *r) {
+		t.setString(prefix + std::to_string(*(float*)data));
+		r->draw(t);
+	}
+
+private:
+	void* data;
+	std::string prefix;
+	sf::Font f;
+	sf::Text t;
+
+};
 
 inline sf::Vector3f SphereToCart(sf::Vector2f i) {
 

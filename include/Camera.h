@@ -19,10 +19,11 @@ public:
 
 	int slew_camera(sf::Vector2f input);
 
-	int update();
+	int update(double delta_time);
 
-	void* get_direction_pointer();
-	void* get_position_pointer();
+	sf::Vector2f* get_direction_pointer();
+	sf::Vector3f* get_position_pointer();
+	sf::Vector3f* get_movement_pointer();
 
 	sf::Vector3f get_movement();
 	sf::Vector3f get_position();

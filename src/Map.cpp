@@ -22,9 +22,6 @@ void Map::moveLight(sf::Vector2f in) {
 
 }
 
-//void Map::GenerateFloor(){
-//}
-
 
 
 
