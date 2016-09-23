@@ -10,33 +10,49 @@ const float  PI_F = 3.14159265358979f;
 
 struct fps_counter {
 public:
-		fps_counter(){
-				if(!f.loadFromFile("../assets/fonts/Arial.ttf")){
-						std::cout << "couldn't find the fall back Arial font in ../assets/fonts/" << std::endl;
-				} else {
-						t.setFont(f);
-				}
+	fps_counter(){
+		if(!f.loadFromFile("../assets/fonts/Arial.ttf")){
+				std::cout << "couldn't find the fall back Arial font in ../assets/fonts/" << std::endl;
+		} else {
+				t.setFont(f);
 		}
+	}
 
-		void frame(double delta_time){
-			if (frame_count == 100){
-				frame_count = 0;
-				fps_average = 0;
-			}
-				frame_count++;
-				fps_average += (delta_time - fps_average) / frame_count;
+	void frame(double delta_time){
+		if (frame_count == 100){
+			frame_count = 0;
+			fps_average = 0;
 		}
+			frame_count++;
+			fps_average += (delta_time - fps_average) / frame_count;
+	}
+
+	void flip_units() {
+		if (milliseconds)
+			milliseconds = false;
+		else
+			milliseconds = true;
+	}
 		
-		void draw(sf::RenderWindow *r){
-				t.setString(std::to_string(fps_average));
-				r->draw(t);
-		}
+	void draw(sf::RenderWindow *r){
+		
+		std::string out;
+
+		if (milliseconds)
+			out = std::to_string(fps_average);
+		else
+			out = std::to_string(floor(1 / fps_average));
+
+		t.setString(out);
+			r->draw(t);
+	}
 
 private:
-		sf::Font f;
-		sf::Text t;
-		int frame_count = 0;
-		double fps_average = 0;
+	bool milliseconds = false;
+	sf::Font f;
+	sf::Text t;
+	int frame_count = 0;
+	double fps_average = 0;
 };
 
 struct debug_text {

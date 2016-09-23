@@ -311,20 +311,9 @@ int main() {
         // ==== FPS LOCKED ====
 		camera.update(delta_time);
 
-
 		// Run the raycast
-		error = clEnqueueAcquireGLObjects(c.getCommandQueue(), 1, &image_buff, 0, 0, 0);
-		if (c.assert(error, "clEnqueueAcquireGLObjects"))
-			return -1;
-
 		c.run_kernel("min_kern", WORK_SIZE);
-
 		clFinish(c.getCommandQueue());
-
-		error = clEnqueueReleaseGLObjects(c.getCommandQueue(), 1, &image_buff, 0, NULL, NULL);
-		if (c.assert(error, "clEnqueueReleaseGLObjects"))
-			return -1;
-
 		
 		// ==== RENDER ====
 
@@ -342,8 +331,6 @@ int main() {
 		cam_text_mov_x.draw(&window);
 		cam_text_mov_y.draw(&window);
 		cam_text_mov_z.draw(&window);
-
-		//cam_text_z.draw(&window);
 			
 		window.display();
 

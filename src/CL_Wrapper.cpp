@@ -276,7 +276,11 @@ int CL_Wrapper::run_kernel(std::string kernel_name, const int work_size){
 
     size_t global_work_size[1] = { static_cast<size_t>(work_size) };
 
-    cl_kernel kernel = kernel_map.at(kernel_name);
+	cl_kernel kernel = kernel_map.at(kernel_name);
+
+	error = clEnqueueAcquireGLObjects(getCommandQueue(), 1, &buffer_map.at("image_buffer"), 0, 0, 0);
+	if (assert(error, "clEnqueueAcquireGLObjects"))
+		return -1;
 
     //error = clEnqueueTask(command_queue, kernel, 0, NULL, NULL);
     error = clEnqueueNDRangeKernel(
@@ -284,8 +288,15 @@ int CL_Wrapper::run_kernel(std::string kernel_name, const int work_size){
            1, NULL, global_work_size,
             NULL, 0, NULL, NULL);
 
-    if (assert(error, "clEnqueueNDRangeKernel"))
-        return -1;
+	if (assert(error, "clEnqueueNDRangeKernel"))
+		return -1;
+
+	// What if errors out and gl objects are never released?
+	error = clEnqueueReleaseGLObjects(getCommandQueue(), 1, &buffer_map.at("image_buffer"), 0, NULL, NULL);
+	if (assert(error, "clEnqueueReleaseGLObjects"))
+		return -1;
+
+
 
 	return 1;
 }
