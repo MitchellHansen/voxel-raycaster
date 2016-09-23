@@ -68,7 +68,7 @@ int Camera::update(double delta_time) {
 	
 	// so vector multiplication broke?
 	// have to do it component wise
-	double multiplier = 50;
+	double multiplier = 10;
 
 	position.x += movement.x * delta_time * multiplier;
 	position.y += movement.y * delta_time * multiplier;

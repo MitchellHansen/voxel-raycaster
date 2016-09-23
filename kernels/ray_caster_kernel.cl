@@ -45,10 +45,6 @@ __kernel void min_kern(
     int3 voxel_step = {1, 1, 1};
 	voxel_step *= (ray_dir > 0) - (ray_dir < 0);
 
-    /*voxel_step.x *= (ray_dir.x > 0) - (ray_dir.x < 0);
-    voxel_step.y *= (ray_dir.y > 0) - (ray_dir.y < 0);
-    voxel_step.z *= (ray_dir.z > 0) - (ray_dir.z < 0);*/
-
     // Setup the voxel coords from the camera origin
 	int3 voxel = convert_int3(*cam_pos);
 
@@ -56,9 +52,25 @@ __kernel void min_kern(
     // traverse an integer split
 	float3 delta_t = fabs(1.0f / ray_dir);
 
-    // Intersection T is the collection of the next intersection points
+	// offset is how far we are into a voxel, enables sub voxel movement
+	float3 offset = ((*cam_pos) - floor(*cam_pos)) * convert_float3(voxel_step);
+    
+	//offset.x += delta_t.x * convert_float((voxel_step.x < 0));
+	//offset -= delta_t * floor(offset / delta_t);
+
+	// Intersection T is the collection of the next intersection points
     // for all 3 axis XYZ.
-	float3 intersection_t = delta_t;
+	float3 intersection_t = delta_t * offset;
+
+	if (intersection_t.x < 0) {
+		intersection_t.x += delta_t.x;
+	}
+	if (intersection_t.y < 0) {
+		intersection_t.y += delta_t.y;
+	}
+	if (intersection_t.z < 0) {
+		intersection_t.z += delta_t.z;
+	}
 
 	int2 randoms = { 3, 14 };
 	uint seed = randoms.x + id;

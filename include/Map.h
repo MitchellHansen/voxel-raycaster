@@ -198,7 +198,10 @@ public:
 
 				if (height_map[x + y * dim.x] > 0) {
 					int z = height_map[x + y * dim.x];
-					list[x + dim.x * (y + dim.z * z)] = 5;
+					while (z > 0){
+						list[x + dim.x * (y + dim.z * z)] = 5;
+						z--;
+					}
 				}
 				
 			}

@@ -68,11 +68,7 @@ int main() {
 	//Map m(sf::Vector3i (50, 50, 50));
 	//return 1;
 
-
-
-
 	sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
-
 
 	// Setup CL, instantiate and pass in values to the kernel
 	CL_Wrapper c;
@@ -81,9 +77,9 @@ int main() {
 	c.create_shared_context();
 	c.create_command_queue();
 
-	//c.compile_kernel("../kernels/kernel.cl", true, "hello");
-	if (c.compile_kernel("../kernels/minimal_kernel.cl", true, "min_kern") < 0) {
+	if (c.compile_kernel("../kernels/ray_caster_kernel.cl", true, "min_kern") < 0) {
 		std::cin.get();
+		return -1;
 	}
 	
 	std::cout << "map...";
@@ -277,7 +273,7 @@ int main() {
 			camera.add_relative_impulse(Camera::DIRECTION::RIGHT);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::T)) {
-			camera.set_position(sf::Vector3f(20, 20, 20));
+			camera.set_position(sf::Vector3f(50, 50, 50));
 		}
 
 		camera.add_static_impulse(cam_vec);
@@ -313,8 +309,7 @@ int main() {
 
 		// Run the raycast
 		c.run_kernel("min_kern", WORK_SIZE);
-		clFinish(c.getCommandQueue());
-		
+				
 		// ==== RENDER ====
 
 		window.clear(sf::Color::Black);

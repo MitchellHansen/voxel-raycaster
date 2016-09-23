@@ -291,17 +291,15 @@ int CL_Wrapper::run_kernel(std::string kernel_name, const int work_size){
 	if (assert(error, "clEnqueueNDRangeKernel"))
 		return -1;
 
+	clFinish(getCommandQueue());
+
 	// What if errors out and gl objects are never released?
 	error = clEnqueueReleaseGLObjects(getCommandQueue(), 1, &buffer_map.at("image_buffer"), 0, NULL, NULL);
 	if (assert(error, "clEnqueueReleaseGLObjects"))
 		return -1;
 
-
-
 	return 1;
 }
-
-
 
 cl_device_id CL_Wrapper::getDeviceID(){ return device_id; };
 cl_platform_id CL_Wrapper::getPlatformID(){ return platform_id; };
@@ -315,7 +313,6 @@ bool CL_Wrapper::assert(int error_code, std::string function_name){
     std::string err_msg = "Error : ";
 
     switch (error_code) {
-
 
         case CL_SUCCESS:
             return false;
