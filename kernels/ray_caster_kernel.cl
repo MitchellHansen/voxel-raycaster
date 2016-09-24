@@ -13,6 +13,8 @@ float4 white_light(float4 input, float3 light, int3 mask) {
 
 }
 
+
+
 __kernel void min_kern(
         global char* map,
         global int3* map_dim,
@@ -62,6 +64,8 @@ __kernel void min_kern(
     // for all 3 axis XYZ.
 	float3 intersection_t = delta_t * offset;
 
+	// for negative values, wrap around the delta_t, rather not do this
+	// component wise, but it doesn't appear to want to work
 	if (intersection_t.x < 0) {
 		intersection_t.x += delta_t.x;
 	}
@@ -86,7 +90,7 @@ __kernel void min_kern(
     do {
 
 		mask = intersection_t.xyz <= min(intersection_t.yzx, intersection_t.zxy);
-		float3 thing = delta_t * fabs(convert_float3(mask.xyz));
+		
 		intersection_t += delta_t * fabs(convert_float3(mask.xyz));
 		voxel.xyz += voxel_step.xyz * mask.xyz;
 
