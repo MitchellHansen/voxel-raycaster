@@ -6,6 +6,9 @@
 #include <iostream>
 #include <functional>
 #include <cmath>
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 #include <deque>
 
 class Map {
@@ -57,17 +60,6 @@ public:
 		//generate_octree();
 		//return;
 
-
-
-
-
-
-
-
-
-
-
-
 		dimensions = dim;
 		std::mt19937 gen;
 		std::uniform_real_distribution<double> dis(-1.0, 1.0);
@@ -78,9 +70,75 @@ public:
 
 		height_map = new double[dim.x * dim.y];
 
-		for (int i = 0; i < dim.x * dim.y; i++) {
-			height_map[i] = 0;
+		for (int i = 0; i < dim.x * dim.y * dim.z; i++) {
+			list[i] = 0;
 		}
+
+
+
+		//for (int x = -dim.x / 2; x < dim.x/2; x++) {
+		//	for (int y = -dim.y / 2; y < dim.y/2; y++) {
+		//		
+		//		double height = 20;
+
+		//		height += std::pow(x / 50.0, 2) - 10 * std::cos(2 * 3.1415926 * x / 50.0);
+		//		height += std::pow(y / 50.0, 2) - 10 * std::cos(2 * 3.1415926 * y / 50.0);
+		//		
+		//		list[(x + dim.x/2) + dim.x * ((y +dim.y/2) + dim.z * (int)height)] = 5;
+		//	}
+		//}
+
+		int xx = 0;
+		int yy = 0;
+		for (int x = -dim.x / 2; x < dim.x / 2; x++) {
+			for (int y = -dim.y / 2; y < dim.y / 2; y++) {
+
+				double z = 150;
+		//for (int x = 0; x < dim.x; x++) {
+		//	for (int y = 0; y < dim.y; y++) {
+				double height = 0;
+
+				z += -x*2 * std::sin(std::sqrt(abs(x*2 - y*2 - 47))) -
+					(y*2 + 47) * std::sin(std::sqrt(std::abs(y*2 + 47 + x*2 / 2)));
+			
+
+				//z += x * std::sin(std::sqrt(std::abs(y - x + 1))) *
+				//	std::cos(std::sqrt(std::abs(y + x + 1))) +
+				//	(y + 1) *
+				//	std::cos(std::sqrt(std::abs(y - x + 1))) *
+				//	std::sin(std::sqrt(std::abs(y + x + 1)));
+			
+				// Pathological
+				//z += 0.5 +
+				//	(std::pow(std::sin(std::sqrt(100 * std::pow(x/20, 2) + std::pow(y/20, 2))), 2) - 0.5) /
+				//	(1 + 0.001 * std::pow(std::pow(x/20, 2) - 2 * x/20 * y/20 + std::pow(y/20, 2), 2));
+
+				// Ackleys
+				//z += 20 + M_E -
+				//	(20 / (std::pow(M_E, 0.2) * std::sqrt((std::pow(x / 16.0, 2) + std::pow(y / 16.0, 2) + 1) / 2))) -
+				//	std::pow(M_E, 0.5 * std::cos(2 * M_PI * x / 16.0) + cos(2 * M_PI * y / 16.0));
+
+				//
+				//z += -20 * std::pow(M_E, -0.2 * sqrt(0.5 * std::pow(x/64.0, 2) + std::pow(y/64.0, 2))) - std::pow(M_E, 0.5 * (cos(2 * M_PI * x/64.0) + (cos(2 * M_PI * y/64.0)))) + 20 + M_E;
+				
+				//list[x + dim.x  * (y + dim.z * (int)height)] = 5;
+
+				double m = 0.7;
+				while ((z*m) > 0){
+					list[xx + dim.x * (yy + dim.z * (int)(z*m))] = 5;
+					z -= 1/m;
+				}
+				yy++;
+
+			}
+			yy = 0;
+			xx++;
+		}
+		
+
+		return;
+
+
 
 		//int featuresize = 2;
 
@@ -109,7 +167,7 @@ public:
 		//value 2^n+1
 		int DATA_SIZE = dim.x + 1;
 		//an initial seed value for the corners of the data
-		double SEED = 50;
+		double SEED = rand() % 25 + 25;
 
 		//seed the data
 		setSample(0, 0, SEED);

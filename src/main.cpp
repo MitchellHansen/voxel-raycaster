@@ -38,9 +38,9 @@ const int WINDOW_X = 1000;
 const int WINDOW_Y = 1000;
 const int WORK_SIZE = WINDOW_X * WINDOW_Y;
 
-const int MAP_X = 1024;
-const int MAP_Y = 1024;
-const int MAP_Z = 256;
+const int MAP_X = 512;
+const int MAP_Y = 512;
+const int MAP_Z = 512;
 
 float elap_time(){
 	static std::chrono::time_point<std::chrono::system_clock> start;
@@ -135,7 +135,7 @@ int main() {
 	c.create_buffer("view_matrix_buffer", sizeof(float) * 4 * view_res.x * view_res.y, view_matrix);
 
 	Camera camera(
-		sf::Vector3f(55, 50, 50),
+		sf::Vector3f(256, 256, 256),
 		sf::Vector2f(0.0f, 1.00f)
 	);
 	

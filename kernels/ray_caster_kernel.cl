@@ -13,7 +13,12 @@ float4 white_light(float4 input, float3 light, int3 mask) {
 
 }
 
+// {r, g, b, i, x, y, z, x', y', z'}
 
+float4 cast_light_rays(float3 ray_origin, global float* lights, global int* light_count) {
+
+
+}
 
 __kernel void min_kern(
         global char* map,
@@ -81,7 +86,7 @@ __kernel void min_kern(
 	uint t = seed ^ (seed << 11);
 	uint result = randoms.y ^ (randoms.y >> 19) ^ (t ^ (t >> 8));
 
-	int max_dist = 500 + result % 50;
+	int max_dist = 800 + result % 50;
 	int dist = 0;
 
 	int3 mask = { 0, 0, 0 };
@@ -90,7 +95,6 @@ __kernel void min_kern(
     do {
 
 		mask = intersection_t.xyz <= min(intersection_t.yzx, intersection_t.zxy);
-		
 		intersection_t += delta_t * fabs(convert_float3(mask.xyz));
 		voxel.xyz += voxel_step.xyz * mask.xyz;
 
@@ -108,7 +112,9 @@ __kernel void min_kern(
 		}
 
         // If we hit a voxel
-        int index = voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * voxel.z);
+		//int index = voxel.x * (*map_dim).y * (*map_dim).z + voxel.z * (*map_dim).z + voxel.y;
+		// Why the off by one on voxel.y?
+        int index = voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z-1));
         int voxel_data = map[index];
 
 		if (voxel_data != 0) {
@@ -127,9 +133,13 @@ __kernel void min_kern(
 				return;
 			case 5:
 				//write_imagef(image, pixel, (float4)(.25, .00, .25, 1.00));
-				write_imagef(image, pixel, white_light((float4)(.25, .32, .14, 0.2), (float3)(lights[7], lights[8], lights[9]), mask));
+			write_imagef(image, pixel, white_light((float4)(.25, .32, .14, 0.2), (float3)(lights[7], lights[8], lights[9]), mask));
+				//cast_light_rays(voxel, lights, light_count)
 				return;
 			case 6:
+				write_imagef(image, pixel, (float4)(.30, .80, .10, 1.00));
+				return;
+			default:
 				write_imagef(image, pixel, (float4)(.30, .80, .10, 1.00));
 				return;
 			}
