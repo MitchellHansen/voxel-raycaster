@@ -27,7 +27,7 @@ float4 cast_light_rays(float3 eye_direction, float3 ray_origin, float4 voxel_col
 	for (int i = 0; i < *light_count; i++) {
 
 		float3 light_direction = (lights[10 * i + 7], lights[10 * i + 8], lights[10 * i + 9]);
-		float c = 1.5;
+		float c = 1.0;
 
 		if (dot(light_direction, voxel_normal) > 0.0) {
 			float3 halfwayVector = normalize(light_direction + eye_direction);
@@ -37,9 +37,11 @@ float4 cast_light_rays(float3 eye_direction, float3 ray_origin, float4 voxel_col
 		}
 	}
 
-	/*if (get_global_id(0) == 0)
-		printf("%f", intensity);*/
-	return voxel_color * (intensity) + ambient_constant;
+	//if (get_global_id(0) == 0)
+	//	printf("%i", *light_count);
+	voxel_color *= intensity;
+	voxel_color.w += ambient_constant;
+	return voxel_color;
 
 	//	for every light
 	//
@@ -174,7 +176,7 @@ __kernel void min_kern(
 
 
 				float3 vox = convert_float3(voxel);
-				float3 norm = normalize(convert_float3(mask));
+				float3 norm = normalize(fabs(convert_float3(mask)));
 				float4 color = (float4)(0.25, 0.00, 0.25, 1.00);
 
 

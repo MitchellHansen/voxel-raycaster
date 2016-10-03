@@ -142,13 +142,15 @@ int main() {
 	c.create_buffer("cam_dir_buffer", sizeof(float) * 4, (void*)camera.get_direction_pointer(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 	c.create_buffer("cam_pos_buffer", sizeof(float) * 4, (void*)camera.get_position_pointer(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
     
+	int light_count = 2;
+	c.create_buffer("light_count_buffer", sizeof(int), &light_count);
+
 	// {r, g, b, i, x, y, z, x', y', z'}
 	sf::Vector3f v = Normalize(sf::Vector3f(1.0, 1.0, 0.0));
-	float light[] = { 0.4, 0.8, 0.1, 1, 50, 50, 50, v.x, v.y, v.z};
-	c.create_buffer("light_buffer", sizeof(float) * 10, light, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
-
-	int light_count = 1;
-	c.create_buffer("light_count_buffer", sizeof(int), &light_count);
+	sf::Vector3f v2 = Normalize(sf::Vector3f(1.1, 0.4, 0.7));
+	float light[] = { 0.4, 0.8, 0.1, 1, 50, 50, 50, v.x, v.y, v.z,
+					  0.4, 0.8, 0.1, 1, 50, 50, 50, v2.x, v2.y, v2.z};
+	c.create_buffer("light_buffer", sizeof(float) * 10 * light_count, light, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 
 	// The drawing canvas
     unsigned char* pixel_array = new sf::Uint8[WINDOW_X * WINDOW_Y * 4];
