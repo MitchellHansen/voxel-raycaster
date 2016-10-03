@@ -74,7 +74,9 @@ public:
 			list[i] = 0;
 		}
 
-
+		for (int i = 0; i < dim.x * dim.y; i++) {
+			height_map[i] = 0;
+		}
 
 		//for (int x = -dim.x / 2; x < dim.x/2; x++) {
 		//	for (int y = -dim.y / 2; y < dim.y/2; y++) {
@@ -88,55 +90,55 @@ public:
 		//	}
 		//}
 
-		int xx = 0;
-		int yy = 0;
-		for (int x = -dim.x / 2; x < dim.x / 2; x++) {
-			for (int y = -dim.y / 2; y < dim.y / 2; y++) {
+		//int xx = 0;
+		//int yy = 0;
+		//for (int x = -dim.x / 2; x < dim.x / 2; x++) {
+		//	for (int y = -dim.y / 2; y < dim.y / 2; y++) {
 
-				double z = 150;
-		//for (int x = 0; x < dim.x; x++) {
-		//	for (int y = 0; y < dim.y; y++) {
-				double height = 0;
+		//		double z = 150;
+		////for (int x = 0; x < dim.x; x++) {
+		////	for (int y = 0; y < dim.y; y++) {
+		//		double height = 0;
 
-				z += -x*2 * std::sin(std::sqrt(abs(x*2 - y*2 - 47))) -
-					(y*2 + 47) * std::sin(std::sqrt(std::abs(y*2 + 47 + x*2 / 2)));
-			
+		//		z += -x*2 * std::sin(std::sqrt(abs(x*2 - y*2 - 47))) -
+		//			(y*2 + 47) * std::sin(std::sqrt(std::abs(y*2 + 47 + x*2 / 2)));
+		//	
 
-				//z += x * std::sin(std::sqrt(std::abs(y - x + 1))) *
-				//	std::cos(std::sqrt(std::abs(y + x + 1))) +
-				//	(y + 1) *
-				//	std::cos(std::sqrt(std::abs(y - x + 1))) *
-				//	std::sin(std::sqrt(std::abs(y + x + 1)));
-			
-				// Pathological
-				//z += 0.5 +
-				//	(std::pow(std::sin(std::sqrt(100 * std::pow(x/20, 2) + std::pow(y/20, 2))), 2) - 0.5) /
-				//	(1 + 0.001 * std::pow(std::pow(x/20, 2) - 2 * x/20 * y/20 + std::pow(y/20, 2), 2));
+		//		//z += x * std::sin(std::sqrt(std::abs(y - x + 1))) *
+		//		//	std::cos(std::sqrt(std::abs(y + x + 1))) +
+		//		//	(y + 1) *
+		//		//	std::cos(std::sqrt(std::abs(y - x + 1))) *
+		//		//	std::sin(std::sqrt(std::abs(y + x + 1)));
+		//	
+		//		// Pathological
+		//		//z += 0.5 +
+		//		//	(std::pow(std::sin(std::sqrt(100 * std::pow(x/20, 2) + std::pow(y/20, 2))), 2) - 0.5) /
+		//		//	(1 + 0.001 * std::pow(std::pow(x/20, 2) - 2 * x/20 * y/20 + std::pow(y/20, 2), 2));
 
-				// Ackleys
-				//z += 20 + M_E -
-				//	(20 / (std::pow(M_E, 0.2) * std::sqrt((std::pow(x / 16.0, 2) + std::pow(y / 16.0, 2) + 1) / 2))) -
-				//	std::pow(M_E, 0.5 * std::cos(2 * M_PI * x / 16.0) + cos(2 * M_PI * y / 16.0));
+		//		// Ackleys
+		//		//z += 20 + M_E -
+		//		//	(20 / (std::pow(M_E, 0.2) * std::sqrt((std::pow(x / 16.0, 2) + std::pow(y / 16.0, 2) + 1) / 2))) -
+		//		//	std::pow(M_E, 0.5 * std::cos(2 * M_PI * x / 16.0) + cos(2 * M_PI * y / 16.0));
 
-				//
-				//z += -20 * std::pow(M_E, -0.2 * sqrt(0.5 * std::pow(x/64.0, 2) + std::pow(y/64.0, 2))) - std::pow(M_E, 0.5 * (cos(2 * M_PI * x/64.0) + (cos(2 * M_PI * y/64.0)))) + 20 + M_E;
-				
-				//list[x + dim.x  * (y + dim.z * (int)height)] = 5;
+		//		//
+		//		//z += -20 * std::pow(M_E, -0.2 * sqrt(0.5 * std::pow(x/64.0, 2) + std::pow(y/64.0, 2))) - std::pow(M_E, 0.5 * (cos(2 * M_PI * x/64.0) + (cos(2 * M_PI * y/64.0)))) + 20 + M_E;
+		//		
+		//		//list[x + dim.x  * (y + dim.z * (int)height)] = 5;
 
-				double m = 0.7;
-				while ((z*m) > 0){
-					list[xx + dim.x * (yy + dim.z * (int)(z*m))] = 5;
-					z -= 1/m;
-				}
-				yy++;
+		//		double m = 0.2;
+		//		while ((z*m) > 0){
+		//			list[xx + dim.x * (yy + dim.z * (int)(z*m))] = 5;
+		//			z -= 1/m;
+		//		}
+		//		yy++;
 
-			}
-			yy = 0;
-			xx++;
-		}
-		
+		//	}
+		//	yy = 0;
+		//	xx++;
+		//}
+		//
 
-		return;
+		//return;
 
 
 

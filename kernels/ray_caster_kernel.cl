@@ -13,11 +13,45 @@ float4 white_light(float4 input, float3 light, int3 mask) {
 
 }
 
+//  0  1  2  3  4  5  6  7   8   9
 // {r, g, b, i, x, y, z, x', y', z'}
 
-float4 cast_light_rays(float3 ray_origin, global float* lights, global int* light_count) {
+float4 cast_light_rays(float3 eye_direction, float3 ray_origin, float4 voxel_color, float3 voxel_normal, global float* lights, global int* light_count) {
 
+	// set the ray origin to be where the initial ray intersected the voxel
+	// which side z, and the x and y position
+	
+	float ambient_constant = 0.5;
+	float intensity = 1.2;
 
+	for (int i = 0; i < *light_count; i++) {
+
+		float3 light_direction = (lights[10 * i + 7], lights[10 * i + 8], lights[10 * i + 9]);
+		float c = 1.5;
+
+		if (dot(light_direction, voxel_normal) > 0.0) {
+			float3 halfwayVector = normalize(light_direction + eye_direction);
+			float dot_prod = dot(voxel_normal, halfwayVector);
+			float specTmp = max((float)dot_prod, 0.0f);
+			intensity += pow(specTmp, c);
+		}
+	}
+
+	/*if (get_global_id(0) == 0)
+		printf("%f", intensity);*/
+	return voxel_color * (intensity) + ambient_constant;
+
+	//	for every light
+	//
+	//		check if the light is within falloff distance
+	//		every unit, light halfs
+	//
+	//		if it is, cast a ray to that light and check for collisions.
+	//			if ray exits voxel volume, assume unobstructed
+	//			
+	//			if ray intersects a voxel, dont influence the voxel color
+	//		
+	//			if it does
 }
 
 __kernel void min_kern(
@@ -61,7 +95,8 @@ __kernel void min_kern(
 
 	// offset is how far we are into a voxel, enables sub voxel movement
 	float3 offset = ((*cam_pos) - floor(*cam_pos)) * convert_float3(voxel_step);
-    
+	
+
 	//offset.x += delta_t.x * convert_float((voxel_step.x < 0));
 	//offset -= delta_t * floor(offset / delta_t);
 
@@ -81,6 +116,7 @@ __kernel void min_kern(
 		intersection_t.z += delta_t.z;
 	}
 
+	// use a ghetto ass rng to give rays a "fog" appearance 
 	int2 randoms = { 3, 14 };
 	uint seed = randoms.x + id;
 	uint t = seed ^ (seed << 11);
@@ -132,10 +168,28 @@ __kernel void min_kern(
 				write_imagef(image, pixel, (float4)(.25, .00, .25, 1.00));
 				return;
 			case 5:
-				//write_imagef(image, pixel, (float4)(.25, .00, .25, 1.00));
-			write_imagef(image, pixel, white_light((float4)(.25, .32, .14, 0.2), (float3)(lights[7], lights[8], lights[9]), mask));
-				//cast_light_rays(voxel, lights, light_count)
+			{
+				//write_imagef(image, pixel, (float4)(.00, .00,  + 0.5, 1.00));
+				//write_imagef(image, pixel, white_light((float4)(.35, .00, ((1.0 - 0) / (128 - 0) * (voxel.z - 128)) + 1, 0.2), (float3)(lights[7], lights[8], lights[9]), mask));
+
+
+				float3 vox = convert_float3(voxel);
+				float3 norm = normalize(convert_float3(mask));
+				float4 color = (float4)(0.25, 0.00, 0.25, 1.00);
+
+
+				write_imagef(image, pixel,
+					cast_light_rays(
+						ray_dir,
+						vox,
+						color,
+						norm ,
+						lights,
+						light_count
+					));
+
 				return;
+			}
 			case 6:
 				write_imagef(image, pixel, (float4)(.30, .80, .10, 1.00));
 				return;

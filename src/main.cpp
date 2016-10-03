@@ -143,8 +143,9 @@ int main() {
 	c.create_buffer("cam_pos_buffer", sizeof(float) * 4, (void*)camera.get_position_pointer(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
     
 	// {r, g, b, i, x, y, z, x', y', z'}
-	float light[] = { 0.4, 0.8, 0.1, 1, 50, 50, 50, 1.1, 0.4, 0.7};
-	c.create_buffer("light_buffer", sizeof(float) * 10, light);
+	sf::Vector3f v = Normalize(sf::Vector3f(1.0, 1.0, 0.0));
+	float light[] = { 0.4, 0.8, 0.1, 1, 50, 50, 50, v.x, v.y, v.z};
+	c.create_buffer("light_buffer", sizeof(float) * 10, light, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 
 	int light_count = 1;
 	c.create_buffer("light_count_buffer", sizeof(int), &light_count);
@@ -222,6 +223,10 @@ int main() {
 	debug_text cam_text_mov_y(5, 30, &mp->y, "Y: ");
 	debug_text cam_text_mov_z(6, 30, &mp->y, "Z: ");
 	//debug_text cam_text_z(3, 30, &p->z);
+
+	debug_text light_x (7, 30, &light[7], "X: ");
+	debug_text light_y(8, 30, &light[8], "Y: ");
+	debug_text light_z(9, 30, &light[9], "Z: ");
 	// ===============================================================================
 
 	// Mouse capture
@@ -304,6 +309,22 @@ int main() {
             // ==== DELTA TIME LOCKED ====
         }
 
+		float l[] = {
+			light[9] * sin(delta_time) + light[7] * cos(delta_time),
+			light[8],
+			light[9] * cos(delta_time) - light[7] * sin(delta_time)
+		};
+
+		float l2[] = {
+			l[0] * cos(delta_time) - l[2] * sin(delta_time),
+			l[0] * sin(delta_time) + l[2] * cos(delta_time),
+			l[2]
+		};
+
+		light[7] = l[0];
+		light[8] = l[1];
+		light[9] = l[2];
+
         // ==== FPS LOCKED ====
 		camera.update(delta_time);
 
@@ -326,6 +347,10 @@ int main() {
 		cam_text_mov_x.draw(&window);
 		cam_text_mov_y.draw(&window);
 		cam_text_mov_z.draw(&window);
+
+		light_x.draw(&window);
+		light_y.draw(&window);
+		light_z.draw(&window);
 			
 		window.display();
 
