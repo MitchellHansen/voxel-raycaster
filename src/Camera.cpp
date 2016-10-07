@@ -25,7 +25,7 @@ int Camera::add_static_impulse(sf::Vector3f impulse) {
 	return 1;
 }
 
-int Camera::add_relative_impulse(DIRECTION impulse_direction) {
+int Camera::add_relative_impulse(DIRECTION impulse_direction, float speed) {
 	
 	// No sense in doing fancy dot products, adding Pi's will suffice
 	// Always add PI/2 to X initially to avoid negative case
@@ -55,6 +55,7 @@ int Camera::add_relative_impulse(DIRECTION impulse_direction) {
 	}
 
 	movement += SphereToCart(dir);
+	movement *= speed;
 
 	return 1;
 }

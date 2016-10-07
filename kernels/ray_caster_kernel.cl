@@ -20,27 +20,40 @@ float4 cast_light_rays(float3 eye_direction, float3 ray_origin, float4 voxel_col
 
 	// set the ray origin to be where the initial ray intersected the voxel
 	// which side z, and the x and y position
-	
+
 	float ambient_constant = 0.5;
-	float intensity = 1.2;
+	float intensity = 0;
 
 	for (int i = 0; i < *light_count; i++) {
 
-		float3 light_direction = (lights[10 * i + 7], lights[10 * i + 8], lights[10 * i + 9]);
-		float c = 1.0;
+		float distance = sqrt(
+			pow(lights[10 * i + 4] - ray_origin.x, 2) +
+			pow(lights[10 * i + 5] - ray_origin.y, 2) +
+			pow(lights[10 * i + 6] - ray_origin.z, 2));
 
-		if (dot(light_direction, voxel_normal) > 0.0) {
+		if (distance > 50)
+			continue;
+
+		float3 light_direction = (lights[10 * i + 7], lights[10 * i + 8], lights[10 * i + 9]);
+		float c = 10.0;
+
+		//if (dot(light_direction, voxel_normal) > 0.0) {
 			float3 halfwayVector = normalize(light_direction + eye_direction);
 			float dot_prod = dot(voxel_normal, halfwayVector);
 			float specTmp = max((float)dot_prod, 0.0f);
 			intensity += pow(specTmp, c);
-		}
+		//}
 	}
 
-	//if (get_global_id(0) == 0)
-	//	printf("%i", *light_count);
-	voxel_color *= intensity;
+	if (get_global_id(0) == 1037760) { 
+		printf("%f", intensity);
+		voxel_color = (float4)(1.0, 1.0, 1.0, 1.0);
+		return voxel_color;
+	}
+
+	voxel_color.w *= intensity;
 	voxel_color.w += ambient_constant;
+
 	return voxel_color;
 
 	//	for every light
@@ -176,8 +189,8 @@ __kernel void min_kern(
 
 
 				float3 vox = convert_float3(voxel);
-				float3 norm = normalize(fabs(convert_float3(mask)));
-				float4 color = (float4)(0.25, 0.00, 0.25, 1.00);
+				float3 norm = normalize(convert_float3(mask) * convert_float3(voxel_step));
+				float4 color = (float4)(0.95, 0.00, 0.25, 1.00);
 
 
 				write_imagef(image, pixel,

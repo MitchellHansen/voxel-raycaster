@@ -34,8 +34,8 @@
 #include "Vector4.hpp"
 #include <Camera.h>
 
-const int WINDOW_X = 1000;
-const int WINDOW_Y = 1000;
+const int WINDOW_X = 1920;
+const int WINDOW_Y = 1080;
 const int WORK_SIZE = WINDOW_X * WINDOW_Y;
 
 const int MAP_X = 512;
@@ -65,297 +65,306 @@ sf::Texture window_texture;
 
 int main() {
 
-	//Map m(sf::Vector3i (50, 50, 50));
-	//return 1;
-
-	sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
-
-	// Setup CL, instantiate and pass in values to the kernel
-	CL_Wrapper c;
-	query_platform_devices();
-	c.acquire_platform_and_device();
-	c.create_shared_context();
-	c.create_command_queue();
-
-	if (c.compile_kernel("../kernels/ray_caster_kernel.cl", true, "min_kern") < 0) {
-		std::cin.get();
-		return -1;
-	}
 	
-	std::cout << "map...";
-    sf::Vector3i map_dim(MAP_X, MAP_Y, MAP_Z);
-    Map* map = new Map(map_dim);
-    
-	c.create_buffer("map_buffer", sizeof(char) * map_dim.x * map_dim.y * map_dim.z, map->list);
-	c.create_buffer("dim_buffer", sizeof(int) * 3, &map_dim);
 
-	sf::Vector2i view_res(WINDOW_X, WINDOW_Y);
-	c.create_buffer("res_buffer", sizeof(int) * 2, &view_res);
-  	
+	Map m(sf::Vector3i (50, 50, 50));
+	m.generate_octree();
+	return 1;
 
-    double y_increment_radians = DegreesToRadians(50.0 / view_res.y);
-    double x_increment_radians = DegreesToRadians(80.0 / view_res.x);
+	//sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
 
-	std::cout << "view matrix...";
-  
-	sf::Vector4f* view_matrix = new sf::Vector4f[WINDOW_X * WINDOW_Y * 4];
+	//// Setup CL, instantiate and pass in values to the kernel
+	//CL_Wrapper c;
+	//query_platform_devices();
+	//c.acquire_platform_and_device();
+	//c.create_shared_context();
+	//c.create_command_queue();
 
-    for (int y = -view_res.y / 2; y < view_res.y / 2; y++) {
-        for (int x = -view_res.x / 2; x < view_res.x / 2; x++) {
+	//if (c.compile_kernel("../kernels/ray_caster_kernel.cl", true, "min_kern") < 0) {
+	//	std::cin.get();
+	//	return -1;
+	//}
+	//
+	//std::cout << "map...";
+ //   sf::Vector3i map_dim(MAP_X, MAP_Y, MAP_Z);
+ //   Map* map = new Map(map_dim);
+ //   
+	//c.create_buffer("map_buffer", sizeof(char) * map_dim.x * map_dim.y * map_dim.z, map->list);
+	//c.create_buffer("dim_buffer", sizeof(int) * 3, &map_dim);
 
-            // The base ray direction to slew from
-            sf::Vector3f ray(1, 0, 0);
+	//sf::Vector2i view_res(WINDOW_X, WINDOW_Y);
+	//c.create_buffer("res_buffer", sizeof(int) * 2, &view_res);
+ // 	
 
-            // Y axis, pitch
-            ray = sf::Vector3f(
-                    ray.z * sin(y_increment_radians * y) + ray.x * cos(y_increment_radians * y),
-                    ray.y,
-                    ray.z * cos(y_increment_radians * y) - ray.x * sin(y_increment_radians * y)
-            );
+ //   double y_increment_radians = DegreesToRadians(50.0 / view_res.y);
+ //   double x_increment_radians = DegreesToRadians(80.0 / view_res.x);
 
-            // Z axis, yaw
-            ray = sf::Vector3f(
-                    ray.x * cos(x_increment_radians * x) - ray.y * sin(x_increment_radians * x),
-                    ray.x * sin(x_increment_radians * x) + ray.y * cos(x_increment_radians * x),
-                    ray.z
-            );
+	//std::cout << "view matrix...";
+ // 
+	//sf::Vector4f* view_matrix = new sf::Vector4f[WINDOW_X * WINDOW_Y * 4];
 
-            int index = (x + view_res.x / 2) + view_res.x * (y + view_res.y / 2);
-            ray = Normalize(ray);
+ //   for (int y = -view_res.y / 2; y < view_res.y / 2; y++) {
+ //       for (int x = -view_res.x / 2; x < view_res.x / 2; x++) {
 
-            view_matrix[index] = sf::Vector4f(
-				ray.x,
-				ray.y,
-				ray.z,
-				0
-			);
-        }
-    }
+ //           // The base ray direction to slew from
+ //           sf::Vector3f ray(1, 0, 0);
 
-	c.create_buffer("view_matrix_buffer", sizeof(float) * 4 * view_res.x * view_res.y, view_matrix);
+	//		// Y axis, pitch
+	//		ray = sf::Vector3f(
+	//			ray.z * sin(y_increment_radians * y) + ray.x * cos(y_increment_radians * y),
+	//			ray.y,
+	//			ray.z * cos(y_increment_radians * y) - ray.x * sin(y_increment_radians * y)
+	//		);
 
-	Camera camera(
-		sf::Vector3f(256, 256, 256),
-		sf::Vector2f(0.0f, 1.00f)
-	);
-	
-	c.create_buffer("cam_dir_buffer", sizeof(float) * 4, (void*)camera.get_direction_pointer(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
-	c.create_buffer("cam_pos_buffer", sizeof(float) * 4, (void*)camera.get_position_pointer(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
-    
-	int light_count = 2;
-	c.create_buffer("light_count_buffer", sizeof(int), &light_count);
 
-	// {r, g, b, i, x, y, z, x', y', z'}
-	sf::Vector3f v = Normalize(sf::Vector3f(1.0, 1.0, 0.0));
-	sf::Vector3f v2 = Normalize(sf::Vector3f(1.1, 0.4, 0.7));
-	float light[] = { 0.4, 0.8, 0.1, 1, 50, 50, 50, v.x, v.y, v.z,
-					  0.4, 0.8, 0.1, 1, 50, 50, 50, v2.x, v2.y, v2.z};
-	c.create_buffer("light_buffer", sizeof(float) * 10 * light_count, light, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+	//		// Z axis, yaw
+	//		ray = sf::Vector3f(
+	//			ray.x * cos(x_increment_radians * x) - ray.y * sin(x_increment_radians * x),
+	//			ray.x * sin(x_increment_radians * x) + ray.y * cos(x_increment_radians * x),
+	//			ray.z
+	//		);
+ //           
+	//		int index = (x + view_res.x / 2) + view_res.x * (y + view_res.y / 2);
+ //           ray = Normalize(ray);
 
-	// The drawing canvas
-    unsigned char* pixel_array = new sf::Uint8[WINDOW_X * WINDOW_Y * 4];
+ //           view_matrix[index] = sf::Vector4f(
+	//			ray.x,
+	//			ray.y,
+	//			ray.z,
+	//			0
+	//		);
+ //       }
+ //   }
 
-    for (int i = 0; i < WINDOW_X * WINDOW_Y * 4; i += 4) {
+	//c.create_buffer("view_matrix_buffer", sizeof(float) * 4 * view_res.x * view_res.y, view_matrix);
 
-        pixel_array[i] = 255; // R?
-        pixel_array[i + 1] = 255; // G?
-        pixel_array[i + 2] = 255; // B?
-        pixel_array[i + 3] = 100; // A?
-    }
+	//Camera camera(
+	//	sf::Vector3f(70, 60, 50),
+	//	sf::Vector2f(0.0f, 1.00f)
+	//);
+	//
+	//c.create_buffer("cam_dir_buffer", sizeof(float) * 4, (void*)camera.get_direction_pointer(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+	//c.create_buffer("cam_pos_buffer", sizeof(float) * 4, (void*)camera.get_position_pointer(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+ //   
+	//int light_count = 2;
+	//c.create_buffer("light_count_buffer", sizeof(int), &light_count);
 
-	sf::Texture t;
-    t.create(WINDOW_X, WINDOW_Y);
-    t.update(pixel_array);
+	//// {r, g, b, i, x, y, z, x', y', z'}
+	//sf::Vector3f v = Normalize(sf::Vector3f(1.0, 0.0, 0.0));
+	//sf::Vector3f v2 = Normalize(sf::Vector3f(1.1, 0.4, 0.7));
+	//float light[] = { 0.4, 0.8, 0.1, 1, 50, 50, 50, v.x, v.y, v.z,
+	//				  0.4, 0.8, 0.1, 1, 50, 50, 50, v2.x, v2.y, v2.z};
+	//c.create_buffer("light_buffer", sizeof(float) * 10 * light_count, light, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 
-    int error;
-    cl_mem image_buff = clCreateFromGLTexture(
-            c.getContext(), CL_MEM_WRITE_ONLY, GL_TEXTURE_2D,
-            0, t.getNativeHandle(), &error);
+	//// The drawing canvas
+ //   unsigned char* pixel_array = new sf::Uint8[WINDOW_X * WINDOW_Y * 4];
 
-    if (c.assert(error, "clCreateFromGLTexture"))
-        return -1;
+ //   for (int i = 0; i < WINDOW_X * WINDOW_Y * 4; i += 4) {
 
-    c.store_buffer(image_buff, "image_buffer");
+ //       pixel_array[i] = 255; // R?
+ //       pixel_array[i + 1] = 255; // G?
+ //       pixel_array[i + 2] = 255; // B?
+ //       pixel_array[i + 3] = 100; // A?
+ //   }
 
-    c.set_kernel_arg("min_kern", 0, "map_buffer");
-    c.set_kernel_arg("min_kern", 1, "dim_buffer");
-    c.set_kernel_arg("min_kern", 2, "res_buffer");
-    c.set_kernel_arg("min_kern", 3, "view_matrix_buffer");
-    c.set_kernel_arg("min_kern", 4, "cam_dir_buffer");
-    c.set_kernel_arg("min_kern", 5, "cam_pos_buffer");
-	c.set_kernel_arg("min_kern", 6, "light_buffer");
-	c.set_kernel_arg("min_kern", 7, "light_count_buffer");
-	c.set_kernel_arg("min_kern", 8, "image_buffer");
+	//sf::Texture t;
+ //   t.create(WINDOW_X, WINDOW_Y);
+ //   t.update(pixel_array);
 
-	sf::Sprite s;
-	s.setTexture(t);
-	s.setPosition(0, 0);
+ //   int error;
+ //   cl_mem image_buff = clCreateFromGLTexture(
+ //           c.getContext(), CL_MEM_WRITE_ONLY, GL_TEXTURE_2D,
+ //           0, t.getNativeHandle(), &error);
 
-    // The step size in milliseconds between calls to Update()
-    // Lets set it to 16.6 milliseonds (60FPS)
-    float step_size = 0.0166f;
+ //   if (c.assert(error, "clCreateFromGLTexture"))
+ //       return -1;
 
-    // Timekeeping values for the loop
-    double  frame_time = 0.0,
-            elapsed_time = 0.0,
-            delta_time = 0.0,
-            accumulator_time = 0.0,
-            current_time = 0.0;
+ //   c.store_buffer(image_buff, "image_buffer");
 
-    fps_counter fps;
+ //   c.set_kernel_arg("min_kern", 0, "map_buffer");
+ //   c.set_kernel_arg("min_kern", 1, "dim_buffer");
+ //   c.set_kernel_arg("min_kern", 2, "res_buffer");
+ //   c.set_kernel_arg("min_kern", 3, "view_matrix_buffer");
+ //   c.set_kernel_arg("min_kern", 4, "cam_dir_buffer");
+ //   c.set_kernel_arg("min_kern", 5, "cam_pos_buffer");
+	//c.set_kernel_arg("min_kern", 6, "light_buffer");
+	//c.set_kernel_arg("min_kern", 7, "light_count_buffer");
+	//c.set_kernel_arg("min_kern", 8, "image_buffer");
 
-	// ============================= RAYCASTER SETUP ==================================
+	//sf::Sprite s;
+	//s.setTexture(t);
+	//s.setPosition(0, 0);
 
-	// Setup the sprite and texture
-	window_texture.create(WINDOW_X, WINDOW_Y);
-	window_sprite.setPosition(0, 0);
+ //   // The step size in milliseconds between calls to Update()
+ //   // Lets set it to 16.6 milliseonds (60FPS)
+ //   float step_size = 0.0166f;
 
-	// State values
+ //   // Timekeeping values for the loop
+ //   double  frame_time = 0.0,
+ //           elapsed_time = 0.0,
+ //           delta_time = 0.0,
+ //           accumulator_time = 0.0,
+ //           current_time = 0.0;
 
-	sf::Vector3f cam_vec(0, 0, 0);
+ //   fps_counter fps;
 
-	RayCaster ray_caster(map, map_dim, view_res);
+	//// ============================= RAYCASTER SETUP ==================================
 
-	sf::Vector2f *dp = camera.get_direction_pointer();
-	debug_text cam_text_x(1, 30, &dp->x, "X: ");
-	debug_text cam_text_y(2, 30, &dp->y, "Y: ");
+	//// Setup the sprite and texture
+	//window_texture.create(WINDOW_X, WINDOW_Y);
+	//window_sprite.setPosition(0, 0);
 
-	sf::Vector3f *mp = camera.get_movement_pointer();
-	debug_text cam_text_mov_x(4, 30, &mp->x, "X: ");
-	debug_text cam_text_mov_y(5, 30, &mp->y, "Y: ");
-	debug_text cam_text_mov_z(6, 30, &mp->y, "Z: ");
-	//debug_text cam_text_z(3, 30, &p->z);
+	//// State values
 
-	debug_text light_x (7, 30, &light[7], "X: ");
-	debug_text light_y(8, 30, &light[8], "Y: ");
-	debug_text light_z(9, 30, &light[9], "Z: ");
-	// ===============================================================================
+	//sf::Vector3f cam_vec(0, 0, 0);
 
-	// Mouse capture
-	sf::Vector2i deltas;
-	sf::Vector2i fixed(window.getSize());
-	bool mouse_enabled = true;
+	//RayCaster ray_caster(map, map_dim, view_res);
 
-	sf::Vector3f cam_mov_vec;
+	//sf::Vector2f *dp = camera.get_direction_pointer();
+	//debug_text cam_text_x(1, 30, &dp->x, "X: ");
+	//debug_text cam_text_y(2, 30, &dp->y, "Y: ");
 
-	while (window.isOpen()) {
+	//sf::Vector3f *mp = camera.get_movement_pointer();
+	//debug_text cam_text_mov_x(4, 30, &mp->x, "X: ");
+	//debug_text cam_text_mov_y(5, 30, &mp->y, "Y: ");
+	//debug_text cam_text_mov_z(6, 30, &mp->y, "Z: ");
+	////debug_text cam_text_z(3, 30, &p->z);
 
-		// Poll for events from the user
-		sf::Event event;
-		while (window.pollEvent(event)) {
+	//debug_text light_x(7, 30, &light[7], "X: ");
+	//debug_text light_y(8, 30, &light[8], "Y: ");
+	//debug_text light_z(9, 30, &light[9], "Z: ");
+	//// ===============================================================================
 
-			// If the user tries to exit the application via the GUI
-			if (event.type == sf::Event::Closed)
-				window.close();
-			if (event.type == sf::Event::KeyPressed) {
-				if (event.key.code == sf::Keyboard::Space) {
-					if (mouse_enabled)
-						mouse_enabled = false;
-					else
-						mouse_enabled = true;
-				}
-			}
-		}
+	//// Mouse capture
+	//sf::Vector2i deltas;
+	//sf::Vector2i fixed(window.getSize());
+	//bool mouse_enabled = true;
 
-		cam_vec.x = 0;
-		cam_vec.y = 0;
-		cam_vec.z = 0;
+	//sf::Vector3f cam_mov_vec;
 
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
-			camera.add_relative_impulse(Camera::DIRECTION::DOWN);
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::E)) {
-			camera.add_relative_impulse(Camera::DIRECTION::UP);
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
-			camera.add_relative_impulse(Camera::DIRECTION::FORWARD);
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
-			camera.add_relative_impulse(Camera::DIRECTION::REARWARD);
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
-			camera.add_relative_impulse(Camera::DIRECTION::LEFT);
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
-			camera.add_relative_impulse(Camera::DIRECTION::RIGHT);
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::T)) {
-			camera.set_position(sf::Vector3f(50, 50, 50));
-		}
+	//while (window.isOpen()) {
 
-		camera.add_static_impulse(cam_vec);
+	//	// Poll for events from the user
+	//	sf::Event event;
+	//	while (window.pollEvent(event)) {
 
-		if (mouse_enabled) {
-			deltas = fixed - sf::Mouse::getPosition();
-			if (deltas != sf::Vector2i(0, 0) && mouse_enabled == true) {
+	//		// If the user tries to exit the application via the GUI
+	//		if (event.type == sf::Event::Closed)
+	//			window.close();
+	//		if (event.type == sf::Event::KeyPressed) {
+	//			if (event.key.code == sf::Keyboard::Space) {
+	//				if (mouse_enabled)
+	//					mouse_enabled = false;
+	//				else
+	//					mouse_enabled = true;
+	//			}
+	//		}
+	//	}
 
-				// Mouse movement
-				sf::Mouse::setPosition(fixed);
-				camera.slew_camera(sf::Vector2f(
-					deltas.y / 300.0f,
-					deltas.x / 300.0f
-				));
-			}
-		}
+	//	cam_vec.x = 0;
+	//	cam_vec.y = 0;
+	//	cam_vec.z = 0;
 
-        // Time keeping
-		elapsed_time = elap_time();
-		delta_time = elapsed_time - current_time;
-		current_time = elapsed_time;
-		if (delta_time > 0.2f)
-			delta_time = 0.2f;
-		accumulator_time += delta_time;
-		while ((accumulator_time - step_size) >= step_size) {
-            accumulator_time -= step_size;
+	//	float speed = 1.0f;
 
-            // ==== DELTA TIME LOCKED ====
-        }
+	//	if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift)) {
+	//		speed = 0.2f;
+	//	}
+	//	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
+	//		camera.add_relative_impulse(Camera::DIRECTION::DOWN, speed);
+	//	}
+	//	if (sf::Keyboard::isKeyPressed(sf::Keyboard::E)) {
+	//		camera.add_relative_impulse(Camera::DIRECTION::UP, speed);
+	//	}
+	//	if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
+	//		camera.add_relative_impulse(Camera::DIRECTION::FORWARD, speed);
+	//	}
+	//	if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
+	//		camera.add_relative_impulse(Camera::DIRECTION::REARWARD, speed);
+	//	}
+	//	if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
+	//		camera.add_relative_impulse(Camera::DIRECTION::LEFT, speed);
+	//	}
+	//	if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
+	//		camera.add_relative_impulse(Camera::DIRECTION::RIGHT, speed);
+	//	}
+	//	if (sf::Keyboard::isKeyPressed(sf::Keyboard::T)) {
+	//		camera.set_position(sf::Vector3f(50, 50, 50));
+	//	}
 
-		float l[] = {
-			light[9] * sin(delta_time) + light[7] * cos(delta_time),
-			light[8],
-			light[9] * cos(delta_time) - light[7] * sin(delta_time)
-		};
+	//	camera.add_static_impulse(cam_vec);
 
-		float l2[] = {
-			l[0] * cos(delta_time) - l[2] * sin(delta_time),
-			l[0] * sin(delta_time) + l[2] * cos(delta_time),
-			l[2]
-		};
+	//	if (mouse_enabled) {
+	//		deltas = fixed - sf::Mouse::getPosition();
+	//		if (deltas != sf::Vector2i(0, 0) && mouse_enabled == true) {
 
-		light[7] = l[0];
-		light[8] = l[1];
-		light[9] = l[2];
+	//			// Mouse movement
+	//			sf::Mouse::setPosition(fixed);
+	//			camera.slew_camera(sf::Vector2f(
+	//				deltas.y / 300.0f,
+	//				deltas.x / 300.0f
+	//			));
+	//		}
+	//	}
 
-        // ==== FPS LOCKED ====
-		camera.update(delta_time);
+ //       // Time keeping
+	//	elapsed_time = elap_time();
+	//	delta_time = elapsed_time - current_time;
+	//	current_time = elapsed_time;
+	//	if (delta_time > 0.2f)
+	//		delta_time = 0.2f;
+	//	accumulator_time += delta_time;
+	//	while ((accumulator_time - step_size) >= step_size) {
+ //           accumulator_time -= step_size;
 
-		// Run the raycast
-		c.run_kernel("min_kern", WORK_SIZE);
-				
-		// ==== RENDER ====
+ //           // ==== DELTA TIME LOCKED ====
+ //       }
 
-		window.clear(sf::Color::Black);
+	//	float l[] = {
+	//		light[9] * sin(delta_time / 1) + light[7] * cos(delta_time / 1),
+	//		light[8],
+	//		light[9] * cos(delta_time / 1) - light[7] * sin(delta_time / 1)
+	//	};
 
-        window.draw(s);
+	//	float l2[] = {
+	//		l[0] * cos(delta_time) - l[2] * sin(delta_time),
+	//		l[0] * sin(delta_time) + l[2] * cos(delta_time),
+	//		l[2]
+	//	};
 
-		// Give the frame counter the frame time and draw the average frame time
-		fps.frame(delta_time);
-		fps.draw(&window);
+	//	light[7] = l[0];
+	//	light[8] = l[1];
+	//	light[9] = l[2];
 
-		cam_text_x.draw(&window);
-		cam_text_y.draw(&window);
+ //       // ==== FPS LOCKED ====
+	//	camera.update(delta_time);
 
-		cam_text_mov_x.draw(&window);
-		cam_text_mov_y.draw(&window);
-		cam_text_mov_z.draw(&window);
+	//	// Run the raycast
+	//	c.run_kernel("min_kern", WORK_SIZE);
+	//			
+	//	// ==== RENDER ====
 
-		light_x.draw(&window);
-		light_y.draw(&window);
-		light_z.draw(&window);
-			
-		window.display();
+	//	window.clear(sf::Color::Black);
 
-	}
+ //       window.draw(s);
+
+	//	// Give the frame counter the frame time and draw the average frame time
+	//	fps.frame(delta_time);
+	//	fps.draw(&window);
+
+	//	cam_text_x.draw(&window);
+	//	cam_text_y.draw(&window);
+
+	//	cam_text_mov_x.draw(&window);
+	//	cam_text_mov_y.draw(&window);
+	//	cam_text_mov_z.draw(&window);
+
+	//	light_x.draw(&window);
+	//	light_y.draw(&window);
+	//	light_z.draw(&window);
+	//		
+	//	window.display();
+
+	//}
 	return 0;
 }

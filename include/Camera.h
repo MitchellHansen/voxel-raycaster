@@ -15,7 +15,7 @@ public:
 	int set_position(sf::Vector3f position);
 
 	int add_static_impulse(sf::Vector3f impulse);
-	int add_relative_impulse(DIRECTION direction);
+	int add_relative_impulse(DIRECTION direction, float speed);
 
 	int slew_camera(sf::Vector2f input);
 
