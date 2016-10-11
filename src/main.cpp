@@ -25,7 +25,6 @@
 #include <OpenCL/cl_ext.h>
 
 #endif
-#include "TestPlatform.cpp"
 #include "Map.h"
 #include "Curses.h"
 #include "util.hpp"
@@ -65,20 +64,13 @@ sf::Texture window_texture;
 
 int main() {
 
-	
+	CL_Wrapper c;
 
-	Map m(sf::Vector3i (50, 50, 50));
-	m.generate_octree();
+	//Map m(sf::Vector3i (50, 50, 50));
+	//m.generate_octree();
 	return 1;
 
 	//sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
-
-	//// Setup CL, instantiate and pass in values to the kernel
-	//CL_Wrapper c;
-	//query_platform_devices();
-	//c.acquire_platform_and_device();
-	//c.create_shared_context();
-	//c.create_command_queue();
 
 	//if (c.compile_kernel("../kernels/ray_caster_kernel.cl", true, "min_kern") < 0) {
 	//	std::cin.get();

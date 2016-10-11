@@ -1,9 +1,4 @@
-#pragma once
 #include "Map.h"
-#include <iostream>
-#include <SFML/System/Vector3.hpp>
-#include <SFML/System/Vector2.hpp>
-#include "util.hpp"
 
 Map::Map(sf::Vector3i position) {
 	
@@ -363,18 +358,6 @@ void Map::setVoxel(sf::Vector3i world_position, int val) {
 	chunk_map.at(chunk_pos).voxel_data[in_chunk_pos.x + CHUNK_DIM * (in_chunk_pos.y + CHUNK_DIM * in_chunk_pos.z)] 
 		= val;
 
-}
-
-void Map::moveLight(sf::Vector2f in) {
-//
-//    sf::Vector3f light_spherical = CartToSphere(global_light);
-//
-//    light_spherical.y += in.y;
-//    light_spherical.x += in.x;
-//
-//    global_light = SphereToCart(light_spherical);
-//
-//    return;
 }
 
 void Chunk::set(int type) {

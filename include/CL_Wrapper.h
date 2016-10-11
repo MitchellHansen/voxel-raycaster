@@ -2,10 +2,12 @@
 #include <iostream>
 #include "util.hpp"
 #include <map>
+#include <string.h>
 
 #ifdef linux
 #include <CL/cl.h>
 #include <CL/opencl.h>
+#include <GL/glx.h>
 
 #elif defined _WIN32
 #include <CL/cl_gl.h>
@@ -35,15 +37,21 @@ public:
 	~CL_Wrapper();
 
     int acquire_platform_and_device();
-    int create_shared_context();
+
+	int create_shared_context();
+	int create_cl_context();
+
     int create_command_queue();
+
     int compile_kernel(std::string kernel_source, bool is_path, std::string kernel_name);
+
 	int create_buffer(std::string buffer_name, cl_uint size, void* data);
 	int create_buffer(std::string buffer_name, cl_uint size, void* data, cl_mem_flags flags);
-	int set_kernel_arg(std::string kernel_name, int index, std::string buffer_name);
 	int store_buffer(cl_mem, std::string buffer_name);
+
+	int set_kernel_arg(std::string kernel_name, int index, std::string buffer_name);
 	int run_kernel(std::string kernel_name, const int work_size);
-	
+
 	bool assert(int error_code, std::string function_name);
 
     cl_device_id getDeviceID();
@@ -56,7 +64,7 @@ private:
 
     int error = 0;
 	bool initialized = false;
-
+	bool cl_khr_gl_sharing_fallback = false;
 
     cl_platform_id platform_id;
 	cl_device_id device_id;

@@ -2,16 +2,18 @@
 #include <SFML/System/Vector3.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <SFML/Graphics/Color.hpp>
+#include <iostream>
+#include <list>
 #include <random>
 #include <iostream>
 #include <functional>
 #include <cmath>
-#define _USE_MATH_DEFINES
-#include <math.h>
+#include "util.hpp"
+#include <deque>
 #include <unordered_map>
 
-
-#include <deque>
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 #define CHUNK_DIM 32
 

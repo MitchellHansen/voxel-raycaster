@@ -1,11 +1,23 @@
 #include "CL_Wrapper.h"
 
 CL_Wrapper::CL_Wrapper() {
+
+    acquire_platform_and_device();
+
+    if (cl_khr_gl_sharing_fallback){
+        create_cl_context();
+    } else {
+        create_shared_context();
+    }
+
+    create_command_queue();
+
 }
 
 
 CL_Wrapper::~CL_Wrapper() {
 }
+
 
 int CL_Wrapper::acquire_platform_and_device(){
 
@@ -88,8 +100,43 @@ int CL_Wrapper::acquire_platform_and_device(){
     platform_id = current_best_device.platform;
     device_id = current_best_device.id;
 
+    // Test for sharing
+    size_t ext_str_size = 1024;
+    char *ext_str = new char[ext_str_size];
+    clGetDeviceInfo(device_id, CL_DEVICE_EXTENSIONS, ext_str_size, ext_str, &ext_str_size);
+
+    if (std::string(ext_str).find("cl_khr_gl_sharing") == std::string::npos){
+        std::cout << "No support for the cl_khr_gl_sharing extension";
+        cl_khr_gl_sharing_fallback = true;
+    }
+
+    delete ext_str;
+
     return 1;
 };
+
+
+int CL_Wrapper::create_cl_context() {
+
+    // If the device doesn't support sharing then we have to create a regular context
+    cl_context_properties context_properties[] = {
+            CL_CONTEXT_PLATFORM, (cl_context_properties)platform_id
+    };
+
+    context = clCreateContext(
+        context_properties,
+        1,
+        &device_id,
+        nullptr, nullptr,
+        &error
+    );
+
+    if (assert(error, "clCreateContext"))
+        return -1;
+
+    return 0;
+}
+
 
 int CL_Wrapper::create_shared_context() {
 
@@ -97,28 +144,28 @@ int CL_Wrapper::create_shared_context() {
     // Setup the context properties to grab the current GL context
 
 #ifdef linux
+
     cl_context_properties context_properties[] = {
 		CL_GL_CONTEXT_KHR, (cl_context_properties)glXGetCurrentContext(),
 		CL_GLX_DISPLAY_KHR, (cl_context_properties)glXGetCurrentDisplay(),
-		CL_CONTEXT_PLATFORM, (cl_context_properties)platform,
+		CL_CONTEXT_PLATFORM, (cl_context_properties)platform_id,
 		0
 	};
 
 #elif defined _WIN32
 
-    // TODO: Clean this up next time I'm on a windows machine
-    //cl_context_properties context_properties[] = {
-	//    CL_CONTEXT_PLATFORM, (cl_context_properties) platformIds[0],
-	//    CL_GL_CONTEXT_KHR, (cl_context_properties) wglGetCurrentContext(),
-	//    CL_WGL_HDC_KHR, (cl_context_properties) wglGetCurrentDC(),
-	//    0
-	//};
 	HGLRC hGLRC = wglGetCurrentContext();
 	HDC hDC = wglGetCurrentDC();
-	cl_context_properties context_properties[] = { CL_CONTEXT_PLATFORM, (cl_context_properties)platform_id, CL_GL_CONTEXT_KHR, (cl_context_properties)hGLRC, CL_WGL_HDC_KHR, (cl_context_properties)hDC, 0 };
+	cl_context_properties context_properties[] = {
+	    CL_CONTEXT_PLATFORM, (cl_context_properties)platform_id,
+	    CL_GL_CONTEXT_KHR, (cl_context_properties)hGLRC,
+	    CL_WGL_HDC_KHR, (cl_context_properties)hDC,
+	    0
+	};
 
 
 #elif defined TARGET_OS_MAC
+
     CGLContextObj glContext = CGLGetCurrentContext();
     CGLShareGroupObj shareGroup = CGLGetShareGroup(glContext);
     cl_context_properties context_properties[] = {
