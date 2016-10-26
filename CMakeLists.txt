@@ -29,7 +29,7 @@ include_directories(include)
 
 # Set the .cpp sources
 file(GLOB SOURCES "src/*.cpp")
-add_executable(${PNAME} ${SOURCES})
+add_executable(${PNAME} ${SOURCES} include/Renderer.cpp include/Renderer.h)
 
 # Link CL, GL, and SFML
 target_link_libraries (${PNAME} ${SFML_LIBRARIES} ${SFML_DEPENDENCIES})
