@@ -16,7 +16,13 @@ float4 white_light(float4 input, float3 light, int3 mask) {
 //  0  1  2  3  4  5  6  7   8   9
 // {r, g, b, i, x, y, z, x', y', z'}
 
-float4 cast_light_rays(float3 eye_direction, float3 ray_origin, float4 voxel_color, float3 voxel_normal, global float* lights, global int* light_count) {
+float4 cast_light_rays(
+	float3 eye_direction, 
+	float3 ray_origin, 
+	float4 voxel_color, 
+	float3 voxel_normal, 
+	global float* lights, 
+	global int* light_count) {
 
 	// set the ray origin to be where the initial ray intersected the voxel
 	// which side z, and the x and y position
@@ -183,10 +189,10 @@ __kernel void min_kern(
 				write_imagef(image, pixel, (float4)(.25, .00, .25, 1.00));
 				return;
 			case 5:
-			{
+			
 				//write_imagef(image, pixel, (float4)(.00, .00,  + 0.5, 1.00));
-				//write_imagef(image, pixel, white_light((float4)(.35, .00, ((1.0 - 0) / (128 - 0) * (voxel.z - 128)) + 1, 0.2), (float3)(lights[7], lights[8], lights[9]), mask));
-
+				write_imagef(image, pixel, white_light((float4)(.35, .00, ((1.0 - 0) / (128 - 0) * (voxel.z - 128)) + 1, 0.2), (float3)(lights[7], lights[8], lights[9]), mask));
+				return;
 
 				float3 vox = convert_float3(voxel);
 				float3 norm = normalize(convert_float3(mask) * convert_float3(voxel_step));
@@ -204,13 +210,13 @@ __kernel void min_kern(
 					));
 
 				return;
-			}
+			
 			case 6:
 				write_imagef(image, pixel, (float4)(.30, .80, .10, 1.00));
 				return;
 			default:
-				write_imagef(image, pixel, (float4)(.30, .80, .10, 1.00));
-				return;
+				//write_imagef(image, pixel, (float4)(.30, .10, .10, 1.00));
+				continue;
 			}
 		}
 

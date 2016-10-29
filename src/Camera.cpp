@@ -34,22 +34,22 @@ int Camera::add_relative_impulse(DIRECTION impulse_direction, float speed) {
 	switch (impulse_direction) {
 	
 	case DIRECTION::UP:
-		dir = sf::Vector2f(direction.y, direction.x + PI);
+		dir = sf::Vector2f(direction.y, direction.x + PI_F);
 		break;
 	case DIRECTION::DOWN:
 		dir = sf::Vector2f(direction.y, direction.x);
 		break;
 	case DIRECTION::LEFT:
-		dir = sf::Vector2f(direction.y + PI + PI / 2, PI / 2);
+		dir = sf::Vector2f(direction.y + PI_F + PI_F / 2, PI_F / 2);
 		break;
 	case DIRECTION::RIGHT:
-		dir = sf::Vector2f(direction.y + PI / 2, PI / 2);
+		dir = sf::Vector2f(direction.y + PI_F / 2, PI_F / 2);
 		break;
 	case DIRECTION::FORWARD:
-		dir = sf::Vector2f(direction.y, direction.x + PI / 2);
+		dir = sf::Vector2f(direction.y, direction.x + PI_F / 2);
 		break;
 	case DIRECTION::REARWARD:
-		dir = sf::Vector2f(direction.y + PI, (direction.x * -1) + PI / 2 );
+		dir = sf::Vector2f(direction.y + PI_F, (direction.x * -1) + PI_F / 2 );
 		break;
 
 	}

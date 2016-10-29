@@ -27,30 +27,30 @@ struct block {
 
 void Map::generate_octree() {
 
-    char* arr[8192];
-    for (int i = 0; i < 8192; i++) {
-        arr[i] = 0;
-    }
+	char* arr[8192];
+	for (int i = 0; i < 8192; i++) {
+		arr[i] = 0;
+	}
 
 	int* dataset = new int[32 * 32 * 32];
 	for (int i = 0; i < 32 * 32 * 32; i++) {
 		dataset[0] = i;
 	}
 
-    int level = log2(32);
+	int level = static_cast<int>(log2(32));
 
-    leaf top_node;
-    top_node.level = level;
+	leaf top_node;
+	top_node.level = level;
 
-    for (int i = 0; i < 16 * 16 * 16; i++){
-        for (int i = 0; i < 8 * 8 * 8; i++){
-            for (int i = 0; i < 4 * 4 * 4; i++){
-                for (int i = 0; i < 2 * 2 * 2; i++){
+	for (int i = 0; i < 16 * 16 * 16; i++) {
+		for (int i = 0; i < 8 * 8 * 8; i++) {
+			for (int i = 0; i < 4 * 4 * 4; i++) {
+				for (int i = 0; i < 2 * 2 * 2; i++) {
 
-                }
-            }
-        }
-    }
+				}
+			}
+		}
+	}
 
 
 
@@ -67,13 +67,13 @@ void Map::generate_octree() {
 
 	unsigned int leafmask = 255;
 	unsigned int validmask = leafmask << 8;
-	
+
 	parent &= validmask;
 	parent &= leafmask;
 
 	std::cout << BitCount(parent & leafmask);
 
-	unsigned int children[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+	unsigned int children[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 }
 

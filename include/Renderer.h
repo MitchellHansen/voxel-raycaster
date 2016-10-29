@@ -36,7 +36,7 @@ public:
 private:
 
     CL_Wrapper *cl;
-    bool sharing_supported = False;
+    bool sharing_supported = false;
     sf::Uint8 *drawing_surface;
     sf::RenderWindow* window;
 

@@ -30,9 +30,9 @@ sf::Color Ray::Cast() {
 
     // Setup the voxel coords from the camera origin
     voxel = sf::Vector3<int>(
-            floorf(origin.x),
-            floorf(origin.y),
-            floorf(origin.z)
+        static_cast<int>(floorf(origin.x)),
+		static_cast<int>(floorf(origin.y)),
+		static_cast<int>(floorf(origin.z))
     );
 
     // Delta T is the units a ray must travel along an axis in order to
@@ -113,18 +113,18 @@ sf::Color Ray::Cast() {
         if (face == 0) {
 
             alpha = AngleBetweenVectors(sf::Vector3f(1, 0, 0), map->global_light);
-            alpha = fmod(alpha, 0.785) * 2;
+            alpha = static_cast<float>(fmod(alpha, 0.785) * 2);
 
         } else if (face == 1) {
 
             alpha = AngleBetweenVectors(sf::Vector3f(0, 1, 0), map->global_light);
-            alpha = fmod(alpha, 0.785) * 2;
+            alpha = static_cast<float>(fmod(alpha, 0.785) * 2);
 
         } else if (face == 2){
 
             //alpha = 1.57 / 2;
             alpha = AngleBetweenVectors(sf::Vector3f(0, 0, 1), map->global_light);
-            alpha = fmod(alpha, 0.785) * 2;
+            alpha = static_cast<float>(fmod(alpha, 0.785) * 2);
         }
 
         alpha *= 162;

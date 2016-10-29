@@ -64,7 +64,7 @@ public:
 		else {
 			t.setFont(f);
 			t.setCharacterSize(20);
-			t.setPosition(20, slot * pixel_spacing);
+			t.setPosition(static_cast<float>(20), static_cast<float>(slot * pixel_spacing));
 		}
 
 	}
@@ -140,11 +140,11 @@ inline float AngleBetweenVectors(sf::Vector3f a, sf::Vector3f b){
 }
 
 inline float DegreesToRadians(float in) {
-	return in * PI / 180.0f;
+	return static_cast<float>(in * PI / 180.0f);
 }
 
 inline float RadiansToDegrees(float in) {
-	return in * 180.0f / PI;
+	return static_cast<float>(in * 180.0f / PI);
 }
 
 inline std::string read_file(std::string file_name){
