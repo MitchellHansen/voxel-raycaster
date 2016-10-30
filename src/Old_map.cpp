@@ -13,6 +13,7 @@ Old_Map::Old_Map(sf::Vector3i dim) {
 Old_Map::~Old_Map() {
 }
 
+
 void Old_Map::generate_terrain() {
 	std::mt19937 gen;
 	std::uniform_real_distribution<double> dis(-1.0, 1.0);

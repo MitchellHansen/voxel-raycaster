@@ -18,6 +18,7 @@ public:
 	Old_Map(sf::Vector3i dim);
 	~Old_Map();
 
+	void generate_from_data(char* dat, int len);
 	void generate_terrain();
 
 	sf::Vector3i getDimensions();

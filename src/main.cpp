@@ -1,4 +1,4 @@
-#ifdef linux
+﻿#ifdef linux
 #include <CL/cl.h>
 #include <CL/opencl.h>
 
@@ -78,7 +78,7 @@ int main() {
 	sf::Vector3i map_dim(MAP_X, MAP_Y, MAP_Z);
     Old_Map* map = new Old_Map(map_dim);
 	map->generate_terrain();
-    
+
 	c.create_buffer("map_buffer", sizeof(char) * map_dim.x * map_dim.y * map_dim.z, map->get_voxel_data());
 	c.create_buffer("dim_buffer", sizeof(int) * 3, &map_dim);
 
@@ -129,7 +129,7 @@ int main() {
 	c.create_buffer("view_matrix_buffer", sizeof(float) * 4 * view_res.x * view_res.y, view_matrix);
 
 	Camera camera(
-		sf::Vector3f(70, 60, 50),
+		sf::Vector3f(0, 0, 0),
 		sf::Vector2f(0.0f, 1.00f)
 	);
 	
@@ -211,8 +211,8 @@ int main() {
 	//RayCaster ray_caster(map, map_dim, view_res);
 
 	sf::Vector2f *dp = camera.get_direction_pointer();
-	debug_text cam_text_x(1, 30, &dp->x, "X: ");
-	debug_text cam_text_y(2, 30, &dp->y, "Y: ");
+	debug_text cam_text_x(1, 30, &dp->x, "incli: ");
+	debug_text cam_text_y(2, 30, &dp->y, "asmth: ");
 
 	sf::Vector3f *mp = camera.get_movement_pointer();
 	debug_text cam_text_mov_x(4, 30, &mp->x, "X: ");
