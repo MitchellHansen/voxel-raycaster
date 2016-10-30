@@ -2,12 +2,12 @@
 #include <util.hpp>
 #include <Ray.h>
 
+RayCaster::RayCaster() {
+}
 
-RayCaster::RayCaster(
-	Map *map,
-	sf::Vector3<int> map_dimensions,
-    sf::Vector2<int> viewport_resolution ) {
-
+void RayCaster::assign_map(Old_Map* map) {
+	this->map = map;
+}
 	// Override values
 	//this.map_dimensions = new Vector3<int> (50, 50, 50);
 	//this.resolution = new Vector2<int> (200, 200);

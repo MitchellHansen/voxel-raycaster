@@ -2,23 +2,32 @@
 #include <SFML/System/Vector3.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <Map.h>
+#include "Old_map.h"
+
+
+// What about a parent, child relationship between the raycaster and it's two
+// different modes? Raycaster -> ClCaster, SoftwareCaster
+class Camera;
 
 class RayCaster {
 public:
-	RayCaster(Map *map,
-			 sf::Vector3<int> map_dimensions,
-			 sf::Vector2<int> viewport_resolution);
+
+	RayCaster();
 	~RayCaster();
 
-    void setFOV(float fov);
-    void setResolution(sf::Vector2<int> resolution);
+	virtual void assign_map(Old_Map *map) = 0;
+	virtual void assign_camera(Camera *camera) = 0;
+	virtual void assign_viewport(int width, int height, float v_fov, float h_fov) = 0;
+	virtual void assign_light(Light light) = 0;
 
-	sf::Color* CastRays(sf::Vector3<float> camera_direction, sf::Vector3<float> camera_position);
-	void moveCamera(sf::Vector2f v);
+	// draw will abstract the gl sharing and software rendering
+	// methods of retrieving the screen buffer
+	virtual void draw(sf::RenderWindow* window) = 0;
+
 private:
 
 	sf::Vector3<int> map_dimensions;
-	Map *map;
+	Old_Map *map;
 
 	// The XY resolution of the viewport
 	sf::Vector2<int> resolution;

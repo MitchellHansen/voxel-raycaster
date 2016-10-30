@@ -43,6 +43,8 @@ public:
 
     int create_command_queue();
 
+	int check_cl_khr_gl_sharing();
+
     int compile_kernel(std::string kernel_source, bool is_path, std::string kernel_name);
 
 	int create_buffer(std::string buffer_name, cl_uint size, void* data);
@@ -60,11 +62,14 @@ public:
     cl_kernel getKernel(std::string kernel_name);
 	cl_command_queue getCommandQueue();
 
+	bool was_init_valid();
+
 private:
 
     int error = 0;
 	bool initialized = false;
 	bool cl_khr_gl_sharing_fallback = false;
+	bool cl_supported = false;
 
     cl_platform_id platform_id;
 	cl_device_id device_id;

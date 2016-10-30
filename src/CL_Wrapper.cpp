@@ -2,16 +2,29 @@
 
 CL_Wrapper::CL_Wrapper() {
 
-    acquire_platform_and_device();
+	// Check to see if acquiring the platform failed out
+	// This also catches when there are general errors,
+	// falling back to the known good software renderer
+	if (acquire_platform_and_device() == -1) {
+		std::cout << "Falling back to the software renderer" << std::endl;
+		return;
+	}
+	
+	cl_supported = true;
 
-    if (cl_khr_gl_sharing_fallback){
-        create_cl_context();
-    } else {
-        create_shared_context();
-    }
+	// update cl_khr_gl_sharing_fallback's value
+	check_cl_khr_gl_sharing();
 
-    create_command_queue();
+	// Whether or not we can share GL contexts with our CL kernels
+	// Enables on-GPU editing and rendering of the screen buffer
+	if (cl_khr_gl_sharing_fallback){
+		create_cl_context();
+	} else {
+		create_shared_context();
+	}
 
+	create_command_queue();
+	
 }
 
 
@@ -42,6 +55,13 @@ int CL_Wrapper::acquire_platform_and_device(){
 
         cl_uint deviceIdCount = 0;
         error = clGetDeviceIDs(plt_buf[i], CL_DEVICE_TYPE_ALL, 0, nullptr, &deviceIdCount);
+
+		// Check to see if we even have opencl on this machine
+		if (deviceIdCount == 0) {
+			cl_supported = false;
+			std::cout << "OpenCL does not appear to be supported on this machine" << std::endl;
+			return -1;
+		}
 
         // Get the device ids
         std::vector<cl_device_id> deviceIds(deviceIdCount);
@@ -100,18 +120,6 @@ int CL_Wrapper::acquire_platform_and_device(){
     platform_id = current_best_device.platform;
     device_id = current_best_device.id;
 
-    // Test for sharing
-    size_t ext_str_size = 1024;
-    char *ext_str = new char[ext_str_size];
-    clGetDeviceInfo(device_id, CL_DEVICE_EXTENSIONS, ext_str_size, ext_str, &ext_str_size);
-
-    if (std::string(ext_str).find("cl_khr_gl_sharing") == std::string::npos){
-        std::cout << "No support for the cl_khr_gl_sharing extension";
-        cl_khr_gl_sharing_fallback = true;
-    }
-
-    delete ext_str;
-
     return 1;
 };
 
@@ -134,7 +142,7 @@ int CL_Wrapper::create_cl_context() {
     if (assert(error, "clCreateContext"))
         return -1;
 
-    return 0;
+    return 1;
 }
 
 
@@ -188,7 +196,7 @@ int CL_Wrapper::create_shared_context() {
     if (assert(error, "clCreateContext"))
         return -1;
 
-    return 0;
+    return 1;
 }
 
 int CL_Wrapper::create_command_queue(){
@@ -200,12 +208,27 @@ int CL_Wrapper::create_command_queue(){
         if (assert(error, "clCreateCommandQueue"))
             return -1;
 
-        return 0;
+        return 1;
     }
     else {
         std::cout << "Failed creating the command queue, context or device_id not initialized";
         return -1;
     }
+}
+
+int CL_Wrapper::check_cl_khr_gl_sharing() {
+	
+	// Test for sharing
+	size_t ext_str_size = 1024;
+	char *ext_str = new char[ext_str_size];
+	clGetDeviceInfo(device_id, CL_DEVICE_EXTENSIONS, ext_str_size, ext_str, &ext_str_size);
+
+	if (std::string(ext_str).find("cl_khr_gl_sharing") == std::string::npos) {
+		std::cout << "No support for the cl_khr_gl_sharing extension";
+		cl_khr_gl_sharing_fallback = true;
+	}
+
+	delete ext_str;
 }
 
 int CL_Wrapper::compile_kernel(std::string kernel_source, bool is_path, std::string kernel_name) {
@@ -353,6 +376,10 @@ cl_platform_id CL_Wrapper::getPlatformID(){ return platform_id; };
 cl_context CL_Wrapper::getContext(){ return context; };
 cl_kernel CL_Wrapper::getKernel(std::string kernel_name ){ return kernel_map.at(kernel_name); };
 cl_command_queue CL_Wrapper::getCommandQueue(){ return command_queue; };
+
+bool CL_Wrapper::was_init_valid() {
+	return cl_supported;
+}
 
 bool CL_Wrapper::assert(int error_code, std::string function_name){
 

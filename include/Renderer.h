@@ -4,6 +4,8 @@
 #include "SFML/Graphics.hpp"
 #include "CL_Wrapper.h"
 #include "Camera.h"
+#include "Old_map.h"
+#include "RayCaster.h"
 
 // Renderer needs to handle the distinction between a few difference circumstances.
 // A.) The machine supports OpenCL and cl_khr_gl_sharing
@@ -18,6 +20,9 @@
 // intent of leaving it specialized to only the raycaster. Any further OpenCL
 // work can use its own class
 
+// Perhaps in the future there will be a container "scene" which will
+// hold the current map, camera, and light objects. The renderer will
+// then be passed that scene which it will then use to render with
 
 class Renderer {
 
@@ -26,9 +31,11 @@ public:
 
     // The renderer needs all of the things that are required
     // by CL in order to render the screen
-    void register_camera(Camera camera);
-
-
+    void register_camera(Camera* camera);
+	void register_map(Old_Map* map);
+	void register_lights();
+	void create_viewport(float v_fov, float h_fov, int height, int width);
+	void register_light(light l);
 
     void draw();
     sf::RenderWindow* get_window();
@@ -36,9 +43,18 @@ public:
 private:
 
     CL_Wrapper *cl;
+	RayCaster *rc;
+
     bool sharing_supported = false;
-    sf::Uint8 *drawing_surface;
+	bool cl_supported = false;
+    
+	sf::Uint8 *drawing_surface;
     sf::RenderWindow* window;
+
+	std::vector<light> lights;
+	Old_Map* map;
+	Camera* camera;
+	sf::Uint8 *view_matrix;
 
 };
 
