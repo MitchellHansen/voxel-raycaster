@@ -52,7 +52,7 @@ float4 cast_light_rays(
 	}
 
 	if (get_global_id(0) == 1037760) { 
-		printf("%f", intensity);
+		//printf("%f", intensity);
 		voxel_color = (float4)(1.0, 1.0, 1.0, 1.0);
 		return voxel_color;
 	}
