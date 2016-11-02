@@ -13,7 +13,7 @@ public:
 		SHARING_NOT_SUPPORTED = 800,
 		OPENCL_NOT_SUPPORTED = 801,
 		OPENCL_ERROR = 802,
-		ERROR = 803
+		ERR = 803
 	};
 
 	RayCaster();
@@ -24,7 +24,7 @@ public:
 	virtual void assign_map(Old_Map *map) = 0;
 	virtual void assign_camera(Camera *camera) = 0;
 	virtual void create_viewport(int width, int height, float v_fov, float h_fov) = 0;
-	virtual void assign_light(Light light) = 0;
+	virtual void assign_light(std::string light_id, Light light) = 0;
 
 	// draw will abstract the gl sharing and software rendering
 	// methods of retrieving the screen buffer
@@ -34,31 +34,14 @@ protected:
 
 	sf::Sprite viewport_sprite;
 	sf::Texture viewport_texture;
-	
 
-	// A reference to the map
-	Old_Map *map;
+	Old_Map * map;
+	Camera *camera;
+	std::map<std::string, Light> light_map;
+	sf::Uint8 *viewport_image;
+	sf::Vector4f *viewport_matrix;
 
-	// The XY resolution of the viewport
-	sf::Vector2<int> resolution;
-
-	// The pixel array, maybe do RBGA? Are there even 4 byte data types?
-	sf::Color *image;
-
-	// The direction of the camera in POLAR coordinates
-	sf::Vector3<float> camera_direction;
-
-	// Convert the polar coordinates to CARTESIAN
-	sf::Vector3<float> camera_direction_cartesian;
-
-	// The world-space position of the camera
-	sf::Vector3<float> camera_position;
-
-    // The distance in units the view plane is from the iris point
-    int view_plane_distance = 200;
-
-    // Precalculated values for the view plane rays
-    sf::Vector3f *view_plane_vectors;
+	int error = 0;
 
 };
 

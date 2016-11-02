@@ -14,8 +14,6 @@ int Hardware_Caster::init() {
 
 	// Initialize opencl up to the point where we start assigning buffers
 
-	int error = 0;
-
 	error = acquire_platform_and_device();
 	if(assert(error, "aquire_platform_and_device"))
 		return error;
@@ -44,6 +42,7 @@ int Hardware_Caster::init() {
 
 void Hardware_Caster::assign_map(Old_Map *map) {
 
+	this->map = map;
 	auto dimensions = map->getDimensions();
 	
 	create_buffer("map_buffer", sizeof(char) * dimensions.x * dimensions.y * dimensions.z, map->get_voxel_data());
@@ -52,6 +51,8 @@ void Hardware_Caster::assign_map(Old_Map *map) {
 }
 
 void Hardware_Caster::assign_camera(Camera *camera) {
+
+	this->camera = camera;
 
 	create_buffer("cam_dir_buffer", sizeof(float) * 4, (void*)camera->get_direction_pointer(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 	create_buffer("cam_pos_buffer", sizeof(float) * 4, (void*)camera->get_position_pointer(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
@@ -74,7 +75,7 @@ void Hardware_Caster::create_viewport(int width, int height, float v_fov, float 
 	double y_increment_radians = DegreesToRadians(v_fov / view_res.y);
 	double x_increment_radians = DegreesToRadians(h_fov / view_res.x);
 
-	sf::Vector4f* view_matrix = new sf::Vector4f[width * height * 4];
+	viewport_matrix = new sf::Vector4f[width * height * 4];
 
 	for (int y = -view_res.y / 2; y < view_res.y / 2; y++) {
 		for (int x = -view_res.x / 2; x < view_res.x / 2; x++) {
@@ -100,7 +101,7 @@ void Hardware_Caster::create_viewport(int width, int height, float v_fov, float 
 			int index = (x + view_res.x / 2) + view_res.x * (y + view_res.y / 2);
 			ray = Normalize(ray);
 
-			view_matrix[index] = sf::Vector4f(
+			viewport_matrix[index] = sf::Vector4f(
 				ray.x,
 				ray.y,
 				ray.z,
@@ -109,30 +110,30 @@ void Hardware_Caster::create_viewport(int width, int height, float v_fov, float 
 		}
 	}
 
-	create_buffer("view_matrix_buffer", sizeof(float) * 4 * view_res.x * view_res.y, view_matrix);
+	create_buffer("view_matrix_buffer", sizeof(float) * 4 * view_res.x * view_res.y, viewport_matrix);
 
 	// Create the image that opencl's rays write to
-	unsigned char* pixel_array = new sf::Uint8[width * height * 4];
+	viewport_image = new sf::Uint8[width * height * 4];
 
 	for (int i = 0; i < width * height * 4; i += 4) {
 
-		pixel_array[i] = 255;     // R
-		pixel_array[i + 1] = 255; // G
-		pixel_array[i + 2] = 255; // B
-		pixel_array[i + 3] = 100; // A
+		viewport_image[i] = 255;     // R
+		viewport_image[i + 1] = 255; // G
+		viewport_image[i + 2] = 255; // B
+		viewport_image[i + 3] = 100; // A
 	}
 
 	// Interop lets us keep a reference to it as a texture
 	viewport_texture.create(width, height);
-	viewport_texture.update(pixel_array);
+	viewport_texture.update(viewport_image);
 	viewport_sprite.setTexture(viewport_texture);
 
 	// Pass the buffer to opencl
-	create_image_buffer("image_buffer", sizeof(sf::Uint8) * width * height * 4, pixel_array);
+	create_image_buffer("image_buffer", sizeof(sf::Uint8) * width * height * 4, viewport_image);
 
 }
 
-void Hardware_Caster::assign_light(Light light) {
+void Hardware_Caster::assign_light(std::string light_id, Light light) {
 
 }
 
@@ -166,7 +167,6 @@ int Hardware_Caster::acquire_platform_and_device() {
 
 		// Check to see if we even have opencl on this machine
 		if (deviceIdCount == 0) {
-			cl_supported = false;
 			std::cout << "There appears to be no platforms supporting opencl" << std::endl;
 			return OPENCL_NOT_SUPPORTED;
 		}
@@ -523,10 +523,6 @@ cl_context Hardware_Caster::getContext() { return context; };
 cl_kernel Hardware_Caster::getKernel(std::string kernel_name) { return kernel_map.at(kernel_name); };
 cl_command_queue Hardware_Caster::getCommandQueue() { return command_queue; };
 
-bool Hardware_Caster::was_init_valid() {
-	return cl_supported;
-}
-
 bool Hardware_Caster::assert(int error_code, std::string function_name) {
 
 	// Just gonna do a little jump table here, just error codes so who cares
@@ -723,7 +719,7 @@ bool Hardware_Caster::assert(int error_code, std::string function_name) {
 	case RayCaster::OPENCL_ERROR:
 		err_msg = "OPENCL_ERROR";
 		break;
-	case RayCaster::ERROR:
+	case RayCaster::ERR:
 		err_msg = "ERROR";
 		break;
 	}

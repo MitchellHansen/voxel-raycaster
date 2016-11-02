@@ -66,78 +66,46 @@ sf::Texture window_texture;
 
 int main() {
 
+	// It looks like I got the bulk of the stuff moved over to hardware caster.
+	// The lights still need work. Adding them to a map and checking for collisions
+	// will probably be the route I take.
+	// Need to hook up the assignment of kernel args
+	// Also need to hook up the rendering with the draw function. 
+
+
+
 	sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
 
-	RayCaster rc = new Hardware_Caster()
-	CL_Wrapper c;
-
-	if (c.compile_kernel("../kernels/ray_caster_kernel.cl", true, "min_kern") < 0) {
-		std::cin.get();
-		return -1;
+	// Initialize the raycaster hardware, compat, or software
+	RayCaster *rc = new Hardware_Caster();
+	if (rc->init() != 0) {
+		delete rc;
+		// rc = new Hardware_Caster_Compat();
+		// if (rc->init() != 0) {
+		//		delete rc;
+		//		rc = new Software_Caster();
+		// }
 	}
 	
+	// This will be removed
+	CL_Wrapper c;
+
 	std::cout << "map...";
 	sf::Vector3i map_dim(MAP_X, MAP_Y, MAP_Z);
-    Old_Map* map = new Old_Map(map_dim);
+	Old_Map* map = new Old_Map(map_dim);
 	map->generate_terrain();
 
-	c.create_buffer("map_buffer", sizeof(char) * map_dim.x * map_dim.y * map_dim.z, map->get_voxel_data());
-	c.create_buffer("dim_buffer", sizeof(int) * 3, &map_dim);
+	rc->assign_map(map);
 
-	sf::Vector2i view_res(WINDOW_X, WINDOW_Y);
-	c.create_buffer("res_buffer", sizeof(int) * 2, &view_res);
-  	
-
-    double y_increment_radians = DegreesToRadians(50.0f / view_res.y);
-    double x_increment_radians = DegreesToRadians(80.0f / view_res.x);
-
-	std::cout << "view matrix...";
-  
-	sf::Vector4f* view_matrix = new sf::Vector4f[WINDOW_X * WINDOW_Y * 4];
-
-    for (int y = -view_res.y / 2; y < view_res.y / 2; y++) {
-        for (int x = -view_res.x / 2; x < view_res.x / 2; x++) {
-
-            // The base ray direction to slew from
-            sf::Vector3f ray(1, 0, 0);
-
-			// Y axis, pitch
-			ray = sf::Vector3f(
-				static_cast<float>(ray.z * sin(y_increment_radians * y) + ray.x * cos(y_increment_radians * y)),
-				static_cast<float>(ray.y),
-				static_cast<float>(ray.z * cos(y_increment_radians * y) - ray.x * sin(y_increment_radians * y))
-			);
-
-
-			// Z axis, yaw
-			ray = sf::Vector3f(
-				static_cast<float>(ray.x * cos(x_increment_radians * x) - ray.y * sin(x_increment_radians * x)),
-				static_cast<float>(ray.x * sin(x_increment_radians * x) + ray.y * cos(x_increment_radians * x)),
-				static_cast<float>(ray.z)
-			);
-            
-			int index = (x + view_res.x / 2) + view_res.x * (y + view_res.y / 2);
-            ray = Normalize(ray);
-
-            view_matrix[index] = sf::Vector4f(
-				ray.x,
-				ray.y,
-				ray.z,
-				0
-			);
-        }
-    }
-
-	c.create_buffer("view_matrix_buffer", sizeof(float) * 4 * view_res.x * view_res.y, view_matrix);
-
-	Camera camera(
+	Camera *camera = new Camera(
 		sf::Vector3f(0, 0, 0),
 		sf::Vector2f(0.0f, 1.00f)
 	);
+
+	rc->assign_camera(camera);
+
+	rc->create_viewport(WINDOW_X, WINDOW_Y, 50.0f, 80.0f);
 	
-	c.create_buffer("cam_dir_buffer", sizeof(float) * 4, (void*)camera.get_direction_pointer(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
-	c.create_buffer("cam_pos_buffer", sizeof(float) * 4, (void*)camera.get_position_pointer(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
-    
 	int light_count = 2;
 	c.create_buffer("light_count_buffer", sizeof(int), &light_count);
 
@@ -148,31 +116,7 @@ int main() {
 					  0.4f, 0.8f, 0.1f, 1.0f, 50.0f, 50.0f, 50.0f, v2.x, v2.y, v2.z};
 	c.create_buffer("light_buffer", sizeof(float) * 10 * light_count, light, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 
-	// The drawing canvas
-    unsigned char* pixel_array = new sf::Uint8[WINDOW_X * WINDOW_Y * 4];
-
-    for (int i = 0; i < WINDOW_X * WINDOW_Y * 4; i += 4) {
-
-        pixel_array[i] = 255; // R?
-        pixel_array[i + 1] = 255; // G?
-        pixel_array[i + 2] = 255; // B?
-        pixel_array[i + 3] = 100; // A?
-    }
-
-	sf::Texture t;
-    t.create(WINDOW_X, WINDOW_Y);
-    t.update(pixel_array);
-
-    int error;
-    cl_mem image_buff = clCreateFromGLTexture(
-            c.getContext(), CL_MEM_WRITE_ONLY, GL_TEXTURE_2D,
-            0, t.getNativeHandle(), &error);
-
-    if (c.assert(error, "clCreateFromGLTexture"))
-        return -1;
-
-    c.store_buffer(image_buff, "image_buffer");
-
+	
     c.set_kernel_arg("min_kern", 0, "map_buffer");
     c.set_kernel_arg("min_kern", 1, "dim_buffer");
     c.set_kernel_arg("min_kern", 2, "res_buffer");
@@ -183,10 +127,7 @@ int main() {
 	c.set_kernel_arg("min_kern", 7, "light_count_buffer");
 	c.set_kernel_arg("min_kern", 8, "image_buffer");
 
-	sf::Sprite s;
-	s.setTexture(t);
-	s.setPosition(0, 0);
-
+	
     // The step size in milliseconds between calls to Update()
     // Lets set it to 16.6 milliseonds (60FPS)
     float step_size = 0.0166f;
@@ -212,11 +153,11 @@ int main() {
 
 	//RayCaster ray_caster(map, map_dim, view_res);
 
-	sf::Vector2f *dp = camera.get_direction_pointer();
+	sf::Vector2f *dp = camera->get_direction_pointer();
 	debug_text cam_text_x(1, 30, &dp->x, "incli: ");
 	debug_text cam_text_y(2, 30, &dp->y, "asmth: ");
 
-	sf::Vector3f *mp = camera.get_movement_pointer();
+	sf::Vector3f *mp = camera->get_movement_pointer();
 	debug_text cam_text_mov_x(4, 30, &mp->x, "X: ");
 	debug_text cam_text_mov_y(5, 30, &mp->y, "Y: ");
 	debug_text cam_text_mov_z(6, 30, &mp->y, "Z: ");
@@ -263,28 +204,28 @@ int main() {
 			speed = 0.2f;
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
-			camera.add_relative_impulse(Camera::DIRECTION::DOWN, speed);
+			camera->add_relative_impulse(Camera::DIRECTION::DOWN, speed);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::E)) {
-			camera.add_relative_impulse(Camera::DIRECTION::UP, speed);
+			camera->add_relative_impulse(Camera::DIRECTION::UP, speed);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
-			camera.add_relative_impulse(Camera::DIRECTION::FORWARD, speed);
+			camera->add_relative_impulse(Camera::DIRECTION::FORWARD, speed);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
-			camera.add_relative_impulse(Camera::DIRECTION::REARWARD, speed);
+			camera->add_relative_impulse(Camera::DIRECTION::REARWARD, speed);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
-			camera.add_relative_impulse(Camera::DIRECTION::LEFT, speed);
+			camera->add_relative_impulse(Camera::DIRECTION::LEFT, speed);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
-			camera.add_relative_impulse(Camera::DIRECTION::RIGHT, speed);
+			camera->add_relative_impulse(Camera::DIRECTION::RIGHT, speed);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::T)) {
-			camera.set_position(sf::Vector3f(50, 50, 50));
+			camera->set_position(sf::Vector3f(50, 50, 50));
 		}
 
-		camera.add_static_impulse(cam_vec);
+		camera->add_static_impulse(cam_vec);
 
 		if (mouse_enabled) {
 			deltas = fixed - sf::Mouse::getPosition();
@@ -292,7 +233,7 @@ int main() {
 
 				// Mouse movement
 				sf::Mouse::setPosition(fixed);
-				camera.slew_camera(sf::Vector2f(
+				camera->slew_camera(sf::Vector2f(
 					deltas.y / 300.0f,
 					deltas.x / 300.0f
 				));
@@ -329,10 +270,11 @@ int main() {
 		light[9] = l[2];
 
         // ==== FPS LOCKED ====
-		camera.update(delta_time);
+		camera->update(delta_time);
 
 		// Run the raycast
-		c.run_kernel("min_kern", WORK_SIZE);
+		rc->draw(&window);
+		//c.run_kernel("min_kern", WORK_SIZE);
 				
 		// ==== RENDER ====
 

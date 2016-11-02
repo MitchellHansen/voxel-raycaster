@@ -40,20 +40,20 @@ public:
 
 	virtual ~Hardware_Caster();
 
-	int init();
+	int init() override;
 
 	// In interop mode, this will create a gl texture that we share
 	// Otherwise, it will create the pixel buffer and pass that in as an image, retreiving it each draw
 	// Both will create the view matrix, view res buffer
-	void create_viewport(int width, int height, float v_fov, float h_fov);
+	void create_viewport(int width, int height, float v_fov, float h_fov) override;
 
-	void assign_light(Light light);
-	void assign_map(Old_Map *map);
-	void assign_camera(Camera *camera);
+	void assign_light(std::string light_id, Light light) override;
+	void assign_map(Old_Map *map) override;
+	void assign_camera(Camera *camera) override;
 
 	// draw will abstract the gl sharing and software rendering
 	// methods of retrieving the screen buffer
-	void draw(sf::RenderWindow* window) = 0;
+	void draw(sf::RenderWindow* window) override;
 
 private:
 
@@ -85,13 +85,6 @@ private:
 	cl_context getContext();
 	cl_kernel getKernel(std::string kernel_name);
 	cl_command_queue getCommandQueue();
-
-	bool was_init_valid();
-
-	int error = 0;
-	bool initialized = false;
-	bool cl_khr_gl_sharing_fallback = false;
-	bool cl_supported = false;
 
 	cl_platform_id platform_id;
 	cl_device_id device_id;
