@@ -3,30 +3,40 @@
 #include <SFML/System/Vector2.hpp>
 #include <Map.h>
 #include "Old_map.h"
+#include "Camera.h"
 
-
-// What about a parent, child relationship between the raycaster and it's two
-// different modes? Raycaster -> ClCaster, SoftwareCaster
-class Camera;
 
 class RayCaster {
 public:
 
+	enum ERROR_CODES {
+		SHARING_NOT_SUPPORTED = 800,
+		OPENCL_NOT_SUPPORTED = 801,
+		OPENCL_ERROR = 802,
+		ERROR = 803
+	};
+
 	RayCaster();
-	~RayCaster();
+	virtual ~RayCaster();
+
+	virtual int init() = 0;
 
 	virtual void assign_map(Old_Map *map) = 0;
 	virtual void assign_camera(Camera *camera) = 0;
-	virtual void assign_viewport(int width, int height, float v_fov, float h_fov) = 0;
+	virtual void create_viewport(int width, int height, float v_fov, float h_fov) = 0;
 	virtual void assign_light(Light light) = 0;
 
 	// draw will abstract the gl sharing and software rendering
 	// methods of retrieving the screen buffer
 	virtual void draw(sf::RenderWindow* window) = 0;
 
-private:
+protected:
 
-	sf::Vector3<int> map_dimensions;
+	sf::Sprite viewport_sprite;
+	sf::Texture viewport_texture;
+	
+
+	// A reference to the map
 	Old_Map *map;
 
 	// The XY resolution of the viewport
@@ -37,7 +47,6 @@ private:
 
 	// The direction of the camera in POLAR coordinates
 	sf::Vector3<float> camera_direction;
-
 
 	// Convert the polar coordinates to CARTESIAN
 	sf::Vector3<float> camera_direction_cartesian;

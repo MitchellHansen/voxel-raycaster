@@ -30,6 +30,7 @@
 #include "Curses.h"
 #include "util.hpp"
 #include "RayCaster.h"
+#include "Hardware_Caster.h"
 #include "CL_Wrapper.h"
 #include "Vector4.hpp"
 #include <Camera.h>
@@ -67,6 +68,7 @@ int main() {
 
 	sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
 
+	RayCaster rc = new Hardware_Caster()
 	CL_Wrapper c;
 
 	if (c.compile_kernel("../kernels/ray_caster_kernel.cl", true, "min_kern") < 0) {

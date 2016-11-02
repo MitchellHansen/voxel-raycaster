@@ -5,9 +5,10 @@ CL_Wrapper::CL_Wrapper() {
 	// Check to see if acquiring the platform failed out
 	// This also catches when there are general errors,
 	// falling back to the known good software renderer
+
 	if (acquire_platform_and_device() == -1) {
 		std::cout << "Falling back to the software renderer" << std::endl;
-		return;
+		
 	}
 	
 	cl_supported = true;
@@ -390,6 +391,9 @@ bool CL_Wrapper::assert(int error_code, std::string function_name){
 
         case CL_SUCCESS:
             return false;
+		
+		case 1:
+			return false;
 
         case CL_DEVICE_NOT_FOUND:
             err_msg += "CL_DEVICE_NOT_FOUND";

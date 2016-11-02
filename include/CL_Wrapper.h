@@ -22,11 +22,11 @@
 #endif
 
 struct device {
-    cl_device_id id;
-    cl_device_type type;
-    cl_uint clock_frequency;
-    char version[128];
-    cl_platform_id platform;
+	cl_device_id id;
+	cl_device_type type;
+	cl_uint clock_frequency;
+	char version[128];
+	cl_platform_id platform;
 	cl_uint comp_units;
 };
 

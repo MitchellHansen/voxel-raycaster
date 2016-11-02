@@ -9,12 +9,12 @@ Renderer::Renderer() {
 	}
 }
 
-void Renderer::register_camera(Camera *camera)
-{
+void Renderer::register_camera(Camera *camera) {
+	this->camera = camera;
+}
+
+void Renderer::draw() {
 
 }
 
-void Renderer::draw()
-{
 
-}

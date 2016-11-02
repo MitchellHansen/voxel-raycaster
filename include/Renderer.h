@@ -35,7 +35,7 @@ public:
 	void register_map(Old_Map* map);
 	void register_lights();
 	void create_viewport(float v_fov, float h_fov, int height, int width);
-	void register_light(light l);
+	void register_light(Light l);
 
     void draw();
     sf::RenderWindow* get_window();
@@ -51,7 +51,7 @@ private:
 	sf::Uint8 *drawing_surface;
     sf::RenderWindow* window;
 
-	std::vector<light> lights;
+	std::vector<Light> lights;
 	Old_Map* map;
 	Camera* camera;
 	sf::Uint8 *view_matrix;
