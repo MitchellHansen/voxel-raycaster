@@ -42,6 +42,7 @@ protected:
 	std::vector<Light> lights;
 	sf::Uint8 *viewport_image = nullptr;
 	sf::Vector4f *viewport_matrix = nullptr;
+	sf::Vector2i viewport_resolution;
 
 	int error = 0;
 

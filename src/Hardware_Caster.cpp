@@ -564,7 +564,6 @@ int Hardware_Caster::run_kernel(std::string kernel_name, const int work_size) {
 void Hardware_Caster::print_kernel_arguments()
 {
 	compile_kernel("../kernels/print_arguments.cl", true, "printer");
-	
 	set_kernel_arg("printer", 0, "map");
 	set_kernel_arg("printer", 1, "map_dimensions");
 	set_kernel_arg("printer", 2, "viewport_resolution");

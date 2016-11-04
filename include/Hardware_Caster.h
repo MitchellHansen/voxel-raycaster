@@ -45,8 +45,8 @@ public:
 
 	int init() override;
 
-	// In interop mode, this will create a gl texture that we share
-	// Otherwise, it will create the pixel buffer and pass that in as an image, retreiving it each draw
+	// In interop mode, this will create a GL texture that we share
+	// Otherwise, it will create the pixel buffer and pass that in as an image, retrieving it each draw
 	// Both will create the view matrix, view res buffer
 	void create_viewport(int width, int height, float v_fov, float h_fov) override;
 
