@@ -75,7 +75,7 @@ float4 cast_light_rays(
 	//			if it does
 }
 
-__kernel void min_kern(
+__kernel void raycaster(
         global char* map,
         global int3* map_dim,
         global int2* resolution,

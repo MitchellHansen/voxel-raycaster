@@ -30,7 +30,7 @@ int Hardware_Caster::init() {
 	if (assert(error, "create_command_queue"))
 		return error;
 
-	error = compile_kernel("../kernels/ray_caster_kernel.cl", true, "min_kern");
+	error = compile_kernel("../kernels/ray_caster_kernel.cl", true, "raycaster");
 	if (assert(error, "compile_kernel")) {
 		std::cin.get(); // hang the output window so we can read the error
 		return error;
@@ -45,8 +45,8 @@ void Hardware_Caster::assign_map(Old_Map *map) {
 	this->map = map;
 	auto dimensions = map->getDimensions();
 	
-	create_buffer("map_buffer", sizeof(char) * dimensions.x * dimensions.y * dimensions.z, map->get_voxel_data());
-	create_buffer("dim_buffer", sizeof(int) * 3, &dimensions);
+	create_buffer("map", sizeof(char) * dimensions.x * dimensions.y * dimensions.z, map->get_voxel_data());
+	create_buffer("map_dimensions", sizeof(int) * 3, &dimensions);
 
 }
 
@@ -54,8 +54,43 @@ void Hardware_Caster::assign_camera(Camera *camera) {
 
 	this->camera = camera;
 
-	create_buffer("cam_dir_buffer", sizeof(float) * 4, (void*)camera->get_direction_pointer(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
-	create_buffer("cam_pos_buffer", sizeof(float) * 4, (void*)camera->get_position_pointer(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+	create_buffer("camera_direction", sizeof(float) * 4, (void*)camera->get_direction_pointer(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+	create_buffer("camera_position", sizeof(float) * 4, (void*)camera->get_position_pointer(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+}
+
+void Hardware_Caster::validate()
+{
+	// Check to make sure everything has been entered;
+	if (camera == nullptr ||
+		map == nullptr ||
+		viewport_image == nullptr ||
+		viewport_matrix == nullptr) {
+		
+		std::cout << "Raycaster.validate() failed, camera, map, or viewport not initialized";
+	
+	} else {
+	
+		// Set all the kernel args
+		set_kernel_arg("raycaster", 0, "map");
+		set_kernel_arg("raycaster", 1, "map_dimensions");
+		set_kernel_arg("raycaster", 2, "viewport_resolution");
+		set_kernel_arg("raycaster", 3, "viewport_matrix");
+		set_kernel_arg("raycaster", 4, "camera_direction");
+		set_kernel_arg("raycaster", 5, "camera_position");
+		set_kernel_arg("raycaster", 6, "lights");
+		set_kernel_arg("raycaster", 7, "light_count");
+		set_kernel_arg("raycaster", 8, "image");
+
+		print_kernel_arguments();
+	}
+
+	
+}
+
+void Hardware_Caster::compute()
+{
+	// correlating work size with texture size? good, bad?
+	run_kernel("raycaster", viewport_texture.getSize().x * viewport_texture.getSize().y);
 }
 
 // There is a possibility that I would want to move this over to be all inside it's own
@@ -65,7 +100,7 @@ void Hardware_Caster::create_viewport(int width, int height, float v_fov, float 
 	
 	// CL needs the screen resolution
 	sf::Vector2i view_res(width, height);
-	create_buffer("res_buffer", sizeof(int) * 2, &view_res);
+	create_buffer("viewport_resolution", sizeof(int) * 2, &view_res);
 
 	// And an array of vectors describing the way the "lens" of our
 	// camera works
@@ -110,7 +145,7 @@ void Hardware_Caster::create_viewport(int width, int height, float v_fov, float 
 		}
 	}
 
-	create_buffer("view_matrix_buffer", sizeof(float) * 4 * view_res.x * view_res.y, viewport_matrix);
+	create_buffer("viewport_matrix", sizeof(float) * 4 * view_res.x * view_res.y, viewport_matrix);
 
 	// Create the image that opencl's rays write to
 	viewport_image = new sf::Uint8[width * height * 4];
@@ -129,16 +164,24 @@ void Hardware_Caster::create_viewport(int width, int height, float v_fov, float 
 	viewport_sprite.setTexture(viewport_texture);
 
 	// Pass the buffer to opencl
-	create_image_buffer("image_buffer", sizeof(sf::Uint8) * width * height * 4, viewport_image);
+	create_image_buffer("image", sizeof(sf::Uint8) * width * height * 4, viewport_image);
 
 }
 
-void Hardware_Caster::assign_light(std::string light_id, Light light) {
+void Hardware_Caster::assign_lights(std::vector<Light> lights) {
+	
+	this->lights = std::vector<Light>(lights);
+
+	int light_count = lights.size();
+
+	create_buffer("lights", sizeof(float) * 12 * light_count, lights.data(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+
+	create_buffer("light_count", sizeof(int), &light_count);
 
 }
 
 void Hardware_Caster::draw(sf::RenderWindow* window) {
-
+	window->draw(viewport_sprite);
 }
 
 int Hardware_Caster::acquire_platform_and_device() {
@@ -286,8 +329,9 @@ int Hardware_Caster::create_shared_context() {
 
 int Hardware_Caster::create_command_queue() {
 
+	// If context and device_id have initialized
 	if (context && device_id) {
-		// And the cl command queue
+		
 		command_queue = clCreateCommandQueue(context, device_id, 0, &error);
 
 		if (assert(error, "clCreateCommandQueue"))
@@ -494,7 +538,7 @@ int Hardware_Caster::run_kernel(std::string kernel_name, const int work_size) {
 
 	cl_kernel kernel = kernel_map.at(kernel_name);
 
-	error = clEnqueueAcquireGLObjects(getCommandQueue(), 1, &buffer_map.at("image_buffer"), 0, 0, 0);
+	error = clEnqueueAcquireGLObjects(getCommandQueue(), 1, &buffer_map.at("image"), 0, 0, 0);
 	if (assert(error, "clEnqueueAcquireGLObjects"))
 		return OPENCL_ERROR;
 
@@ -510,11 +554,28 @@ int Hardware_Caster::run_kernel(std::string kernel_name, const int work_size) {
 	clFinish(getCommandQueue());
 
 	// What if errors out and gl objects are never released?
-	error = clEnqueueReleaseGLObjects(getCommandQueue(), 1, &buffer_map.at("image_buffer"), 0, NULL, NULL);
+	error = clEnqueueReleaseGLObjects(getCommandQueue(), 1, &buffer_map.at("image"), 0, NULL, NULL);
 	if (assert(error, "clEnqueueReleaseGLObjects"))
 		return OPENCL_ERROR;
 
 	return 1;
+}
+
+void Hardware_Caster::print_kernel_arguments()
+{
+	compile_kernel("../kernels/print_arguments.cl", true, "printer");
+	
+	set_kernel_arg("printer", 0, "map");
+	set_kernel_arg("printer", 1, "map_dimensions");
+	set_kernel_arg("printer", 2, "viewport_resolution");
+	set_kernel_arg("printer", 3, "viewport_matrix");
+	set_kernel_arg("printer", 4, "camera_direction");
+	set_kernel_arg("printer", 5, "camera_position");
+	set_kernel_arg("printer", 6, "lights");
+	set_kernel_arg("printer", 7, "light_count");
+	set_kernel_arg("printer", 8, "image");
+
+	run_kernel("printer", 1);
 }
 
 cl_device_id Hardware_Caster::getDeviceID() { return device_id; };

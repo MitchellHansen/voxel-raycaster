@@ -7,7 +7,6 @@
 #include <CL/cl_gl.h>
 #include <CL/cl.h>
 #include <CL/opencl.h>
-#include <GL/GL.h>
 
 #include <windows.h>
 
@@ -20,18 +19,16 @@
 
 #endif
 
+#pragma once
 #include <iostream>
 #include <chrono>
 #include <fstream>
 #include <sstream>
 #include <SFML/Graphics.hpp>
-
 #include "Old_Map.h"
-#include "Curses.h"
 #include "util.hpp"
 #include "RayCaster.h"
 #include "Hardware_Caster.h"
-#include "CL_Wrapper.h"
 #include "Vector4.hpp"
 #include <Camera.h>
 
@@ -66,19 +63,11 @@ sf::Texture window_texture;
 
 int main() {
 
-	// It looks like I got the bulk of the stuff moved over to hardware caster.
-	// The lights still need work. Adding them to a map and checking for collisions
-	// will probably be the route I take.
-	// Need to hook up the assignment of kernel args
-	// Also need to hook up the rendering with the draw function. 
-
-
-
 	sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
 
 	// Initialize the raycaster hardware, compat, or software
 	RayCaster *rc = new Hardware_Caster();
-	if (rc->init() != 0) {
+	if (rc->init() != 1) {
 		delete rc;
 		// rc = new Hardware_Caster_Compat();
 		// if (rc->init() != 0) {
@@ -86,9 +75,8 @@ int main() {
 		//		rc = new Software_Caster();
 		// }
 	}
-	
-	// This will be removed
-	CL_Wrapper c;
+
+	// Set up the raycaster
 
 	std::cout << "map...";
 	sf::Vector3i map_dim(MAP_X, MAP_Y, MAP_Z);
@@ -98,82 +86,46 @@ int main() {
 	rc->assign_map(map);
 
 	Camera *camera = new Camera(
-		sf::Vector3f(0, 0, 0),
-		sf::Vector2f(0.0f, 1.00f)
+		sf::Vector3f(10, 11, 12),
+		sf::Vector2f(0.1f, 1.00f)
 	);
 
 	rc->assign_camera(camera);
 
 	rc->create_viewport(WINDOW_X, WINDOW_Y, 50.0f, 80.0f);
-	
-	int light_count = 2;
-	c.create_buffer("light_count_buffer", sizeof(int), &light_count);
 
-	// {r, g, b, i, x, y, z, x', y', z'}
-	sf::Vector3f v = Normalize(sf::Vector3f(1.0f, 0.0f, 0.0f));
-	sf::Vector3f v2 = Normalize(sf::Vector3f(1.1f, 0.4f, 0.7f));
-	float light[] = { 0.4f, 0.8f, 0.1f, 1.0f, 50.0f, 50.0f, 50.0f, v.x, v.y, v.z,
-					  0.4f, 0.8f, 0.1f, 1.0f, 50.0f, 50.0f, 50.0f, v2.x, v2.y, v2.z};
-	c.create_buffer("light_buffer", sizeof(float) * 10 * light_count, light, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+	Light l;
+	l.direction_cartesian = sf::Vector3f(1.0f, 1.0f, 0.0f);
+	l.position = sf::Vector3f(10.0f, 10.0f, 10.0f);
+	l.rgbi = sf::Vector4f(0.3f, 0.4f, 0.3f, 1.0f);
 
-	
-    c.set_kernel_arg("min_kern", 0, "map_buffer");
-    c.set_kernel_arg("min_kern", 1, "dim_buffer");
-    c.set_kernel_arg("min_kern", 2, "res_buffer");
-    c.set_kernel_arg("min_kern", 3, "view_matrix_buffer");
-    c.set_kernel_arg("min_kern", 4, "cam_dir_buffer");
-    c.set_kernel_arg("min_kern", 5, "cam_pos_buffer");
-	c.set_kernel_arg("min_kern", 6, "light_buffer");
-	c.set_kernel_arg("min_kern", 7, "light_count_buffer");
-	c.set_kernel_arg("min_kern", 8, "image_buffer");
+	rc->assign_lights(std::vector<Light>{l});
 
-	
-    // The step size in milliseconds between calls to Update()
-    // Lets set it to 16.6 milliseonds (60FPS)
-    float step_size = 0.0166f;
+	rc->validate();
 
-    // Timekeeping values for the loop
-    double  frame_time = 0.0,
-            elapsed_time = 0.0,
-            delta_time = 0.0,
-            accumulator_time = 0.0,
-            current_time = 0.0;
+	// Done setting up raycaster
 
+	// ========== DEBUG ==========
     fps_counter fps;
-
-	// ============================= RAYCASTER SETUP ==================================
-
-	// Setup the sprite and texture
-	window_texture.create(WINDOW_X, WINDOW_Y);
-	window_sprite.setPosition(0, 0);
-
-	// State values
-
-	sf::Vector3f cam_vec(0, 0, 0);
-
-	//RayCaster ray_caster(map, map_dim, view_res);
 
 	sf::Vector2f *dp = camera->get_direction_pointer();
 	debug_text cam_text_x(1, 30, &dp->x, "incli: ");
 	debug_text cam_text_y(2, 30, &dp->y, "asmth: ");
+	// ===========================
 
-	sf::Vector3f *mp = camera->get_movement_pointer();
-	debug_text cam_text_mov_x(4, 30, &mp->x, "X: ");
-	debug_text cam_text_mov_y(5, 30, &mp->y, "Y: ");
-	debug_text cam_text_mov_z(6, 30, &mp->y, "Z: ");
-	//debug_text cam_text_z(3, 30, &p->z);
 
-	debug_text light_x(7, 30, &light[7], "X: ");
-	debug_text light_y(8, 30, &light[8], "Y: ");
-	debug_text light_z(9, 30, &light[9], "Z: ");
-	// ===============================================================================
+	// 16.6 milliseconds (60FPS)
+	float step_size = 0.0166f;
+	double  frame_time = 0.0,
+			elapsed_time = 0.0,
+			delta_time = 0.0,
+			accumulator_time = 0.0,
+			current_time = 0.0;
 
 	// Mouse capture
 	sf::Vector2i deltas;
 	sf::Vector2i fixed(window.getSize());
 	bool mouse_enabled = true;
-
-	sf::Vector3f cam_mov_vec;
 
 	while (window.isOpen()) {
 
@@ -181,9 +133,9 @@ int main() {
 		sf::Event event;
 		while (window.pollEvent(event)) {
 
-			// If the user tries to exit the application via the GUI
 			if (event.type == sf::Event::Closed)
 				window.close();
+
 			if (event.type == sf::Event::KeyPressed) {
 				if (event.key.code == sf::Keyboard::Space) {
 					if (mouse_enabled)
@@ -193,10 +145,6 @@ int main() {
 				}
 			}
 		}
-
-		cam_vec.x = 0;
-		cam_vec.y = 0;
-		cam_vec.z = 0;
 
 		float speed = 1.0f;
 
@@ -225,8 +173,6 @@ int main() {
 			camera->set_position(sf::Vector3f(50, 50, 50));
 		}
 
-		camera->add_static_impulse(cam_vec);
-
 		if (mouse_enabled) {
 			deltas = fixed - sf::Mouse::getPosition();
 			if (deltas != sf::Vector2i(0, 0) && mouse_enabled == true) {
@@ -253,34 +199,14 @@ int main() {
             // ==== DELTA TIME LOCKED ====
         }
 
-		float l[] = {
-			static_cast<float>(light[9] * sin(delta_time / 1) + light[7] * cos(delta_time / 1)),
-			static_cast<float>(light[8]),
-			static_cast<float>(light[9] * cos(delta_time / 1) - light[7] * sin(delta_time / 1))
-		};
-
-		float l2[] = {
-			static_cast<float>(l[0] * cos(delta_time) - l[2] * sin(delta_time)),
-			static_cast<float>(l[0] * sin(delta_time) + l[2] * cos(delta_time)),
-			static_cast<float>(l[2])
-		};
-
-		light[7] = l[0];
-		light[8] = l[1];
-		light[9] = l[2];
-
         // ==== FPS LOCKED ====
 		camera->update(delta_time);
 
-		// Run the raycast
-		rc->draw(&window);
-		//c.run_kernel("min_kern", WORK_SIZE);
-				
-		// ==== RENDER ====
-
 		window.clear(sf::Color::Black);
 
-        window.draw(s);
+		// Run the raycast
+		rc->compute();
+		rc->draw(&window);
 
 		// Give the frame counter the frame time and draw the average frame time
 		fps.frame(delta_time);
@@ -288,14 +214,6 @@ int main() {
 
 		cam_text_x.draw(&window);
 		cam_text_y.draw(&window);
-
-		cam_text_mov_x.draw(&window);
-		cam_text_mov_y.draw(&window);
-		cam_text_mov_z.draw(&window);
-
-		light_x.draw(&window);
-		light_y.draw(&window);
-		light_z.draw(&window);
 			
 		window.display();
 

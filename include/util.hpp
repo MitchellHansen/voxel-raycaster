@@ -11,8 +11,13 @@ const float  PI_F = 3.14159265358979f;
 
 struct Light {
 	sf::Vector4f rgbi;
+
+	// I believe that Vector3's get padded to Vector4's. Give them a non-garbage value
 	sf::Vector3f position;
+	const float padding_1 = -1;
+
 	sf::Vector3f direction_cartesian;
+	const float padding_2 = -2;
 };
 
 struct fps_counter {
@@ -164,5 +169,6 @@ inline std::string read_file(std::string file_name){
 
 	std::stringstream buf;
 	buf << input_file.rdbuf();
+	input_file.close();
 	return buf.str();
 }

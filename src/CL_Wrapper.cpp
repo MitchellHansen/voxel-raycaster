@@ -226,10 +226,11 @@ int CL_Wrapper::check_cl_khr_gl_sharing() {
 
 	if (std::string(ext_str).find("cl_khr_gl_sharing") == std::string::npos) {
 		std::cout << "No support for the cl_khr_gl_sharing extension";
-		cl_khr_gl_sharing_fallback = true;
+		return -1;
 	}
 
 	delete ext_str;
+	return 1;
 }
 
 int CL_Wrapper::compile_kernel(std::string kernel_source, bool is_path, std::string kernel_name) {

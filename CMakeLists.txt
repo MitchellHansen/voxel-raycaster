@@ -27,9 +27,12 @@ include_directories(${OpenCL_INCLUDE_DIRS})
 include_directories(${OpenGL_INCLUDE_DIRS})
 include_directories(include)
 
-# Set the .cpp sources
+# Set the sources, allows VS to filter them properly
 file(GLOB SOURCES "src/*.cpp")
-add_executable(${PNAME} ${SOURCES} include/Renderer.cpp include/Renderer.h)
+file(GLOB HEADERS "include/*.h" "include/*.hpp")
+file(GLOB KERNELS "kernels/*.cl")
+
+add_executable(${PNAME} ${SOURCES} ${HEADERS} ${KERNELS})
 
 # Link CL, GL, and SFML
 target_link_libraries (${PNAME} ${SFML_LIBRARIES} ${SFML_DEPENDENCIES})

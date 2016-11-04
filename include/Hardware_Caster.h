@@ -6,6 +6,7 @@
 #include <map>
 #include <string.h>
 
+
 #ifdef linux
 #include <CL/cl.h>
 #include <CL/opencl.h>
@@ -15,8 +16,10 @@
 #include <CL/cl_gl.h>
 #include <CL/cl.h>
 #include <CL/opencl.h>
-#include <GL/GL.h>
+
+// Note: windows.h must be included before Gl/GL.h
 #include <windows.h>
+#include <GL/GL.h>
 
 #elif defined TARGET_OS_MAC
 # include <OpenGL/OpenGL.h>
@@ -47,12 +50,14 @@ public:
 	// Both will create the view matrix, view res buffer
 	void create_viewport(int width, int height, float v_fov, float h_fov) override;
 
-	void assign_light(std::string light_id, Light light) override;
+	void assign_lights(std::vector<Light> lights) override;
 	void assign_map(Old_Map *map) override;
 	void assign_camera(Camera *camera) override;
+	void validate() override;
 
 	// draw will abstract the gl sharing and software rendering
 	// methods of retrieving the screen buffer
+	void compute() override;
 	void draw(sf::RenderWindow* window) override;
 
 private:
@@ -78,6 +83,8 @@ private:
 
 	int run_kernel(std::string kernel_name, const int work_size);
 
+	void print_kernel_arguments();
+
 	bool assert(int error_code, std::string function_name);
 
 	cl_device_id getDeviceID();
@@ -93,5 +100,6 @@ private:
 
 	std::map<std::string, cl_kernel> kernel_map;
 	std::map<std::string, cl_mem> buffer_map;
+
 };
 
