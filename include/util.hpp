@@ -10,14 +10,13 @@ const double PI = 3.141592653589793238463;
 const float  PI_F = 3.14159265358979f;
 
 struct Light {
+#pragma pack(1)
 	sf::Vector4f rgbi;
 
 	// I believe that Vector3's get padded to Vector4's. Give them a non-garbage value
 	sf::Vector3f position;
-	const float padding_1 = -1;
 
 	sf::Vector3f direction_cartesian;
-	const float padding_2 = -2;
 };
 
 struct fps_counter {

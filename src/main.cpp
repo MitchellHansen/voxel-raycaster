@@ -31,6 +31,7 @@
 #include "Hardware_Caster.h"
 #include "Vector4.hpp"
 #include <Camera.h>
+#include "Software_Caster.h"
 
 const int WINDOW_X = 1920;
 const int WINDOW_Y = 1080;
@@ -67,6 +68,7 @@ int main() {
 
 	// Initialize the raycaster hardware, compat, or software
 	RayCaster *rc = new Hardware_Caster();
+	//RayCaster *rc = new Software_Caster();
 	if (rc->init() != 1) {
 		delete rc;
 		// rc = new Hardware_Caster_Compat();
@@ -95,8 +97,8 @@ int main() {
 	rc->create_viewport(WINDOW_X, WINDOW_Y, 50.0f, 80.0f);
 
 	Light l;
-	l.direction_cartesian = sf::Vector3f(1.0f, 1.0f, 0.0f);
-	l.position = sf::Vector3f(10.0f, 10.0f, 10.0f);
+	l.direction_cartesian = sf::Vector3f(1.5f, 1.2f, 0.5f);
+	l.position = sf::Vector3f(100.0f, 100.0f, 100.0f);
 	l.rgbi = sf::Vector4f(0.3f, 0.4f, 0.3f, 1.0f);
 
 	rc->assign_lights(std::vector<Light>{l});
@@ -125,7 +127,9 @@ int main() {
 	// Mouse capture
 	sf::Vector2i deltas;
 	sf::Vector2i fixed(window.getSize());
+	sf::Vector2i prev_pos;
 	bool mouse_enabled = true;
+	bool reset = false;
 
 	while (window.isOpen()) {
 
@@ -142,6 +146,8 @@ int main() {
 						mouse_enabled = false;
 					else
 						mouse_enabled = true;
+				} if (event.key.code == sf::Keyboard::R) {
+					reset = true;
 				}
 			}
 		}
@@ -174,11 +180,18 @@ int main() {
 		}
 
 		if (mouse_enabled) {
-			deltas = fixed - sf::Mouse::getPosition();
+			if (reset) {
+				reset = false;
+				sf::Mouse::setPosition(sf::Vector2i(2560/2, 1080/2));
+				prev_pos = sf::Vector2i(2560 / 2, 1080 / 2);
+			}
+
+			deltas = prev_pos - sf::Mouse::getPosition();
 			if (deltas != sf::Vector2i(0, 0) && mouse_enabled == true) {
 
 				// Mouse movement
-				sf::Mouse::setPosition(fixed);
+				//sf::Mouse::setPosition(fixed);
+				prev_pos = sf::Mouse::getPosition();
 				camera->slew_camera(sf::Vector2f(
 					deltas.y / 300.0f,
 					deltas.x / 300.0f

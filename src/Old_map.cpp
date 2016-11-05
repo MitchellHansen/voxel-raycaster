@@ -17,7 +17,7 @@ Old_Map::~Old_Map() {
 void Old_Map::generate_terrain() {
 	std::mt19937 gen;
 	std::uniform_real_distribution<double> dis(-1.0, 1.0);
-	auto f_rand = std::bind(dis, gen);
+	auto f_rand = std::bind(dis, std::ref(gen));
 
 	voxel_data = new char[dimensions.x * dimensions.y * dimensions.z];
 	height_map = new double[dimensions.x * dimensions.y];
@@ -34,7 +34,8 @@ void Old_Map::generate_terrain() {
 	//value 2^n+1
 	int DATA_SIZE = dimensions.x + 1;
 	//an initial seed value for the corners of the data
-	double SEED = rand() % 25 + 25;
+	//srand(f_rand());
+	double SEED = rand() % 25 + 55;
 
 	//seed the data
 	set_sample(0, 0, SEED);

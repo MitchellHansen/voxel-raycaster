@@ -170,11 +170,13 @@ void Hardware_Caster::create_viewport(int width, int height, float v_fov, float 
 
 void Hardware_Caster::assign_lights(std::vector<Light> lights) {
 	
+	std::cout << sizeof(Light);
+
 	this->lights = std::vector<Light>(lights);
 
-	int light_count = lights.size();
+	light_count = lights.size();
 
-	create_buffer("lights", sizeof(float) * 12 * light_count, lights.data(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+	create_buffer("lights", sizeof(float) * 10 * light_count, this->lights.data(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 
 	create_buffer("light_count", sizeof(int), &light_count);
 

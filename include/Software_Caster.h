@@ -1,4 +1,5 @@
 #include "RayCaster.h"
+#include <thread>
 
 class Software_Caster : public RayCaster
 {
@@ -26,6 +27,9 @@ public:
 
 private:
 	
-	void cast_rays();
-
+	void cast_viewport();
+	void cast_thread(int start_id, int end_id);
+	void cast_ray(int id);
+	void blit_pixel(sf::Color color, sf::Vector2i position, sf::Vector3i mask);
+	sf::Color global_light(sf::Color in, sf::Vector3i mask);
 };

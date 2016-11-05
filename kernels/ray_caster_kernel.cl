@@ -191,7 +191,7 @@ __kernel void raycaster(
 			case 5:
 			
 				//write_imagef(image, pixel, (float4)(.00, .00,  + 0.5, 1.00));
-				write_imagef(image, pixel, white_light((float4)(.35, .00, ((1.0 - 0) / (128 - 0) * (voxel.z - 128)) + 1, 0.2), (float3)(lights[7], lights[8], lights[9]), mask));
+				write_imagef(image, pixel, white_light((float4)(.40, .00, ((1.0 - 0) / (128 - 0) * (voxel.z - 128)) + 1, 0.2), (float3)(lights[7], lights[8], lights[9]), mask));
 				return;
 
 				float3 vox = convert_float3(voxel);
