@@ -15,6 +15,8 @@ public:
 	void compile_shader(std::string file_path, Shader_Type t);
 	void create_program();
 	void create_buffers();
+	void transform();
+	void rotate(double delta);
 	void draw();
 
 private:
@@ -25,5 +27,9 @@ private:
 	GLuint vertex_shader;
 	GLuint fragment_shader;
 	GLuint shader_program;
+
+	GLfloat *matrix;
+
+	double counter = 0;
 };
 

@@ -2,6 +2,18 @@
 
 GL_Testing::GL_Testing() {
 
+	GLfloat tmp[] = {
+
+		1, 0, 0, 0,
+		0, cos(1), sin(1), 0,
+		0, -sin(1), cos(1), 0,
+		0, 0, 0, 1
+
+	};
+
+	matrix = new GLfloat[16];
+	memcpy(matrix, tmp, sizeof(GLfloat) * 16);
+
 	GLint err = glewInit();
 
 	if (err) {
@@ -12,7 +24,6 @@ GL_Testing::GL_Testing() {
 
 void GL_Testing::compile_shader(std::string file_path, Shader_Type t) {
 
-	
 
 	// Load in the source and cstring it
 	const char* source;
@@ -105,6 +116,31 @@ void GL_Testing::create_buffers() {
 	glBindBuffer(GL_ARRAY_BUFFER, 0); // Note that this is allowed, the call to glVertexAttribPointer registered VBO as the currently bound vertex buffer object so afterwards we can safely unbind
 
 	glBindVertexArray(0);
+}
+
+void GL_Testing::transform()
+{
+	GLuint transformLoc = glGetUniformLocation(shader_program, "transform");
+
+	glUseProgram(shader_program);
+	glUniformMatrix4fv(transformLoc, 1, GL_FALSE, matrix);
+}
+
+void GL_Testing::rotate(double delta) {
+	
+	counter += delta;
+
+	GLfloat tmp[] = {
+
+		1, 0, 0, 0,
+		0, cos(counter), sin(counter), 0,
+		0, -sin(counter), cos(counter), 0,
+		0, 0, 0, 1
+
+	};
+
+	memcpy(matrix, tmp, sizeof(GLfloat) * 16);
+
 }
 
 void GL_Testing::draw() {
