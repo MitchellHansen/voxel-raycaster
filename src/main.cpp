@@ -1,14 +1,13 @@
-﻿#ifdef linux
+﻿#include "GL_Testing.h"
+
+#ifdef linux
 #include <CL/cl.h>
 #include <CL/opencl.h>
 
 #elif defined _WIN32
 #include <windows.h>
-#include <CL/cl_gl.h>
 #include <CL/cl.h>
 #include <CL/opencl.h>
-
-#include <windows.h>
 
 #elif defined TARGET_OS_MAC
 #include <OpenGL/gl.h>
@@ -24,6 +23,8 @@
 #include <chrono>
 #include <fstream>
 #include <sstream>
+
+
 #include <SFML/Graphics.hpp>
 #include "Old_Map.h"
 #include "util.hpp"
@@ -32,6 +33,7 @@
 #include "Vector4.hpp"
 #include <Camera.h>
 #include "Software_Caster.h"
+
 
 const int WINDOW_X = 1920;
 const int WINDOW_Y = 1080;
@@ -65,6 +67,12 @@ sf::Texture window_texture;
 int main() {
 
 	sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
+
+	GL_Testing t;
+	t.compile_shader("../shaders/passthrough.frag", GL_Testing::Shader_Type::FRAGMENT);
+	t.compile_shader("../shaders/passthrough.vert", GL_Testing::Shader_Type::VERTEX);
+	t.create_program();
+	t.create_buffers();
 
 	// Initialize the raycaster hardware, compat, or software
 	RayCaster *rc = new Hardware_Caster();
@@ -190,7 +198,7 @@ int main() {
 			if (deltas != sf::Vector2i(0, 0) && mouse_enabled == true) {
 
 				// Mouse movement
-				//sf::Mouse::setPosition(fixed);
+				sf::Mouse::setPosition(fixed);
 				prev_pos = sf::Mouse::getPosition();
 				camera->slew_camera(sf::Vector2f(
 					deltas.y / 300.0f,
@@ -220,6 +228,14 @@ int main() {
 		// Run the raycast
 		rc->compute();
 		rc->draw(&window);
+		
+		window.popGLStates();
+
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		t.draw();
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		
+		window.pushGLStates();
 
 		// Give the frame counter the frame time and draw the average frame time
 		fps.frame(delta_time);
@@ -227,7 +243,7 @@ int main() {
 
 		cam_text_x.draw(&window);
 		cam_text_y.draw(&window);
-			
+
 		window.display();
 
 	}

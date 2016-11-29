@@ -10,7 +10,6 @@ const double PI = 3.141592653589793238463;
 const float  PI_F = 3.14159265358979f;
 
 struct Light {
-#pragma pack(1)
 	sf::Vector4f rgbi;
 
 	// I believe that Vector3's get padded to Vector4's. Give them a non-garbage value
@@ -163,7 +162,7 @@ inline std::string read_file(std::string file_name){
 
 	if (!input_file.is_open()){
 		std::cout << file_name << " could not be opened" << std::endl;
-		return nullptr;
+		return "";
 	}
 
 	std::stringstream buf;
