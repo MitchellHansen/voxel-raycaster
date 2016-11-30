@@ -3,7 +3,7 @@
 
 
 Hardware_Caster::Hardware_Caster() {
-	
+
 }
 
 
@@ -35,6 +35,11 @@ int Hardware_Caster::init() {
 		std::cin.get(); // hang the output window so we can read the error
 		return error;
 	}
+
+	srand(NULL);
+	int seed = rand();
+
+	create_buffer("seed", sizeof(int), &seed);
 
 	return 1;
 
@@ -80,6 +85,7 @@ void Hardware_Caster::validate()
 		set_kernel_arg("raycaster", 6, "lights");
 		set_kernel_arg("raycaster", 7, "light_count");
 		set_kernel_arg("raycaster", 8, "image");
+		set_kernel_arg("raycaster", 9, "seed");
 
 		print_kernel_arguments();
 	}

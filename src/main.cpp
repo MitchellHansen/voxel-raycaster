@@ -73,7 +73,6 @@ int main() {
 	t.compile_shader("../shaders/passthrough.vert", GL_Testing::Shader_Type::VERTEX);
 	t.create_program();
 	t.create_buffers();
-	t.transform();
 
 	// Initialize the raycaster hardware, compat, or software
 	RayCaster *rc = new Hardware_Caster();
@@ -233,9 +232,9 @@ int main() {
 		window.popGLStates();
 
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		t.rotate(delta_time);
-		t.transform();
-		t.draw();
+		//t.rotate(delta_time);
+		//t.transform();
+		//t.draw();
 		
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		

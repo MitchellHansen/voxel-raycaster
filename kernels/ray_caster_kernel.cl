@@ -84,7 +84,8 @@ __kernel void raycaster(
         global float3* cam_pos,
 		global float* lights,
 		global int* light_count,
-        __write_only image2d_t image
+        __write_only image2d_t image,
+		global int* seed
 ){
 
     size_t id = get_global_id(0);
@@ -138,15 +139,19 @@ __kernel void raycaster(
 	}
 
 	// use a ghetto ass rng to give rays a "fog" appearance 
-	int2 randoms = { 3, 14 };
-	uint seed = randoms.x + id;
-	uint t = seed ^ (seed << 11);
+	int2 randoms = { seed, ray_dir.y };
+	uint tseed = randoms.x + id;
+	uint t = tseed ^ (tseed << 11);
 	uint result = randoms.y ^ (randoms.y >> 19) ^ (t ^ (t >> 8));
+	*seed = result % 50;
 
-	int max_dist = 800 + result % 50;
+	int max_dist = 800 + result % 100;
 	int dist = 0;
 
 	int3 mask = { 0, 0, 0 };
+	float4 color = { 0.73, 0.81, 0.89, 0.6 };
+	float4 c = (float4)(0.40, 0.00, 0.40, 0.2);
+	c.x += ray_dir.y;// (result % 100) / 100;
 
     // Andrew Woo's raycasting algo
     do {
@@ -160,14 +165,14 @@ __kernel void raycaster(
 		int3 undershoot = voxel > 0;
 
 		if (overshoot.x == 0 || overshoot.y == 0 || overshoot.z == 0 || undershoot.x == 0 || undershoot.y == 0){
-			write_imagef(image, pixel, (float4)(.73, .81, .89, 1.0));
+			write_imagef(image, pixel, white_light(mix(color, (float4)(0.40, 0.00, 0.40, 0.2), 1.0 - max(dist / 700.0f, (float)0)), (float3)(lights[7], lights[8], lights[9]), mask));
 			return;
 		}
 		if (undershoot.z == 0) {
-			write_imagef(image, pixel, (float4)(.14, .30, .50, 1.0));
+			write_imagef(image, pixel, white_light(mix(color, (float4)(0.40, 0.00, 0.40, 0.2), 1.0 - max(dist / 700.0f, (float)0)), (float3)(lights[7], lights[8], lights[9]), mask));
 			return;
 		}
-
+		
         // If we hit a voxel
 		//int index = voxel.x * (*map_dim).y * (*map_dim).z + voxel.z * (*map_dim).z + voxel.y;
 		// Why the off by one on voxel.y?
@@ -189,9 +194,9 @@ __kernel void raycaster(
 				write_imagef(image, pixel, (float4)(.25, .00, .25, 1.00));
 				return;
 			case 5:
-			
-				//write_imagef(image, pixel, (float4)(.00, .00,  + 0.5, 1.00));
-				write_imagef(image, pixel, white_light((float4)(0.40, 0.00, 0.40, 0.2), (float3)(lights[7], lights[8], lights[9]), mask));
+				
+				//write_imagef(image, pixel, (float4)(0.40, 0.00, 0.40, 0.2));
+				write_imagef(image, pixel, white_light(mix(color, c, 1.0 - max((dist/700.0f) - 0.3f, (float)0)), (float3)(lights[7], lights[8], lights[9]), mask));
 				return;
 
 				float3 vox = convert_float3(voxel);
@@ -221,8 +226,10 @@ __kernel void raycaster(
 		}
 
         dist++;
-    } while (dist < max_dist);
 
-    write_imagef(image, pixel, (float4)(.73, .81, .89, 1.0));
+    } while (dist / 700.0f < 1);
+	//dist < max_dist
+	write_imagef(image, pixel, white_light(mix(color, (float4)(0.40, 0.00, 0.40, 0.2), 1.0 - max(dist / 700.0f, (float)0)), (float3)(lights[7], lights[8], lights[9]), mask));
+    //write_imagef(image, pixel, (float4)(.73, .81, .89, 1.0));
     return;
 }
