@@ -22,6 +22,10 @@ message(STATUS "OpenCL found: ${OPENCL_FOUND}")
 find_package(GLEW REQUIRED)
 message(STATUS "GLEW found: ${GLEW_FOUND}")
 
+# Find Vulkan
+#find_package(VULKAN REQUIRED)
+#message(STATUS "VULKAN found: ${VULKAN_FOUND}")
+
 # Find OpenGL
 find_package( OpenGL REQUIRED)
 message(STATUS "OpenGL found: ${OPENGL_FOUND}")
@@ -30,6 +34,7 @@ message(STATUS "OpenGL found: ${OPENGL_FOUND}")
 include_directories(${SFML_INCLUDE_DIR})
 include_directories(${OpenCL_INCLUDE_DIRS})
 include_directories(${OpenGL_INCLUDE_DIRS})
+#include_directories(${Vulkan_INCLUDE_DIRS})
 include_directories(include)
 
 # Glob all thr sources into their values
@@ -53,6 +58,7 @@ target_link_libraries (${PNAME} ${SFML_LIBRARIES} ${SFML_DEPENDENCIES})
 target_link_libraries (${PNAME} ${OpenCL_LIBRARY})
 target_link_libraries (${PNAME} ${OPENGL_LIBRARIES})
 target_link_libraries (${PNAME} ${GLEW_LIBRARIES})
+#target_link_libraries (${PNAME} ${Vulkan_LIBRARIES})
 
 # Setup to use C++11
 set_property(TARGET ${PNAME} PROPERTY CXX_STANDARD 11) # Use C++11

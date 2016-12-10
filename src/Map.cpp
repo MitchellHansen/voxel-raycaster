@@ -1,8 +1,63 @@
 #include "Map.h"
 
+
+
+
+
+//  root
+//  
+//  a1 
+//  a2
+//  
+//  b1
+//  b1
+//  
+//  c1
+//  c1
+//  
+//  a2
+//  a2
+//  
+//  
+//  
+//  
+//  
+//  
+//  
+//  
+//  
+//  
+//  
+//  
+//  
+//  
+//  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Map::Map(sf::Vector3i position) {
 	
 	load_unload(position);
+
+	for (int i = 0; i < 8192; i++) {
+		block[i] = 0;
+	}
 }
 
 int BitCount(unsigned int u) {
@@ -10,6 +65,30 @@ int BitCount(unsigned int u) {
 
 	uCount = u - ((u >> 1) & 033333333333) - ((u >> 2) & 011111111111);
 	return ((uCount + (uCount >> 3)) & 030707070707) % 63;
+}
+
+void SetBit(int position, char* c) {
+	*c |= 1 << position;
+}
+
+void FlipBit(int position, char* c) {
+	*c ^= 1 << position;
+}
+
+int GetBit(int position, char* c) {
+	return (*c >> position) & 1;
+}
+
+void SetBit(int position, int64_t* c) {
+	*c |= 1 << position;
+}
+
+void FlipBit(int position, int64_t* c) {
+	*c ^= 1 << position;
+}
+
+int GetBit(int position, int64_t* c) {
+	return (*c >> position) & 1;
 }
 
 struct leaf {
@@ -24,6 +103,103 @@ struct block {
 	double* data = new double[1000];
 };
 
+int64_t generate_children_at_raw() {
+
+	int64_t t;
+
+	// count the raw data and insert via bit masks or whatever into the valid field
+
+	// Set the child pointer blank and the leaf mask blank as well
+
+	// Return the single value
+
+	return t;
+}
+
+int64_t Map::generate_children(sf::Vector3i pos, int dim) {
+
+	sf::Vector3i t1 = sf::Vector3i(pos.x, pos.y, pos.z);
+	sf::Vector3i t2 = sf::Vector3i(pos.x + dim, pos.y, pos.z);
+	sf::Vector3i t3 = sf::Vector3i(pos.x, pos.y + dim, pos.z);
+	sf::Vector3i t4 = sf::Vector3i(pos.x + dim, pos.y + dim, pos.z);
+
+	sf::Vector3i t5 = sf::Vector3i(pos.x, pos.y, pos.z + dim);
+	sf::Vector3i t6 = sf::Vector3i(pos.x + dim, pos.y, pos.z + dim);
+	sf::Vector3i t7 = sf::Vector3i(pos.x, pos.y + dim, pos.z + dim);
+	sf::Vector3i t8 = sf::Vector3i(pos.x + dim, pos.y + dim, pos.z + dim);
+
+	std::vector<int64_t> cps;
+	int64_t tmp = 0;
+
+	if (dim == 1) {
+
+		if (getVoxel(t1))
+			SetBit(16, &tmp);
+		if (getVoxel(t2))
+			SetBit(16, &tmp);
+		if (getVoxel(t3))
+			SetBit(16, &tmp);
+		if (getVoxel(t4))
+			SetBit(16, &tmp);
+		if (getVoxel(t5))
+			SetBit(16, &tmp);
+		if (getVoxel(t6))
+			SetBit(16, &tmp);
+		if (getVoxel(t7))
+			SetBit(16, &tmp);
+		if (getVoxel(t8))
+			SetBit(16, &tmp);
+
+		cps.push_back(tmp);
+
+	}
+	else {
+
+		// Generate all 8 sub trees accounting for each of their unique positions
+		int curr_stack_pos = stack_position;
+
+
+
+		tmp = generate_children(t1, dim / 2);
+		if (tmp != 0)
+			cps.push_back(tmp);
+
+		tmp = generate_children(t2, dim / 2);
+		if (tmp != 0)
+			cps.push_back(tmp);
+
+		tmp = generate_children(t3, dim / 2);
+		if (tmp != 0)
+			cps.push_back(tmp);
+
+		tmp = generate_children(t4, dim / 2);
+		if (tmp != 0)
+			cps.push_back(tmp);
+
+		tmp = generate_children(t5, dim / 2);
+		if (tmp != 0)
+			cps.push_back(tmp);
+
+		tmp = generate_children(t6, dim / 2);
+		if (tmp != 0)
+			cps.push_back(tmp);
+
+		tmp = generate_children(t7, dim / 2);
+		if (tmp != 0)
+			cps.push_back(tmp);
+
+		tmp = generate_children(t8, dim / 2);
+		if (tmp != 0)
+			cps.push_back(tmp);
+
+	}
+
+
+	memcpy(&block[stack_position], cps.data(), cps.size() * sizeof(int64_t));
+	stack_position += cps.size();
+
+	return 0;
+}
 
 void Map::generate_octree() {
 
@@ -34,19 +210,40 @@ void Map::generate_octree() {
 
 	int* dataset = new int[32 * 32 * 32];
 	for (int i = 0; i < 32 * 32 * 32; i++) {
-		dataset[0] = i;
+		dataset[0] = rand() % 2;
 	}
 
-	int level = static_cast<int>(log2(32));
+
+
+	// levels defines how many levels to traverse before we hit raw data
+	// Will be the map width I presume. Will still need to handle how to swap in and out data.
+	// Possible have some upper static nodes that will stay full regardless of contents?
+	int levels = static_cast<int>(log2(64));
+
 
 	leaf top_node;
-	top_node.level = level;
 
-	for (int i = 0; i < 16 * 16 * 16; i++) {
-		for (int i = 0; i < 8 * 8 * 8; i++) {
-			for (int i = 0; i < 4 * 4 * 4; i++) {
+	int t_level = -1;
+	int b_level = 0;
+
+	for (int i1 = 0; i1 < 2 * 2 * 2; i1++) {
+		int b_level = 1;
+		for (int i2 = 0; i2 < 2 * 2 * 2; i2++) {
+			int b_level = 2;
+			for (int i3 = 0; i3 < 2 * 2 * 2; i3++) {
+				int b_level = 3;
+				
+				leaf l1;
+				l1.children = nullptr;
+				l1.leaf_mask = 0;
+				l1.valid_mask = 0;
+
 				for (int i = 0; i < 2 * 2 * 2; i++) {
+					
+					//int x = 
 
+
+					//if (dataset[]
 				}
 			}
 		}
@@ -125,6 +322,11 @@ void Map::setVoxel(sf::Vector3i world_position, int val) {
 	chunk_map.at(chunk_pos).voxel_data[in_chunk_pos.x + CHUNK_DIM * (in_chunk_pos.y + CHUNK_DIM * in_chunk_pos.z)] 
 		= val;
 
+}
+
+char Map::getVoxel(sf::Vector3i pos){
+
+	return voxel_data[pos.x + OCT_DIM * (pos.y + OCT_DIM * pos.z)];
 }
 
 void Chunk::set(int type) {

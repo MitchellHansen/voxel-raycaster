@@ -1,5 +1,6 @@
 ﻿#include "GL_Testing.h"
-
+#include <vulkan/vulkan.h>
+#include <vulkan/vk_sdk_platform.h>
 #ifdef linux
 #include <CL/cl.h>
 #include <CL/opencl.h>
@@ -65,6 +66,15 @@ sf::Texture window_texture;
 
 
 int main() {
+
+
+
+
+	Map _map(sf::Vector3i(0, 0, 0));
+	_map.generate_octree();
+
+
+	glewInit();
 
 	sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
 

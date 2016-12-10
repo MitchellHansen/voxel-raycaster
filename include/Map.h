@@ -16,6 +16,7 @@
 #include <math.h>
 
 #define CHUNK_DIM 32
+#define OCT_DIM 64
 
 struct KeyHasher {
 	std::size_t operator()(const sf::Vector3i& k) const {
@@ -55,6 +56,15 @@ public:
 protected:
 
 private:
+
+
+	int64_t generate_children(sf::Vector3i pos, int dim);
+
+
+	int64_t block[1024];
+	int stack_position = 0;
+	char getVoxel(sf::Vector3i pos);
+	char* voxel_data = new char[OCT_DIM * OCT_DIM * OCT_DIM];
 
 
 	std::unordered_map<sf::Vector3i, Chunk, KeyHasher> chunk_map;

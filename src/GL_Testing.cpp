@@ -4,10 +4,10 @@ GL_Testing::GL_Testing() {
 
 	GLfloat tmp[] = {
 
-		1, 0, 0, 0,
-		0, cos(1), sin(1), 0,
-		0, -sin(1), cos(1), 0,
-		0, 0, 0, 1
+		1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, static_cast<float>(cos(1.0f)), static_cast<float>(sin(1.0f)), 0.0f,
+		0.0f, static_cast<float>(-sin(1.0f)), static_cast<float>(cos(1.0f)), 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f
 
 	};
 
@@ -132,10 +132,10 @@ void GL_Testing::rotate(double delta) {
 
 	GLfloat tmp[] = {
 
-		1, 0, 0, 0,
-		0, cos(counter), sin(counter), 0,
-		0, -sin(counter), cos(counter), 0,
-		0, 0, 0, 1
+		1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, static_cast<float>(cos(counter)), static_cast<float>(sin(counter)), 0.0f,
+		0.0f, static_cast<float>(-sin(counter)), static_cast<float>(cos(counter)), 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f
 
 	};
 

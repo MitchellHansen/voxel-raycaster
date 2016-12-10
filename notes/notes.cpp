@@ -8,7 +8,6 @@ OpenCL:
 	- Separate out into a part of the rendering module
 
 Map:
-	- Reimplement the old map, put it into an old_map structure
 	- Implement the new octree structure
 		- storing the pre-octree volumetric data
 		- determining when to load volumetric data into the in-memory structure
@@ -27,6 +26,16 @@ Renderer:
 
 	  
 	  
+	  
+	  
+	  
+	  
+	  
+	  
+Build:
+	Z:\Cpp_Libs\SFML-Visual_Studio2015RCx64
+	Z:/Cpp_Libs/glew-2.0.0/lib/Release/x64/glew32s.lib
+	Z:/Cpp_Libs/glew-2.0.0/include
 	  
 */
 

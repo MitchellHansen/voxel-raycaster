@@ -130,20 +130,12 @@ sf::Color Ray::Cast() {
         alpha *= 162;
 
         switch (voxel_data) {
-            case 1:
-                //  AngleBew0 - 1.57 * 162 = 0 - 255
-
-                return sf::Color(255, 0, 0, alpha);
-            case 2:
-                return sf::Color(255, 10, 0, alpha);
-            case 3:
-                return sf::Color(255, 0, 255, alpha);
-            case 4:
-                return sf::Color(80, 0, 150, alpha);
             case 5:
                 return sf::Color(255, 120, 255, alpha);
             case 6:
                 return sf::Color(150, 80, 220, alpha);
+			default:
+				return sf::Color(150, 80, 220, alpha);
         }
 
         dist++;

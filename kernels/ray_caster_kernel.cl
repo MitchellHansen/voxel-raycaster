@@ -75,6 +75,17 @@ float4 cast_light_rays(
 	//			if it does
 }
 
+int rand(int* seed) // 1 <= *seed < m
+{
+	int const a = 16807; //ie 7**5
+	int const m = 2147483647; //ie 2**31-1
+
+	*seed = ((*seed) * a) % m;
+	return(*seed);
+}
+
+
+
 __kernel void raycaster(
         global char* map,
         global int3* map_dim,
@@ -85,8 +96,16 @@ __kernel void raycaster(
 		global float* lights,
 		global int* light_count,
         __write_only image2d_t image,
-		global int* seed
+		global int* seed_memory
 ){
+
+
+	int global_id = get_global_id(1) * get_global_size(0) + get_global_id(0);
+	int seed = seed_memory[global_id];
+	int random_number = rand(&seed);
+	seed_memory[global_id] = seed;
+
+
 
     size_t id = get_global_id(0);
     int2 pixel = {id % (*resolution).x, id / (*resolution).x};
@@ -139,19 +158,18 @@ __kernel void raycaster(
 	}
 
 	// use a ghetto ass rng to give rays a "fog" appearance 
-	int2 randoms = { seed, ray_dir.y };
+	int2 randoms = { random_number, 14 };
 	uint tseed = randoms.x + id;
 	uint t = tseed ^ (tseed << 11);
 	uint result = randoms.y ^ (randoms.y >> 19) ^ (t ^ (t >> 8));
-	*seed = result % 50;
 
 	int max_dist = 800 + result % 100;
 	int dist = 0;
 
 	int3 mask = { 0, 0, 0 };
 	float4 color = { 0.73, 0.81, 0.89, 0.6 };
-	float4 c = (float4)(0.40, 0.00, 0.40, 0.2);
-	c.x += ray_dir.y;// (result % 100) / 100;
+	float4 c = (float4)(0.60, 0.00, 0.40, 0.1);
+	c.x += (result % 100) / 10;
 
     // Andrew Woo's raycasting algo
     do {

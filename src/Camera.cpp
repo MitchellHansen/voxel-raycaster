@@ -71,11 +71,11 @@ int Camera::update(double delta_time) {
 	// have to do it component wise
 	double multiplier = 40;
 
-	position.x += movement.x * delta_time * multiplier;
-	position.y += movement.y * delta_time * multiplier;
-	position.z += movement.z * delta_time * multiplier;
+	position.x += static_cast<float>(movement.x * delta_time * multiplier);
+	position.y += static_cast<float>(movement.y * delta_time * multiplier);
+	position.z += static_cast<float>(movement.z * delta_time * multiplier);
 	
-	movement *= (float)(friction_coefficient * delta_time * multiplier);
+	movement *= static_cast<float>(friction_coefficient * delta_time * multiplier);
 	
 	return 1;
 }

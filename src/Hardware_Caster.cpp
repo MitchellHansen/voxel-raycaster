@@ -37,9 +37,10 @@ int Hardware_Caster::init() {
 	}
 
 	srand(NULL);
-	int seed = rand();
 
-	create_buffer("seed", sizeof(int), &seed);
+	int *seed_memory = new int[1920*1080];
+
+	create_buffer("seed", sizeof(int) * 1920 * 1080, seed_memory);
 
 	return 1;
 
@@ -87,7 +88,7 @@ void Hardware_Caster::validate()
 		set_kernel_arg("raycaster", 8, "image");
 		set_kernel_arg("raycaster", 9, "seed");
 
-		print_kernel_arguments();
+		//print_kernel_arguments();
 	}
 
 	
@@ -180,7 +181,7 @@ void Hardware_Caster::assign_lights(std::vector<Light> lights) {
 
 	this->lights = std::vector<Light>(lights);
 
-	light_count = lights.size();
+	light_count = static_cast<int>(lights.size());
 
 	create_buffer("lights", sizeof(float) * 10 * light_count, this->lights.data(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 
@@ -229,7 +230,7 @@ int Hardware_Caster::acquire_platform_and_device() {
 		if (assert(error, "clGetDeviceIDs"))
 			return OPENCL_ERROR;
 
-		for (int q = 0; q < deviceIdCount; q++) {
+		for (unsigned int q = 0; q < deviceIdCount; q++) {
 
 			device d;
 
