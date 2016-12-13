@@ -55,7 +55,7 @@ Map::Map(sf::Vector3i position) {
 	
 	load_unload(position);
 
-	for (int i = 0; i < 8192; i++) {
+	for (int i = 0; i < 1024; i++) {
 		block[i] = 0;
 	}
 }
@@ -130,25 +130,27 @@ int64_t Map::generate_children(sf::Vector3i pos, int dim) {
 
 	std::vector<int64_t> cps;
 	int64_t tmp = 0;
+	int64_t ret_pos = stack_position;
 
 	if (dim == 1) {
 
+		// These don't bound check, should they?
 		if (getVoxel(t1))
 			SetBit(16, &tmp);
 		if (getVoxel(t2))
-			SetBit(16, &tmp);
+			SetBit(17, &tmp);
 		if (getVoxel(t3))
-			SetBit(16, &tmp);
+			SetBit(18, &tmp);
 		if (getVoxel(t4))
-			SetBit(16, &tmp);
+			SetBit(19, &tmp);
 		if (getVoxel(t5))
-			SetBit(16, &tmp);
+			SetBit(20, &tmp);
 		if (getVoxel(t6))
-			SetBit(16, &tmp);
+			SetBit(21, &tmp);
 		if (getVoxel(t7))
-			SetBit(16, &tmp);
+			SetBit(22, &tmp);
 		if (getVoxel(t8))
-			SetBit(16, &tmp);
+			SetBit(23, &tmp);
 
 		cps.push_back(tmp);
 
@@ -157,7 +159,6 @@ int64_t Map::generate_children(sf::Vector3i pos, int dim) {
 
 		// Generate all 8 sub trees accounting for each of their unique positions
 		int curr_stack_pos = stack_position;
-
 
 
 		tmp = generate_children(t1, dim / 2);
@@ -207,6 +208,8 @@ void Map::generate_octree() {
 	for (int i = 0; i < 8192; i++) {
 		arr[i] = 0;
 	}
+
+	generate_children(sf::Vector3i(0, 0, 0), 64);
 
 	int* dataset = new int[32 * 32 * 32];
 	for (int i = 0; i < 32 * 32 * 32; i++) {
