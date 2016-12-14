@@ -8,6 +8,10 @@ Map::Map(sf::Vector3i position) {
 	for (int i = 0; i < 1024; i++) {
 		block[i] = 0;
 	}
+
+	for (int i = 0; i < OCT_DIM * OCT_DIM * OCT_DIM; i++) {
+		voxel_data[i] = rand() % 2;
+	}
 }
 
 int BitCount(unsigned int u) {
@@ -41,111 +45,106 @@ int GetBit(int position, uint64_t* c) {
 	return (*c >> position) & 1;
 }
 
-struct nonleaf {
-   std::vector<nonleaf> children;
-    char leaf_mask;
-    char valid_mask;
-};
+bool CheckFullValid(const uint64_t c) {
+	uint64_t bitmask = 0xFF0000;
+	return (c & bitmask) == bitmask;
+}
 
+
+bool CheckShouldInclude(const uint64_t descriptor) {
+
+	// This first one is wrong, I think it's in it's endianness
+	// Im currently useing bit 0 as the start to the child pointer, yes no?
+
+	// Checks if there are any non-leafs
+	uint64_t leaf_mask = 0xFF000000;
+	if ((descriptor & leaf_mask) == leaf_mask)
+		return false;
+	
+	// Valid mask checks for contiguous values
+	uint64_t valid_mask = 0xFF0000;
+
+	if ((descriptor & valid_mask) == valid_mask)
+		return true;
+	else if ((descriptor & valid_mask) == ~valid_mask)
+		return true;
+	else
+		return false;
+
+
+}
 
 uint64_t Map::generate_children(sf::Vector3i pos, int dim) {
 
-	sf::Vector3i t1 = sf::Vector3i(pos.x, pos.y, pos.z);
-	sf::Vector3i t2 = sf::Vector3i(pos.x + dim, pos.y, pos.z);
-	sf::Vector3i t3 = sf::Vector3i(pos.x, pos.y + dim, pos.z);
-	sf::Vector3i t4 = sf::Vector3i(pos.x + dim, pos.y + dim, pos.z);
 
-	sf::Vector3i t5 = sf::Vector3i(pos.x, pos.y, pos.z + dim);
-	sf::Vector3i t6 = sf::Vector3i(pos.x + dim, pos.y, pos.z + dim);
-	sf::Vector3i t7 = sf::Vector3i(pos.x, pos.y + dim, pos.z + dim);
-	sf::Vector3i t8 = sf::Vector3i(pos.x + dim, pos.y + dim, pos.z + dim);
-
-	std::vector<uint64_t> cps;
-	uint64_t tmp = 0;
-
-	int cycle_num = cycle_counter;
-	cycle_counter++;
+	// The 8 subvoxel coords starting from the 1th direction, the direction of the origin of the 3d grid
+	// XY, Z++, XY
+	std::vector<sf::Vector3i> v = { 
+		sf::Vector3i(pos.x, pos.y, pos.z),
+		sf::Vector3i(pos.x + dim, pos.y, pos.z),
+		sf::Vector3i(pos.x, pos.y + dim, pos.z),
+		sf::Vector3i(pos.x + dim, pos.y + dim, pos.z),
+		sf::Vector3i(pos.x, pos.y, pos.z + dim),
+		sf::Vector3i(pos.x + dim, pos.y, pos.z + dim),
+		sf::Vector3i(pos.x, pos.y + dim, pos.z + dim),
+		sf::Vector3i(pos.x + dim, pos.y + dim, pos.z + dim) 
+	};
 
 	if (dim == 1) {
 
-		// These don't bound check, should they?
-		if (getVoxel(t1))
-			SetBit(16, &tmp);
-		if (getVoxel(t2))
-			SetBit(17, &tmp);
-		if (getVoxel(t3))
-			SetBit(18, &tmp);
-		if (getVoxel(t4))
-			SetBit(19, &tmp);
-		if (getVoxel(t5))
-			SetBit(20, &tmp);
-		if (getVoxel(t6))
-			SetBit(21, &tmp);
-		if (getVoxel(t7))
-			SetBit(22, &tmp);
-		if (getVoxel(t8))
-			SetBit(23, &tmp);
+		// Return the base 2x2 leaf node
+		uint64_t tmp = 0;
 
-		cps.push_back(tmp);
+		// These don't bound check, should they?
+		// Setting the individual valid mask bits
+		for (int i = 0; i < v.size(); i++) {
+			if (getVoxel(v.at(i)))
+				SetBit(i + 16, &tmp);
+		}
+
+		// Set the leaf mask to full
+		tmp |= 0xFF000000;
+
+		// The CP will be left blank, contours will be added maybe
+		return tmp;
 
 	}
 	else {
 
-		// Generate all 8 sub trees accounting for each of their unique positions
+		uint64_t tmp;
+		uint64_t child;
 
-		tmp = generate_children(t1, dim / 2);
-		if (tmp != 0)
-			cps.push_back(tmp);
+		std::vector<uint64_t> children;
 
-		tmp = generate_children(t2, dim / 2);
-		if (tmp != 0)
-			cps.push_back(tmp);
+		// Generate down the recursion, returning the descriptor of the current node
+		for (int i = 0; i < v.size(); i++) {
+			child = generate_children(v.at(i), dim / 2);
+			if (child != 0 && CheckShouldInclude(child)) {
+				children.push_back(child);
+				SetBit(i + 16, &tmp);
+			}
+		}
 
-		tmp = generate_children(t3, dim / 2);
-		if (tmp != 0)
-			cps.push_back(tmp);
+		// Now put those values onto the block stack, it returns the 
+		// 16 bit topmost pointer to the block. The 16th bit being
+		// a switch to jump to a far pointer.
+		tmp |= a.copy_to_stack(children);
 
-		tmp = generate_children(t4, dim / 2);
-		if (tmp != 0)
-			cps.push_back(tmp);
-
-		tmp = generate_children(t5, dim / 2);
-		if (tmp != 0)
-			cps.push_back(tmp);
-
-		tmp = generate_children(t6, dim / 2);
-		if (tmp != 0)
-			cps.push_back(tmp);
-
-		tmp = generate_children(t7, dim / 2);
-		if (tmp != 0)
-			cps.push_back(tmp);
-
-		tmp = generate_children(t8, dim / 2);
-		if (tmp != 0)
-			cps.push_back(tmp);
+		return tmp;
 
 	}
-
-	a.reserve(cycle_num, cps);
 
 	return 0;
 }
 
 void Map::generate_octree() {
 
-	char* arr[8192];
-	for (int i = 0; i < 8192; i++) {
-		arr[i] = 0;
+
+
+	generate_children(sf::Vector3i(0, 0, 0), OCT_DIM);
+	for (int i = 1000; i >= 0 ; i--) {
+		PrettyPrintUINT64(a.dat[i]);
 	}
-
-	generate_children(sf::Vector3i(0, 0, 0), 64);
-
-	int* dataset = new int[32 * 32 * 32];
-	for (int i = 0; i < 32 * 32 * 32; i++) {
-		dataset[0] = rand() % 2;
-	}
-
 	// levels defines how many levels to traverse before we hit raw data
 	// Will be the map width I presume. Will still need to handle how to swap in and out data.
 	// Possible have some upper static nodes that will stay full regardless of contents?

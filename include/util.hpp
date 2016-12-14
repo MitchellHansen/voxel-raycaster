@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include "Vector4.hpp"
+#include <bitset>
 
 const double PI = 3.141592653589793238463;
 const float  PI_F = 3.14159265358979f;
@@ -169,4 +170,14 @@ inline std::string read_file(std::string file_name){
 	buf << input_file.rdbuf();
 	input_file.close();
 	return buf.str();
+}
+
+inline void PrettyPrintUINT64(uint64_t i) {
+
+	std::cout << "[" << std::bitset<15>(i) << "]";
+	std::cout << "[" << std::bitset<1>(i >> 15) << "]";
+	std::cout << "[" << std::bitset<8>(i >> 16) << "]";
+	std::cout << "[" << std::bitset<8>(i >> 24) << "]";
+	std::cout << "[" << std::bitset<32>(i >> 32) << "]" << std::endl;
+
 }

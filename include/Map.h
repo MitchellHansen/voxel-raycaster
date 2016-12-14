@@ -11,12 +11,13 @@
 #include "util.hpp"
 #include <deque>
 #include <unordered_map>
+#include <bitset>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
 
 #define CHUNK_DIM 32
-#define OCT_DIM 64
+#define OCT_DIM 16
 
 struct KeyHasher {
 	std::size_t operator()(const sf::Vector3i& k) const {
@@ -35,17 +36,42 @@ struct Chunk {
 	int* voxel_data;
 };
 
-class Allocator {
+class Octree {
 	
 public:
-	uint64_t dat[10000];
-	int dat_pos = 0;
-	Allocator() {};
-	~Allocator() {};
-	void reserve(int presidence, std::vector<uint64_t> cps) {
-		memcpy(&dat[dat_pos], cps.data(), cps.size() * sizeof(uint64_t));
-		dat_pos += cps.size();
-	}
+	Octree() {
+		dat = new uint64_t[(int)pow(2, 15)];
+		for (int i = 0; i < (int)pow(2, 15); i++) {
+			dat[i] = 0;
+		}
+	};
+
+	~Octree() {};
+
+	uint64_t *dat;
+	uint64_t stack_pos = 0x8000;
+	uint64_t global_pos = 0;
+	
+	uint64_t copy_to_stack(std::vector<uint64_t> children) {
+		
+		// Check to make sure these children will fit on the top of the stack
+		// if not, allocate a new block and paste them at the bottom
+		// Make sure to reset the position
+
+		// Copy the children on the stack, bottom up, first node to last
+		memcpy(&dat[stack_pos], children.data(), children.size() * sizeof(int64_t));
+		stack_pos -= children.size();
+
+		// Return the bitmask encoding the index of that value
+		// If we tripped the far bit, allocate a far index to the stack and place
+		// it one above preferably.
+		// And then shift the far bit to 1
+
+		// If not, shift the index to its correct place
+		return stack_pos;
+	};
+
+	
 
 };
 
@@ -68,7 +94,7 @@ public:
 	void moveLight(sf::Vector2f in);
 	sf::Vector3f global_light;
 
-	Allocator a;
+	Octree a;
 
 protected:
 
