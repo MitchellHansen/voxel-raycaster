@@ -35,6 +35,21 @@ struct Chunk {
 	int* voxel_data;
 };
 
+class Allocator {
+	
+public:
+	uint64_t dat[10000];
+	int dat_pos = 0;
+	Allocator() {};
+	~Allocator() {};
+	void reserve(int presidence, std::vector<uint64_t> cps) {
+		memcpy(&dat[dat_pos], cps.data(), cps.size() * sizeof(uint64_t));
+		dat_pos += cps.size();
+	}
+
+};
+
+
 class Map {
 public: 
 
@@ -53,15 +68,17 @@ public:
 	void moveLight(sf::Vector2f in);
 	sf::Vector3f global_light;
 
+	Allocator a;
+
 protected:
 
 private:
 
 
-	int64_t generate_children(sf::Vector3i pos, int dim);
+	uint64_t generate_children(sf::Vector3i pos, int dim);
+	int cycle_counter = 0;
 
-
-	int64_t block[1024];
+	uint64_t block[1024];
 	int stack_position = 0;
 	char getVoxel(sf::Vector3i pos);
 	char* voxel_data = new char[OCT_DIM * OCT_DIM * OCT_DIM];

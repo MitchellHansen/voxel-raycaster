@@ -1,56 +1,6 @@
 #include "Map.h"
 
 
-
-
-
-//  root
-//  
-//  a1 
-//  a2
-//  
-//  b1
-//  b1
-//  
-//  c1
-//  c1
-//  
-//  a2
-//  a2
-//  
-//  
-//  
-//  
-//  
-//  
-//  
-//  
-//  
-//  
-//  
-//  
-//  
-//  
-//  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 Map::Map(sf::Vector3i position) {
 	
 	load_unload(position);
@@ -79,44 +29,26 @@ int GetBit(int position, char* c) {
 	return (*c >> position) & 1;
 }
 
-void SetBit(int position, int64_t* c) {
+void SetBit(int position, uint64_t* c) {
 	*c |= 1 << position;
 }
 
-void FlipBit(int position, int64_t* c) {
+void FlipBit(int position, uint64_t* c) {
 	*c ^= 1 << position;
 }
 
-int GetBit(int position, int64_t* c) {
+int GetBit(int position, uint64_t* c) {
 	return (*c >> position) & 1;
 }
 
-struct leaf {
-    leaf *children;
+struct nonleaf {
+   std::vector<nonleaf> children;
     char leaf_mask;
     char valid_mask;
-    int level;
 };
 
-struct block {
-	int header = 0;
-	double* data = new double[1000];
-};
 
-int64_t generate_children_at_raw() {
-
-	int64_t t;
-
-	// count the raw data and insert via bit masks or whatever into the valid field
-
-	// Set the child pointer blank and the leaf mask blank as well
-
-	// Return the single value
-
-	return t;
-}
-
-int64_t Map::generate_children(sf::Vector3i pos, int dim) {
+uint64_t Map::generate_children(sf::Vector3i pos, int dim) {
 
 	sf::Vector3i t1 = sf::Vector3i(pos.x, pos.y, pos.z);
 	sf::Vector3i t2 = sf::Vector3i(pos.x + dim, pos.y, pos.z);
@@ -128,9 +60,11 @@ int64_t Map::generate_children(sf::Vector3i pos, int dim) {
 	sf::Vector3i t7 = sf::Vector3i(pos.x, pos.y + dim, pos.z + dim);
 	sf::Vector3i t8 = sf::Vector3i(pos.x + dim, pos.y + dim, pos.z + dim);
 
-	std::vector<int64_t> cps;
-	int64_t tmp = 0;
-	int64_t ret_pos = stack_position;
+	std::vector<uint64_t> cps;
+	uint64_t tmp = 0;
+
+	int cycle_num = cycle_counter;
+	cycle_counter++;
 
 	if (dim == 1) {
 
@@ -158,8 +92,6 @@ int64_t Map::generate_children(sf::Vector3i pos, int dim) {
 	else {
 
 		// Generate all 8 sub trees accounting for each of their unique positions
-		int curr_stack_pos = stack_position;
-
 
 		tmp = generate_children(t1, dim / 2);
 		if (tmp != 0)
@@ -195,9 +127,7 @@ int64_t Map::generate_children(sf::Vector3i pos, int dim) {
 
 	}
 
-
-	memcpy(&block[stack_position], cps.data(), cps.size() * sizeof(int64_t));
-	stack_position += cps.size();
+	a.reserve(cycle_num, cps);
 
 	return 0;
 }
@@ -216,49 +146,15 @@ void Map::generate_octree() {
 		dataset[0] = rand() % 2;
 	}
 
-
-
 	// levels defines how many levels to traverse before we hit raw data
 	// Will be the map width I presume. Will still need to handle how to swap in and out data.
 	// Possible have some upper static nodes that will stay full regardless of contents?
 	int levels = static_cast<int>(log2(64));
 
 
-	leaf top_node;
-
-	int t_level = -1;
-	int b_level = 0;
-
-	for (int i1 = 0; i1 < 2 * 2 * 2; i1++) {
-		int b_level = 1;
-		for (int i2 = 0; i2 < 2 * 2 * 2; i2++) {
-			int b_level = 2;
-			for (int i3 = 0; i3 < 2 * 2 * 2; i3++) {
-				int b_level = 3;
-				
-				leaf l1;
-				l1.children = nullptr;
-				l1.leaf_mask = 0;
-				l1.valid_mask = 0;
-
-				for (int i = 0; i < 2 * 2 * 2; i++) {
-					
-					//int x = 
-
-
-					//if (dataset[]
-				}
-			}
-		}
-	}
-
-
-
 	std::list<int> parent_stack;
 
 	int byte_pos = 0;
-
-
 
 	unsigned int parent = 0;
 	for (int i = 0; i < 16; i++) {
