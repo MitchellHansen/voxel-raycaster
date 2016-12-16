@@ -1,19 +1,5 @@
 #include "Map.h"
 
-
-Map::Map(sf::Vector3i position) {
-	
-	load_unload(position);
-
-	for (int i = 0; i < 1024; i++) {
-		block[i] = 0;
-	}
-
-	for (int i = 0; i < OCT_DIM * OCT_DIM * OCT_DIM; i++) {
-		voxel_data[i] = rand() % 2;
-	}
-}
-
 int BitCount(unsigned int u) {
 	unsigned int uCount;
 
@@ -45,33 +31,62 @@ int GetBit(int position, uint64_t* c) {
 	return (*c >> position) & 1;
 }
 
-bool CheckFullValid(const uint64_t c) {
+bool CheckLeafSign(const uint64_t descriptor) {
+
+	uint64_t valid_mask = 0xFF0000;
+
+	// Return true if all 1's, false if contiguous 0's
+	if ((descriptor & valid_mask) == valid_mask) {
+		return true;
+	}
+	if ((descriptor & valid_mask) == 0) {
+		return false;
+	}
+
+	// Error out, something funky
+	abort();
+}
+
+bool CheckContiguousValid(const uint64_t c) {
 	uint64_t bitmask = 0xFF0000;
 	return (c & bitmask) == bitmask;
 }
 
 
-bool CheckShouldInclude(const uint64_t descriptor) {
 
-	// This first one is wrong, I think it's in it's endianness
-	// Im currently useing bit 0 as the start to the child pointer, yes no?
+bool IsLeaf(const uint64_t descriptor) {
 
-	// Checks if there are any non-leafs
 	uint64_t leaf_mask = 0xFF000000;
-	if ((descriptor & leaf_mask) == leaf_mask)
-		return false;
-	
-	// Valid mask checks for contiguous values
 	uint64_t valid_mask = 0xFF0000;
 
-	if ((descriptor & valid_mask) == valid_mask)
-		return true;
-	else if ((descriptor & valid_mask) == ~valid_mask)
-		return true;
+	// Check for contiguous valid values of either 0's or 1's
+	if (((descriptor & valid_mask) == valid_mask) || ((descriptor & valid_mask) == 0)) {
+		
+		// Check for a full leaf mask
+		// Only if valid and leaf are contiguous, then it's a leaf
+		if ((descriptor & leaf_mask) == leaf_mask)
+			return true;
+		else
+			return false;
+	}
 	else
 		return false;
+}
 
+Map::Map(sf::Vector3i position) {
 
+	load_unload(position);
+
+	for (int i = 0; i < 1024; i++) {
+		block[i] = 0;
+	}
+
+	for (int i = 0; i < OCT_DIM * OCT_DIM * OCT_DIM; i++) {
+		if (rand() % 8 > 2)
+			voxel_data[i] = 0;
+		else
+			voxel_data[i] = 1;
+	}
 }
 
 uint64_t Map::generate_children(sf::Vector3i pos, int dim) {
@@ -111,25 +126,35 @@ uint64_t Map::generate_children(sf::Vector3i pos, int dim) {
 	}
 	else {
 
-		uint64_t tmp;
-		uint64_t child;
+		uint64_t tmp = 0;
+		uint64_t child = 0;
 
 		std::vector<uint64_t> children;
 
 		// Generate down the recursion, returning the descriptor of the current node
 		for (int i = 0; i < v.size(); i++) {
+
+			// Get the child descriptor from the i'th to 8th subvoxel
 			child = generate_children(v.at(i), dim / 2);
-			if (child != 0 && CheckShouldInclude(child)) {
-				children.push_back(child);
+
+			if (IsLeaf(child)) {
+				if (CheckLeafSign(child))
+					SetBit(i + 16, &tmp);
+
+				SetBit(i + 16 + 8, &tmp);
+			}
+
+			else {
 				SetBit(i + 16, &tmp);
+				children.push_back(child);
 			}
 		}
-
+		//1111111111111111111111111111111111111111111111110111111111000000
 		// Now put those values onto the block stack, it returns the 
 		// 16 bit topmost pointer to the block. The 16th bit being
 		// a switch to jump to a far pointer.
 		tmp |= a.copy_to_stack(children);
-
+		
 		return tmp;
 
 	}
@@ -142,8 +167,8 @@ void Map::generate_octree() {
 
 
 	generate_children(sf::Vector3i(0, 0, 0), OCT_DIM);
-	for (int i = 1000; i >= 0 ; i--) {
-		PrettyPrintUINT64(a.dat[i]);
+	for (int i = 32767; i >= 31767; i--) {
+		std::cout << i; PrettyPrintUINT64(a.dat[i]);
 	}
 	// levels defines how many levels to traverse before we hit raw data
 	// Will be the map width I presume. Will still need to handle how to swap in and out data.
