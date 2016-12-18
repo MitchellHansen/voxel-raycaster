@@ -65,9 +65,6 @@ sf::Texture window_texture;
 
 int main() {
 
-
-
-
 	Map _map(sf::Vector3i(0, 0, 0));
 	_map.generate_octree();
 

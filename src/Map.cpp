@@ -8,27 +8,27 @@ int BitCount(unsigned int u) {
 }
 
 void SetBit(int position, char* c) {
-	*c |= 1 << position;
+	*c |= (uint64_t)1 << position;
 }
 
 void FlipBit(int position, char* c) {
-	*c ^= 1 << position;
+	*c ^= (uint64_t)1 << position;
 }
 
 int GetBit(int position, char* c) {
-	return (*c >> position) & 1;
+	return (*c >> position) & (uint64_t)1;
 }
 
 void SetBit(int position, uint64_t* c) {
-	*c |= 1 << position;
+	*c |= (uint64_t)1 << position;
 }
 
 void FlipBit(int position, uint64_t* c) {
-	*c ^= 1 << position;
+	*c ^= (uint64_t)1 << position;
 }
 
 int GetBit(int position, uint64_t* c) {
-	return (*c >> position) & 1;
+	return (*c >> position) & (uint64_t)1;
 }
 
 bool CheckLeafSign(const uint64_t descriptor) {
@@ -137,6 +137,8 @@ uint64_t Map::generate_children(sf::Vector3i pos, int dim) {
 			// Get the child descriptor from the i'th to 8th subvoxel
 			child = generate_children(v.at(i), dim / 2);
 
+			PrettyPrintUINT64(child);
+
 			if (IsLeaf(child)) {
 				if (CheckLeafSign(child))
 					SetBit(i + 16, &tmp);
@@ -148,12 +150,22 @@ uint64_t Map::generate_children(sf::Vector3i pos, int dim) {
 				SetBit(i + 16, &tmp);
 				children.push_back(child);
 			}
+
+			PrettyPrintUINT64(tmp);
 		}
-		//1111111111111111111111111111111111111111111111110111111111000000
 		// Now put those values onto the block stack, it returns the 
 		// 16 bit topmost pointer to the block. The 16th bit being
 		// a switch to jump to a far pointer.
+		PrettyPrintUINT64(tmp);
 		tmp |= a.copy_to_stack(children);
+
+		std::cout << counter++ << std::endl;
+		if ((tmp & 0xFFFFFFFF00000000) != 0) {
+			PrettyPrintUINT64(tmp & 0xFFFFFFFF00000000);
+			PrettyPrintUINT64(tmp);
+			
+			abort();
+		}
 		
 		return tmp;
 
@@ -167,9 +179,9 @@ void Map::generate_octree() {
 
 
 	generate_children(sf::Vector3i(0, 0, 0), OCT_DIM);
-	for (int i = 32767; i >= 31767; i--) {
+	/*for (int i = 32767; i >= 31767; i--) {
 		std::cout << i; PrettyPrintUINT64(a.dat[i]);
-	}
+	}*/
 	// levels defines how many levels to traverse before we hit raw data
 	// Will be the map width I presume. Will still need to handle how to swap in and out data.
 	// Possible have some upper static nodes that will stay full regardless of contents?

@@ -100,6 +100,7 @@ protected:
 
 private:
 
+	int counter = 0;
 
 	uint64_t generate_children(sf::Vector3i pos, int dim);
 	int cycle_counter = 0;
