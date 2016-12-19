@@ -17,7 +17,7 @@
 #include <math.h>
 
 #define CHUNK_DIM 32
-#define OCT_DIM 16
+#define OCT_DIM 64
 
 struct KeyHasher {
 	std::size_t operator()(const sf::Vector3i& k) const {
@@ -54,19 +54,19 @@ public:
 	
 	uint64_t copy_to_stack(std::vector<uint64_t> children) {
 		
-		// Check to make sure these children will fit on the top of the stack
-		// if not, allocate a new block and paste them at the bottom
-		// Make sure to reset the position
-
-		for (int i = 0; i < children.size(); i++) {
-			if (children.at(i) == 0)
-				abort();
+		// Check for the 15 bit boundry		
+		if (stack_pos - children.size() > stack_pos) {
+			global_pos = stack_pos;
+			stack_pos = 0x8000;
+		}
+		else {
+			stack_pos -= children.size();
 		}
 
-		// Copy the children on the stack, bottom up, first node to last
-		memcpy(&dat[stack_pos], children.data(), children.size() * sizeof(int64_t));
-		stack_pos -= children.size();
+		// Check for the far bit
 
+		memcpy(&dat[stack_pos + global_pos], children.data(), children.size() * sizeof(uint64_t));
+		
 		// Return the bitmask encoding the index of that value
 		// If we tripped the far bit, allocate a far index to the stack and place
 		// it one above preferably.
@@ -113,13 +113,10 @@ private:
 
 
 	uint64_t generate_children(sf::Vector3i pos, int dim);
-	int cycle_counter = 0;
 
-	uint64_t block[1024];
-	int stack_position = 0;
+
 	char getVoxel(sf::Vector3i pos);
 	char* voxel_data = new char[OCT_DIM * OCT_DIM * OCT_DIM];
-
 
 	std::unordered_map<sf::Vector3i, Chunk, KeyHasher> chunk_map;
 

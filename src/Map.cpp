@@ -77,10 +77,6 @@ Map::Map(sf::Vector3i position) {
 
 	load_unload(position);
 
-	for (int i = 0; i < 1024; i++) {
-		block[i] = 0;
-	}
-
 	for (int i = 0; i < OCT_DIM * OCT_DIM * OCT_DIM; i++) {
 		if (rand() % 8 > 2)
 			voxel_data[i] = 0;
@@ -126,6 +122,9 @@ uint64_t Map::generate_children(sf::Vector3i pos, int dim) {
 	}
 	else {
 
+		// 2339 is the iterative anomoly
+		// 30454 is the stack anomoly
+
 		uint64_t tmp = 0;
 		uint64_t child = 0;
 
@@ -152,9 +151,11 @@ uint64_t Map::generate_children(sf::Vector3i pos, int dim) {
 				children.push_back(child);
 			}
 		}
+
 		// Now put those values onto the block stack, it returns the 
 		// 16 bit topmost pointer to the block. The 16th bit being
 		// a switch to jump to a far pointer.
+		int y = 0;
 		tmp |= a.copy_to_stack(children);
 
 		if ((tmp & 0xFFFFFFFF00000000) != 0) {
@@ -170,9 +171,7 @@ uint64_t Map::generate_children(sf::Vector3i pos, int dim) {
 
 void Map::generate_octree() {
 
-
-
-	generate_children(sf::Vector3i(0, 0, 0), OCT_DIM);
+	generate_children(sf::Vector3i(0, 0, 0), OCT_DIM/2);
 	DumpLog(&ss, "raw_output.txt");
 
 	std::stringstream sss;
@@ -181,9 +180,7 @@ void Map::generate_octree() {
 		sss << "\n";
 	}
 	DumpLog(&sss, "raw_data.txt");
-	/*for (int i = 32767; i >= 31767; i--) {
-		std::cout << i; PrettyPrintUINT64(a.dat[i]);
-	}*/
+
 	// levels defines how many levels to traverse before we hit raw data
 	// Will be the map width I presume. Will still need to handle how to swap in and out data.
 	// Possible have some upper static nodes that will stay full regardless of contents?
