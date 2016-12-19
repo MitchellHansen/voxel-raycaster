@@ -58,6 +58,11 @@ public:
 		// if not, allocate a new block and paste them at the bottom
 		// Make sure to reset the position
 
+		for (int i = 0; i < children.size(); i++) {
+			if (children.at(i) == 0)
+				abort();
+		}
+
 		// Copy the children on the stack, bottom up, first node to last
 		memcpy(&dat[stack_pos], children.data(), children.size() * sizeof(int64_t));
 		stack_pos -= children.size();
@@ -100,7 +105,12 @@ protected:
 
 private:
 
+	// DEBUG
 	int counter = 0;
+	std::stringstream ss;
+
+	// !DEBUG
+
 
 	uint64_t generate_children(sf::Vector3i pos, int dim);
 	int cycle_counter = 0;

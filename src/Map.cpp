@@ -137,7 +137,8 @@ uint64_t Map::generate_children(sf::Vector3i pos, int dim) {
 			// Get the child descriptor from the i'th to 8th subvoxel
 			child = generate_children(v.at(i), dim / 2);
 
-			PrettyPrintUINT64(child);
+			PrettyPrintUINT64(child, &ss);
+			ss << "    " << dim << "    " << counter++ << std::endl;
 
 			if (IsLeaf(child)) {
 				if (CheckLeafSign(child))
@@ -150,20 +151,13 @@ uint64_t Map::generate_children(sf::Vector3i pos, int dim) {
 				SetBit(i + 16, &tmp);
 				children.push_back(child);
 			}
-
-			PrettyPrintUINT64(tmp);
 		}
 		// Now put those values onto the block stack, it returns the 
 		// 16 bit topmost pointer to the block. The 16th bit being
 		// a switch to jump to a far pointer.
-		PrettyPrintUINT64(tmp);
 		tmp |= a.copy_to_stack(children);
 
-		std::cout << counter++ << std::endl;
 		if ((tmp & 0xFFFFFFFF00000000) != 0) {
-			PrettyPrintUINT64(tmp & 0xFFFFFFFF00000000);
-			PrettyPrintUINT64(tmp);
-			
 			abort();
 		}
 		
@@ -179,6 +173,14 @@ void Map::generate_octree() {
 
 
 	generate_children(sf::Vector3i(0, 0, 0), OCT_DIM);
+	DumpLog(&ss, "raw_output.txt");
+
+	std::stringstream sss;
+	for (int i = 0; i < (int)pow(2, 15); i++) {
+		PrettyPrintUINT64(a.dat[i], &sss);
+		sss << "\n";
+	}
+	DumpLog(&sss, "raw_data.txt");
 	/*for (int i = 32767; i >= 31767; i--) {
 		std::cout << i; PrettyPrintUINT64(a.dat[i]);
 	}*/
