@@ -174,69 +174,40 @@ void Map::generate_octree() {
 	generate_children(sf::Vector3i(0, 0, 0), OCT_DIM/2);
 	DumpLog(&ss, "raw_output.txt");
 
-	std::stringstream sss;
-	for (int i = 0; i < (int)pow(2, 15); i++) {
-		PrettyPrintUINT64(a.dat[i], &sss);
-		sss << "\n";
-	}
-	DumpLog(&sss, "raw_data.txt");
+	a.print_block(0);
 
-	// levels defines how many levels to traverse before we hit raw data
-	// Will be the map width I presume. Will still need to handle how to swap in and out data.
-	// Possible have some upper static nodes that will stay full regardless of contents?
-	int levels = static_cast<int>(log2(64));
-
-
-	std::list<int> parent_stack;
-
-	int byte_pos = 0;
-
-	unsigned int parent = 0;
-	for (int i = 0; i < 16; i++) {
-		parent ^= 1 << i;
-	}
-
-	unsigned int leafmask = 255;
-	unsigned int validmask = leafmask << 8;
-
-	parent &= validmask;
-	parent &= leafmask;
-
-	std::cout << BitCount(parent & leafmask);
-
-	unsigned int children[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 }
 
 void Map::load_unload(sf::Vector3i world_position) {
 	
-	sf::Vector3i chunk_pos(world_to_chunk(world_position));
-	
-	//Don't forget the middle chunk
-	if (chunk_map.find(chunk_pos) == chunk_map.end()) {
-		chunk_map[chunk_pos] = Chunk(5);
-	}
+	//sf::Vector3i chunk_pos(world_to_chunk(world_position));
+	//
+	////Don't forget the middle chunk
+	//if (chunk_map.find(chunk_pos) == chunk_map.end()) {
+	//	chunk_map[chunk_pos] = Chunk(5);
+	//}
 
-	for (int x = chunk_pos.x - chunk_radius / 2; x < chunk_pos.x + chunk_radius / 2; x++) {
-		for (int y = chunk_pos.y - chunk_radius / 2; y < chunk_pos.y + chunk_radius / 2; y++) {
-			for (int z = chunk_pos.z - chunk_radius / 2; z < chunk_pos.z + chunk_radius / 2; z++) {
+	//for (int x = chunk_pos.x - chunk_radius / 2; x < chunk_pos.x + chunk_radius / 2; x++) {
+	//	for (int y = chunk_pos.y - chunk_radius / 2; y < chunk_pos.y + chunk_radius / 2; y++) {
+	//		for (int z = chunk_pos.z - chunk_radius / 2; z < chunk_pos.z + chunk_radius / 2; z++) {
 
-				if (chunk_map.find(sf::Vector3i(x, y, z)) == chunk_map.end()) {
-					chunk_map.emplace(sf::Vector3i(x, y, z), Chunk(rand() % 6));
-					//chunk_map[sf::Vector3i(x, y, z)] = Chunk(rand() % 6);
-				}
-			}
-		}
-	}
+	//			if (chunk_map.find(sf::Vector3i(x, y, z)) == chunk_map.end()) {
+	//				chunk_map.emplace(sf::Vector3i(x, y, z), Chunk(rand() % 6));
+	//				//chunk_map[sf::Vector3i(x, y, z)] = Chunk(rand() % 6);
+	//			}
+	//		}
+	//	}
+	//}
 }
 
 void Map::load_single(sf::Vector3i world_position) {
-	sf::Vector3i chunk_pos(world_to_chunk(world_position));
+	//sf::Vector3i chunk_pos(world_to_chunk(world_position));
 
-	//Don't forget the middle chunk
-	if (chunk_map.find(chunk_pos) == chunk_map.end()) {
-		chunk_map[chunk_pos] = Chunk(0);
-	}
+	////Don't forget the middle chunk
+	//if (chunk_map.find(chunk_pos) == chunk_map.end()) {
+	//	chunk_map[chunk_pos] = Chunk(0);
+	//}
 }
 
 sf::Vector3i Map::getDimensions() {
@@ -245,33 +216,20 @@ sf::Vector3i Map::getDimensions() {
 
 void Map::setVoxel(sf::Vector3i world_position, int val) {
 
-	load_single(world_position);
-	sf::Vector3i chunk_pos(world_to_chunk(world_position));
-	sf::Vector3i in_chunk_pos(
-		world_position.x % CHUNK_DIM,
-		world_position.y % CHUNK_DIM,
-		world_position.z % CHUNK_DIM
-	);
+	//load_single(world_position);
+	//sf::Vector3i chunk_pos(world_to_chunk(world_position));
+	//sf::Vector3i in_chunk_pos(
+	//	world_position.x % CHUNK_DIM,
+	//	world_position.y % CHUNK_DIM,
+	//	world_position.z % CHUNK_DIM
+	//);
 
-	chunk_map.at(chunk_pos).voxel_data[in_chunk_pos.x + CHUNK_DIM * (in_chunk_pos.y + CHUNK_DIM * in_chunk_pos.z)] 
-		= val;
+	//chunk_map.at(chunk_pos).voxel_data[in_chunk_pos.x + CHUNK_DIM * (in_chunk_pos.y + CHUNK_DIM * in_chunk_pos.z)] 
+	//	= val;
 
 }
 
 char Map::getVoxel(sf::Vector3i pos){
 
 	return voxel_data[pos.x + OCT_DIM * (pos.y + OCT_DIM * pos.z)];
-}
-
-void Chunk::set(int type) {
-	for (int i = 0; i < CHUNK_DIM * CHUNK_DIM * CHUNK_DIM; i++) {
-		voxel_data[i] = 0;
-	}
-
-	for (int x = 0; x < CHUNK_DIM; x+=2) {
-		for (int y = 0; y < CHUNK_DIM; y+=2) {
-			//list[x + dim.x * (y + dim.z * z)]
-			voxel_data[x + CHUNK_DIM * (y + CHUNK_DIM * 1)] = type;
-		}
-	}
 }

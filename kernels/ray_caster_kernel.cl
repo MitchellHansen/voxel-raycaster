@@ -111,10 +111,16 @@ __kernel void raycaster(
     int2 pixel = {id % (*resolution).x, id / (*resolution).x};
     float3 ray_dir = projection_matrix[pixel.x + (*resolution).x * pixel.y];
 
+	if (pixel.x == 960 && pixel.y == 540) {
+		write_imagef(image, pixel, (float4)(0.00, 1.00, 0.00, 1.00));
+		return;
+	}
+
     ray_dir = (float3)(
-            ray_dir.z * sin((*cam_dir).x) + ray_dir.x * cos((*cam_dir).x),
+			// 1.57s are temp fix until view matrix is tweaked
+            ray_dir.z * sin((*cam_dir).x - 1.57) + ray_dir.x * cos((*cam_dir).x - 1.57),
             ray_dir.y,
-            ray_dir.z * cos((*cam_dir).x) - ray_dir.x * sin((*cam_dir).x)
+            ray_dir.z * cos((*cam_dir).x - 1.57) - ray_dir.x * sin((*cam_dir).x - 1.57)
     );
 
     ray_dir = (float3)(

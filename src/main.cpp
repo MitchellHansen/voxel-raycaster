@@ -65,8 +65,8 @@ sf::Texture window_texture;
 
 int main() {
 
-	Map _map(sf::Vector3i(0, 0, 0));
-	_map.generate_octree();
+	//Map _map(sf::Vector3i(0, 0, 0));
+	//_map.generate_octree();
 
 
 	glewInit();
@@ -101,8 +101,8 @@ int main() {
 	rc->assign_map(map);
 
 	Camera *camera = new Camera(
-		sf::Vector3f(10, 11, 12),
-		sf::Vector2f(0.1f, 1.00f)
+		sf::Vector3f(50, 50, 50),
+		sf::Vector2f(0.0f, 1.5707f)
 	);
 
 	rc->assign_camera(camera);
@@ -126,6 +126,9 @@ int main() {
 	sf::Vector2f *dp = camera->get_direction_pointer();
 	debug_text cam_text_x(1, 30, &dp->x, "incli: ");
 	debug_text cam_text_y(2, 30, &dp->y, "asmth: ");
+	debug_text cam_text_pos_x(3, 30, &camera->get_position_pointer()->x, "x: ");
+	debug_text cam_text_pos_y(4, 30, &camera->get_position_pointer()->y, "y: ");
+	debug_text cam_text_pos_z(5, 30, &camera->get_position_pointer()->z, "z: ");
 	// ===========================
 
 
@@ -154,13 +157,19 @@ int main() {
 				window.close();
 
 			if (event.type == sf::Event::KeyPressed) {
-				if (event.key.code == sf::Keyboard::Space) {
+				if (event.key.code == sf::Keyboard::M) {
 					if (mouse_enabled)
 						mouse_enabled = false;
 					else
 						mouse_enabled = true;
 				} if (event.key.code == sf::Keyboard::R) {
 					reset = true;
+				} if (event.key.code == sf::Keyboard::X) {
+					std::vector<float> tvf = sfml_get_float_input(&window);
+					if (tvf.size() == 3){
+						sf::Vector3f tv3(tvf.at(0), tvf.at(1), tvf.at(2));
+						camera->set_position(tv3);
+					}
 				}
 			}
 		}
@@ -169,6 +178,9 @@ int main() {
 
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift)) {
 			speed = 0.2f;
+		}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::L)) {
+			camera->look_at_center();
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
 			camera->add_relative_impulse(Camera::DIRECTION::DOWN, speed);
@@ -251,6 +263,10 @@ int main() {
 
 		cam_text_x.draw(&window);
 		cam_text_y.draw(&window);
+
+		cam_text_pos_x.draw(&window);
+		cam_text_pos_y.draw(&window);
+		cam_text_pos_z.draw(&window);
 
 		window.display();
 

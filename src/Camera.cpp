@@ -33,11 +33,11 @@ int Camera::add_relative_impulse(DIRECTION impulse_direction, float speed) {
 
 	switch (impulse_direction) {
 	
-	case DIRECTION::UP:
-		dir = sf::Vector2f(direction.y, direction.x + PI_F);
-		break;
-	case DIRECTION::DOWN:
+	case DIRECTION::FORWARD:
 		dir = sf::Vector2f(direction.y, direction.x);
+		break;
+	case DIRECTION::REARWARD:
+		dir = sf::Vector2f(direction.y, direction.x + PI_F);
 		break;
 	case DIRECTION::LEFT:
 		dir = sf::Vector2f(direction.y + PI_F + PI_F / 2, PI_F / 2);
@@ -45,10 +45,10 @@ int Camera::add_relative_impulse(DIRECTION impulse_direction, float speed) {
 	case DIRECTION::RIGHT:
 		dir = sf::Vector2f(direction.y + PI_F / 2, PI_F / 2);
 		break;
-	case DIRECTION::FORWARD:
+	case DIRECTION::UP:
 		dir = sf::Vector2f(direction.y, direction.x + PI_F / 2);
 		break;
-	case DIRECTION::REARWARD:
+	case DIRECTION::DOWN:
 		dir = sf::Vector2f(direction.y + PI_F, (direction.x * -1) + PI_F / 2 );
 		break;
 
@@ -65,10 +65,16 @@ int Camera::slew_camera(sf::Vector2f input) {
 	return 1;
 }
 
+void Camera::set_camera(sf::Vector2f input) {
+	direction = input;
+}
+
+void Camera::set_camera(sf::Vector3f input) {
+	direction = CartToNormalizedSphere(input);
+}
+
 int Camera::update(double delta_time) {
 	
-	// so vector multiplication broke?
-	// have to do it component wise
 	double multiplier = 40;
 
 	position.x += static_cast<float>(movement.x * delta_time * multiplier);
@@ -79,6 +85,22 @@ int Camera::update(double delta_time) {
 	
 	return 1;
 }
+
+void Camera::look_at_center() {
+	//std::cout << "X:" << position.x << std::endl;
+	//std::cout << "Y:" << position.y << std::endl;
+	//std::cout << "Z:" << position.z << std::endl;
+
+	//std::cout << "dx:" << direction.x << std::endl;
+	//std::cout << "dy:" << direction.y << std::endl;
+
+	direction = CartToNormalizedSphere(sf::Vector3f(75, 75, 75) - position);
+
+	//std::cout << "dx:" << direction.x << std::endl;
+	//std::cout << "dy:" << direction.y << std::endl;
+
+}
+
 
 sf::Vector2f* Camera::get_direction_pointer() {
 	return &direction;

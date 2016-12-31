@@ -19,36 +19,28 @@
 #define CHUNK_DIM 32
 #define OCT_DIM 64
 
-struct KeyHasher {
+struct XYZHasher {
 	std::size_t operator()(const sf::Vector3i& k) const {
-
 		return ((std::hash<int>()(k.x)
 			^ (std::hash<int>()(k.y) << 1)) >> 1)
 			^ (std::hash<int>()(k.z) << 1);
 	}
 };
 
-struct Chunk {
-	Chunk(int type) { voxel_data = new int[CHUNK_DIM * CHUNK_DIM * CHUNK_DIM]; set(type); };
-	Chunk() { };
-	void set(int type);
-	~Chunk() { voxel_data = nullptr; };
-	int* voxel_data;
-};
-
 class Octree {
-	
 public:
 	Octree() {
-		dat = new uint64_t[(int)pow(2, 15)];
-		for (int i = 0; i < (int)pow(2, 15); i++) {
-			dat[i] = 0;
+
+		// initialize the first stack block
+		stack.push_back(new uint64_t[0x8000]);
+		for (int i = 0; i < 0x8000; i++) {
+			stack.back() = 0;
 		}
 	};
 
 	~Octree() {};
 
-	uint64_t *dat;
+	std::list<uint64_t*> stack;
 	uint64_t stack_pos = 0x8000;
 	uint64_t global_pos = 0;
 	
@@ -65,7 +57,7 @@ public:
 
 		// Check for the far bit
 
-		memcpy(&dat[stack_pos + global_pos], children.data(), children.size() * sizeof(uint64_t));
+		memcpy(&stack.front()[stack_pos + global_pos], children.data(), children.size() * sizeof(uint64_t));
 		
 		// Return the bitmask encoding the index of that value
 		// If we tripped the far bit, allocate a far index to the stack and place
@@ -76,6 +68,17 @@ public:
 		return stack_pos;
 	};
 
+	void print_block(int block_pos) {
+		std::stringstream sss;
+		for (int i = 0; i < (int)pow(2, 15); i++) {
+			PrettyPrintUINT64(stack.front()[i], &sss);
+			sss << "\n";
+		}
+		DumpLog(&sss, "raw_data.txt");
+	}
+
+
+
 	
 
 };
@@ -83,6 +86,7 @@ public:
 
 class Map {
 public: 
+
 
 	Map(sf::Vector3i dim);
 	void generate_octree();
@@ -118,7 +122,7 @@ private:
 	char getVoxel(sf::Vector3i pos);
 	char* voxel_data = new char[OCT_DIM * OCT_DIM * OCT_DIM];
 
-	std::unordered_map<sf::Vector3i, Chunk, KeyHasher> chunk_map;
+	//std::unordered_map<sf::Vector3i, Chunk, XYZHasher> chunk_map;
 
 	double* height_map;
 

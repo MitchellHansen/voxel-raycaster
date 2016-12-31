@@ -18,8 +18,12 @@ public:
 	int add_relative_impulse(DIRECTION direction, float speed);
 
 	int slew_camera(sf::Vector2f input);
+	void set_camera(sf::Vector2f input);
+	void set_camera(sf::Vector3f input);
 
 	int update(double delta_time);
+
+	void look_at_center();
 
 	sf::Vector2f* get_direction_pointer();
 	sf::Vector3f* get_position_pointer();

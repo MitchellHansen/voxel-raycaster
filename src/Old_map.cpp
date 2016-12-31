@@ -26,6 +26,8 @@ void Old_Map::generate_terrain() {
 		voxel_data[i] = 0;
 	}
 
+	set_voxel(sf::Vector3i(75, 75, 75), 5);
+
 	for (int i = 0; i < dimensions.x * dimensions.y; i++) {
 		height_map[i] = 0;
 	}
