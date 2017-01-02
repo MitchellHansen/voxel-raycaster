@@ -133,9 +133,7 @@ __kernel void raycaster(
 	voxel_step *= (ray_dir > 0) - (ray_dir < 0);
 
     // Setup the voxel coords from the camera origin
-	// Off by one error here in regards to the camera position.
-	// Will need to hunt this down later
-	int3 voxel = convert_int3(*cam_pos + 1);
+	int3 voxel = convert_int3(*cam_pos);
 
     // Delta T is the units a ray must travel along an axis in order to
     // traverse an integer split
@@ -197,8 +195,7 @@ __kernel void raycaster(
 		
         // If we hit a voxel
 		//int index = voxel.x * (*map_dim).y * (*map_dim).z + voxel.z * (*map_dim).z + voxel.y;
-		// Why the off by one on voxel.y?
-        int index = voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z-1));
+        int index = voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z));
         int voxel_data = map[index];
 
 		if (voxel_data != 0) {
