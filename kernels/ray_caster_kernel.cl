@@ -105,8 +105,6 @@ __kernel void raycaster(
 	int random_number = rand(&seed);
 	seed_memory[global_id] = seed;
 
-
-
     size_t id = get_global_id(0);
     int2 pixel = {id % (*resolution).x, id / (*resolution).x};
     float3 ray_dir = projection_matrix[pixel.x + (*resolution).x * pixel.y];
@@ -116,13 +114,14 @@ __kernel void raycaster(
 		return;
 	}
 
-    ray_dir = (float3)(
-			// 1.57s are temp fix until view matrix is tweaked
-            ray_dir.z * sin((*cam_dir).x - 1.57) + ray_dir.x * cos((*cam_dir).x - 1.57),
-            ray_dir.y,
-            ray_dir.z * cos((*cam_dir).x - 1.57) - ray_dir.x * sin((*cam_dir).x - 1.57)
-    );
+	// Pitch
+	ray_dir = (float3)(
+		ray_dir.z * sin((*cam_dir).x) + ray_dir.x * cos((*cam_dir).x),
+		ray_dir.y,
+		ray_dir.z * cos((*cam_dir).x) - ray_dir.x * sin((*cam_dir).x)
+		);
 
+	// Yaw
     ray_dir = (float3)(
             ray_dir.x * cos((*cam_dir).y) - ray_dir.y * sin((*cam_dir).y),
             ray_dir.x * sin((*cam_dir).y) + ray_dir.y * cos((*cam_dir).y),
@@ -134,7 +133,9 @@ __kernel void raycaster(
 	voxel_step *= (ray_dir > 0) - (ray_dir < 0);
 
     // Setup the voxel coords from the camera origin
-	int3 voxel = convert_int3(*cam_pos);
+	// Off by one error here in regards to the camera position.
+	// Will need to hunt this down later
+	int3 voxel = convert_int3(*cam_pos + 1);
 
     // Delta T is the units a ray must travel along an axis in order to
     // traverse an integer split
@@ -143,9 +144,6 @@ __kernel void raycaster(
 	// offset is how far we are into a voxel, enables sub voxel movement
 	float3 offset = ((*cam_pos) - floor(*cam_pos)) * convert_float3(voxel_step);
 	
-
-	//offset.x += delta_t.x * convert_float((voxel_step.x < 0));
-	//offset -= delta_t * floor(offset / delta_t);
 
 	// Intersection T is the collection of the next intersection points
     // for all 3 axis XYZ.

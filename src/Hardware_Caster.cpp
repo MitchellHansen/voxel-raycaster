@@ -132,12 +132,18 @@ void Hardware_Caster::create_viewport(int width, int height, float v_fov, float 
 				static_cast<float>(ray.z * cos(y_increment_radians * y) - ray.x * sin(y_increment_radians * y))
 			);
 
-
 			// Z axis, yaw
 			ray = sf::Vector3f(
 				static_cast<float>(ray.x * cos(x_increment_radians * x) - ray.y * sin(x_increment_radians * x)),
 				static_cast<float>(ray.x * sin(x_increment_radians * x) + ray.y * cos(x_increment_radians * x)),
 				static_cast<float>(ray.z)
+			);
+
+			// correct for the base ray pointing to (1, 0, 0) as (0, 0). Should equal (1.57, 0)
+			ray = sf::Vector3f(
+				static_cast<float>(ray.z * sin(-1.57) + ray.x * cos(-1.57)),
+				static_cast<float>(ray.y),
+				static_cast<float>(ray.z * cos(-1.57) - ray.x * sin(-1.57))
 			);
 
 			int index = (x + view_res.x / 2) + view_res.x * (y + view_res.y / 2);
