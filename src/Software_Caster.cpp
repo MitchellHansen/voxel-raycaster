@@ -328,7 +328,7 @@ sf::Color Software_Caster::global_light(sf::Color in, sf::Vector3i mask) {
 
 	sf::Vector3f mask_f(mask);
 
-	in.a = in.a + acos(
+	in.a = in.a + (int)acos(
 				DotProduct(
 					Normalize(lights.at(0).direction_cartesian),
 					Normalize(mask_f)

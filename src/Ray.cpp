@@ -131,11 +131,11 @@ sf::Color Ray::Cast() {
 
         switch (voxel_data) {
             case 5:
-                return sf::Color(255, 120, 255, alpha);
+                return sf::Color(255, 120, 255, static_cast<int>(alpha));
             case 6:
-                return sf::Color(150, 80, 220, alpha);
+                return sf::Color(150, 80, 220, static_cast<int>(alpha));
 			default:
-				return sf::Color(150, 80, 220, alpha);
+				return sf::Color(150, 80, 220, static_cast<int>(alpha));
         }
 
         dist++;

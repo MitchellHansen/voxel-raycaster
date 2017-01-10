@@ -99,11 +99,12 @@ __kernel void raycaster(
 		global int* seed_memory
 ){
 
-
-	int global_id = get_global_id(1) * get_global_size(0) + get_global_id(0);
+	// Get and set the random seed from seed memory
+	int global_id = get_global_id(0);
 	int seed = seed_memory[global_id];
 	int random_number = rand(&seed);
 	seed_memory[global_id] = seed;
+
 
     size_t id = get_global_id(0);
     int2 pixel = {id % (*resolution).x, id / (*resolution).x};

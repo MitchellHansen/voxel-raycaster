@@ -1,13 +1,12 @@
 #pragma once
 #include <SFML/Graphics.hpp>
-#include <iostream>
+#include "Vector4.hpp"
 #include <math.h>
+#include <bitset>
+#include <iostream>
 #include <fstream>
 #include <sstream>
-#include "Vector4.hpp"
-#include <bitset>
 #include <string>
-#include <math.h>
 #include <iterator>
 
 

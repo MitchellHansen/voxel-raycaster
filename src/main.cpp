@@ -5,6 +5,9 @@
 
 #elif defined _WIN32
 #include <windows.h>
+
+// As if hardware is ever going to move away from 1.2
+#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 #include <CL/cl.h>
 #include <CL/opencl.h>
 
@@ -32,6 +35,7 @@
 #include "Vector4.hpp"
 #include <Camera.h>
 #include "Software_Caster.h"
+#include "Input.h"
 
 
 const int WINDOW_X = 1920;
@@ -79,20 +83,14 @@ int main() {
 	t.create_program();
 	t.create_buffers();
 
-	// Initialize the raycaster hardware, compat, or software
+
 	RayCaster *rc = new Hardware_Caster();
-	//RayCaster *rc = new Software_Caster();
+
 	if (rc->init() != 1) {
-		delete rc;
-		// rc = new Hardware_Caster_Compat();
-		// if (rc->init() != 0) {
-		//		delete rc;
-		//		rc = new Software_Caster();
-		// }
+		abort();
 	}
 
 	// Set up the raycaster
-
 	std::cout << "map...";
 	sf::Vector3i map_dim(MAP_X, MAP_Y, MAP_Z);
 	Old_Map* map = new Old_Map(map_dim);
@@ -147,14 +145,30 @@ int main() {
 	bool mouse_enabled = true;
 	bool reset = false;
 
+
+	Input input_handler;
+	input_handler.subscribe(camera, SfEventPublisher::Event_Class::KeyEvent);
+	window.setKeyRepeatEnabled(false);
+
 	while (window.isOpen()) {
 
+		input_handler.consume_events(&window);
+		input_handler.set_flags();
 		// Poll for events from the user
 		sf::Event event;
 		while (window.pollEvent(event)) {
 
 			if (event.type == sf::Event::Closed)
 				window.close();
+
+			if (event.type == sf::Event::KeyPressed) {
+				std::cout << event.key.code << std::endl;
+			}
+			if (event.type == sf::Event::KeyReleased) {
+				std::cout << event.key.code << std::endl;
+			}
+
+
 
 			if (event.type == sf::Event::KeyPressed) {
 				if (event.key.code == sf::Keyboard::M) {

@@ -86,18 +86,14 @@ int Camera::update(double delta_time) {
 	return 1;
 }
 
-void Camera::look_at_center() {
-	//std::cout << "X:" << position.x << std::endl;
-	//std::cout << "Y:" << position.y << std::endl;
-	//std::cout << "Z:" << position.z << std::endl;
+void Camera::update(SfEventPublisher* p, sf::Event e)
+{
 
-	//std::cout << "dx:" << direction.x << std::endl;
-	//std::cout << "dy:" << direction.y << std::endl;
+}
+
+void Camera::look_at_center() {
 
 	direction = CartToNormalizedSphere(sf::Vector3f(75, 75, 75) - position);
-
-	//std::cout << "dx:" << direction.x << std::endl;
-	//std::cout << "dy:" << direction.y << std::endl;
 
 }
 
