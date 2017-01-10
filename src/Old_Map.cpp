@@ -3,7 +3,7 @@
 #include <SFML/System/Vector3.hpp>
 #include <SFML/System/Vector2.hpp>
 #include "util.hpp"
-#include <Old_map.h>
+#include <Old_Map.h>
 
 Old_Map::Old_Map(sf::Vector3i dim) {
 	dimensions = dim;

@@ -7,8 +7,11 @@ set(PNAME Game)
 project(${PNAME})
 
 # Set up variables, and find SFML
-set(SFML_ROOT root CACHE STRING "User specified path")
-set(SFML_INCLUDE_DIR ${SFML_ROOT}/include)
+if (WIN32)
+    set(SFML_ROOT root CACHE STRING "User specified path")
+    set(SFML_INCLUDE_DIR ${SFML_ROOT}/include)
+endif()
+
 set(SFML_COMPONENTS graphics window system network audio)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 find_package(SFML 2.1 COMPONENTS ${SFML_COMPONENTS} REQUIRED)
@@ -58,6 +61,7 @@ target_link_libraries (${PNAME} ${SFML_LIBRARIES} ${SFML_DEPENDENCIES})
 target_link_libraries (${PNAME} ${OpenCL_LIBRARY})
 target_link_libraries (${PNAME} ${OPENGL_LIBRARIES})
 target_link_libraries (${PNAME} ${GLEW_LIBRARIES})
+target_link_libraries (${PNAME} -lpthread)
 #target_link_libraries (${PNAME} ${Vulkan_LIBRARIES})
 
 # Setup to use C++11
