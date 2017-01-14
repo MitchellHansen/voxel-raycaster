@@ -35,7 +35,7 @@ public:
 	sf::Vector2f get_direction();
 
 
-	void update(VrEventPublisher* p, vr::Event e) override;
+	void recieve_event(VrEventPublisher* p, std::unique_ptr<vr::Event> event) override;
 
 private:
 

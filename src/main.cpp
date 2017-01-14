@@ -148,14 +148,18 @@ int main() {
 
 
 	Input input_handler;
-	input_handler.subscribe(camera, vr::Event::EventType::KeyPressed);
+	input_handler.subscribe(camera, vr::Event::EventType::KeyHeld);
+
+	WindowHandler win_hand(&window);
+	win_hand.subscribe_to_publisher(&input_handler, vr::Event::EventType::Closed);
 
 	window.setKeyRepeatEnabled(false);
 
 	while (window.isOpen()) {
 
 		input_handler.consume_sf_events(&window);
-		input_handler.set_flags();
+		input_handler.handle_held_keys();
+		input_handler.dispatch_events();
 		// Poll for events from the user
 		sf::Event event;
 		while (window.pollEvent(event)) {
@@ -188,36 +192,6 @@ int main() {
 					}
 				}
 			}
-		}
-
-		float speed = 1.0f;
-
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift)) {
-			speed = 0.2f;
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::L)) {
-			camera->look_at_center();
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
-			camera->add_relative_impulse(Camera::DIRECTION::DOWN, speed);
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::E)) {
-			camera->add_relative_impulse(Camera::DIRECTION::UP, speed);
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
-			camera->add_relative_impulse(Camera::DIRECTION::FORWARD, speed);
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
-			camera->add_relative_impulse(Camera::DIRECTION::REARWARD, speed);
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
-			camera->add_relative_impulse(Camera::DIRECTION::LEFT, speed);
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
-			camera->add_relative_impulse(Camera::DIRECTION::RIGHT, speed);
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::T)) {
-			camera->set_position(sf::Vector3f(50, 50, 50));
 		}
 
 		if (mouse_enabled) {

@@ -18,7 +18,7 @@ public:
 	void consume_sf_events(sf::RenderWindow *window);
 	void consume_vr_events();
 	
-	void set_flags();
+	void handle_held_keys();
 	void dispatch_events();
 	
 private:
@@ -36,5 +36,21 @@ private:
 private:
 	
 	std::list<std::unique_ptr<vr::Event>> event_queue;
+
+};
+
+class WindowHandler : public VrEventSubscriber {
+	
+public:
+	WindowHandler(sf::RenderWindow *window) : window_ref(window) { };
+
+	virtual void recieve_event(VrEventPublisher* p, std::unique_ptr<vr::Event> event) override {
+		if (event.get()->type == vr::Event::Closed) {
+			window_ref->close();
+		}
+	};
+
+private:
+	sf::RenderWindow* window_ref;
 
 };

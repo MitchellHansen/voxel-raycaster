@@ -87,9 +87,44 @@ int Camera::update(double delta_time) {
 	return 1;
 }
 
-void Camera::update(VrEventPublisher* p, vr::Event e) {
+void Camera::recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Event> event) {
 
-	std::cout << "Cam event" << std::endl;
+	if (event.get()->type == vr::Event::KeyHeld) {
+
+		vr::KeyHeld *held_event = static_cast<vr::KeyHeld*>(event.get());
+
+		float speed = 1.0f;
+
+		if (held_event->code == sf::Keyboard::LShift) {
+			speed = 0.2f;
+		}
+		else if (held_event->code == sf::Keyboard::C) {
+			look_at_center();
+		}
+		else if (held_event->code == sf::Keyboard::Q) {
+			add_relative_impulse(Camera::DIRECTION::DOWN, speed);
+		}
+		else if (held_event->code == sf::Keyboard::E) {
+			add_relative_impulse(Camera::DIRECTION::UP, speed);
+		}
+		else if (held_event->code == sf::Keyboard::W) {
+			add_relative_impulse(Camera::DIRECTION::FORWARD, speed);
+		}
+		else if (held_event->code == sf::Keyboard::S) {
+			add_relative_impulse(Camera::DIRECTION::REARWARD, speed);
+		}
+		else if (held_event->code == sf::Keyboard::A) {
+			add_relative_impulse(Camera::DIRECTION::LEFT, speed);
+		}
+		else if (held_event->code == sf::Keyboard::D) {
+			add_relative_impulse(Camera::DIRECTION::RIGHT, speed);
+		}
+		else if (held_event->code == sf::Keyboard::T) {
+			set_position(sf::Vector3f(50, 50, 50));
+		}
+	}
+
+
 }
 
 void Camera::look_at_center() {

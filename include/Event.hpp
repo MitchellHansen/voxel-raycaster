@@ -16,8 +16,9 @@ namespace vr {
 
 	// A result of getting rid of the union and extracting
 	// event types into individual classes is the fact that
-	// there is going to be a lot of repeat code i.e the
-	// difference between KeyPressed and KeyReleased
+	// there is going to be a lot of repeat code i.e 
+	// KeyPressed, KeyHeld, and KeyReleased all hold the same
+	// data, it's just their names that are different
 
 	class Event {
 	public:
@@ -30,15 +31,18 @@ namespace vr {
 			GainedFocus,
 			TextEntered,
 			KeyPressed,
+			KeyHeld,
 			KeyReleased,
 			MouseWheelMoved,
 			MouseWheelScrolled,
 			MouseButtonPressed,
+			MouseButtonHeld,
 			MouseButtonReleased,
 			MouseMoved,
 			MouseEntered,
 			MouseLeft,
 			JoystickButtonPressed,
+			JoystickButtonHeld,
 			JoystickButtonReleased,
 			JoystickMoved,
 			JoystickConnected,
@@ -48,6 +52,7 @@ namespace vr {
 			TouchEnded,
 			SensorChanged,
 			NetworkJoystickButtonPressed,
+			NetworkJoystickButtonHeld,
 			NetworkJoystickButtonReleased,
 			NetworkJoystickMoved,
 			NetworkJoystickConnected,
@@ -72,8 +77,8 @@ namespace vr {
 	public:
 		Resized(unsigned int width, unsigned int height) : 
 			width(width), height(height), Event(vr::Event::EventType::Resized) {};
-		unsigned int width;
-		unsigned int height;
+		unsigned int		width;
+		unsigned int		height;
 	};
 
 	class LostFocus : public Event {
@@ -97,6 +102,18 @@ namespace vr {
 	public:
 		KeyPressed(sf::Keyboard::Key code, bool alt, bool control, bool shift, bool system ) :
 			code(code), alt(alt), control(control), shift(shift), system(system), Event(vr::Event::EventType::KeyPressed) {};
+
+		sf::Keyboard::Key	code;
+		bool				alt;
+		bool				control;
+		bool				shift;
+		bool				system;
+	};
+
+	class KeyHeld : public Event {
+	public:
+		KeyHeld(sf::Keyboard::Key code, bool alt, bool control, bool shift, bool system) :
+			code(code), alt(alt), control(control), shift(shift), system(system), Event(vr::Event::EventType::KeyHeld) {};
 
 		sf::Keyboard::Key	code;
 		bool				alt;
@@ -144,6 +161,16 @@ namespace vr {
 		int					y;
 	};
 
+	class MouseButtonHeld : public Event {
+	public:
+		MouseButtonHeld(sf::Mouse::Button button, int x, int y) :
+			button(button), x(x), y(y), Event(vr::Event::EventType::MouseButtonHeld) {};
+
+		sf::Mouse::Button	button;
+		int					x;
+		int					y;
+	};
+
 	class MouseButtonReleased : public Event {
 	public:
 		MouseButtonReleased(sf::Mouse::Button button, int x, int y) :
@@ -159,8 +186,8 @@ namespace vr {
 		MouseMoved(int x, int y) :
 			x(x), y(y), Event(vr::Event::EventType::MouseMoved) {};
 
-		int x;
-		int y;
+		int					x;
+		int					y;
 	};
 
 	class MouseEntered : public Event {
@@ -168,8 +195,8 @@ namespace vr {
 		MouseEntered(int x, int y) :
 			x(x), y(y), Event(vr::Event::EventType::MouseEntered) {};
 
-		int x;
-		int y;
+		int					x;
+		int					y;
 	};
 
 	class MouseLeft : public Event {
@@ -177,8 +204,8 @@ namespace vr {
 		MouseLeft(int x, int y) :
 			x(x), y(y), Event(vr::Event::EventType::MouseLeft) {};
 
-		int x;
-		int y;
+		int					x;
+		int					y;
 	};
 
 	class JoystickButtonPressed : public Event {
@@ -186,8 +213,17 @@ namespace vr {
 		JoystickButtonPressed(unsigned int joystickId, unsigned int button) :
 			joystickId(joystickId), button(button), Event(vr::Event::EventType::JoystickButtonPressed) {};
 
-		unsigned int joystickId;
-		unsigned int button;
+		unsigned int		joystickId;
+		unsigned int		button;
+	};
+
+	class JoystickButtonHeld : public Event {
+	public:
+		JoystickButtonHeld(unsigned int joystickId, unsigned int button) :
+			joystickId(joystickId), button(button), Event(vr::Event::EventType::JoystickButtonHeld) {};
+
+		unsigned int		joystickId;
+		unsigned int		button;
 	};
 
 	class JoystickButtonReleased : public Event {
@@ -195,8 +231,8 @@ namespace vr {
 		JoystickButtonReleased(unsigned int joystickId, unsigned int button) :
 			joystickId(joystickId), button(button), Event(vr::Event::EventType::JoystickButtonReleased) {};
 
-		unsigned int joystickId;
-		unsigned int button;
+		unsigned int		joystickId;
+		unsigned int		button;
 	};
 
 	class JoystickMoved : public Event {
@@ -214,7 +250,7 @@ namespace vr {
 		JoystickConnected(unsigned int joystickId) :
 			joystickId(joystickId), Event(vr::Event::EventType::JoystickConnected) {};
 
-		unsigned int joystickId;
+		unsigned int		joystickId;
 	};
 
 	class JoystickDisconnected : public Event {
@@ -222,17 +258,17 @@ namespace vr {
 		JoystickDisconnected(unsigned int joystickId) :
 			joystickId(joystickId), Event(vr::Event::EventType::JoystickDisconnected) {};
 
-		unsigned int joystickId;
+		unsigned int		joystickId;
 	};
 
 	class TouchBegan : public Event {
 	public:
 		TouchBegan(unsigned int finger, int x, int y) :
 			finger(finger), x(x), y(y), Event(vr::Event::EventType::TouchBegan) {};
-
-		unsigned int finger;
-		int x;
-		int y;
+				
+		unsigned int		finger;
+		int					x;
+		int					y;
 	};
 
 	class TouchMoved : public Event {
@@ -240,9 +276,9 @@ namespace vr {
 		TouchMoved(unsigned int finger, int x, int y) :
 			finger(finger), x(x), y(y), Event(vr::Event::EventType::TouchMoved) {};
 
-		unsigned int finger;
-		int x;
-		int y;
+		unsigned int		finger;
+		int					x;
+		int					y;
 	};
 
 	class TouchEnded : public Event {
@@ -250,9 +286,9 @@ namespace vr {
 		TouchEnded(unsigned int finger, int x, int y) :
 			finger(finger), x(x), y(y), Event(vr::Event::EventType::TouchEnded) {};
 
-		unsigned int finger;
-		int x;
-		int y;
+		unsigned int		finger;
+		int					x;
+		int					y;
 	};
 
 	class SensorChanged : public Event {
@@ -260,10 +296,10 @@ namespace vr {
 		SensorChanged(sf::Sensor::Type type, float x, float y, float z) :
 			type(type), x(x), y(y), z(z), Event(vr::Event::EventType::SensorChanged) {};
 
-		sf::Sensor::Type type;
-		float x;
-		float y;
-		float z;
+		sf::Sensor::Type	type;
+		float				x;
+		float				y;
+		float				z;
 	};
 
 	// I'm moving this to it's own event type because
@@ -275,6 +311,15 @@ namespace vr {
 	public:
 		NetworkJoystickButtonPressed(unsigned int joystickId, unsigned int button) :
 			joystickId(joystickId), button(button), Event(vr::Event::EventType::NetworkJoystickButtonPressed) {};
+
+		unsigned int		joystickId;
+		unsigned int		button;
+	};
+
+	class NetworkJoystickButtonHeld : public Event {
+	public:
+		NetworkJoystickButtonHeld(unsigned int joystickId, unsigned int button) :
+			joystickId(joystickId), button(button), Event(vr::Event::EventType::NetworkJoystickButtonHeld) {};
 
 		unsigned int		joystickId;
 		unsigned int		button;

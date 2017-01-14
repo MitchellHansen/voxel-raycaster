@@ -27,29 +27,86 @@ void Input::consume_sf_events(sf::RenderWindow *window) {
 	transpose_sf_events(sf_event_queue);
 
 	sf_event_queue.clear();
+
 }
 
 void Input::consume_vr_events() {
 
 }
 
-void Input::set_flags() {
+void Input::handle_held_keys() {
 
-	//for (auto e: event_queue) {
-	//	if (e.type == vr::Event::KeyPressed) {
-	//		vr::KeyPressed e = static_cast<vr::KeyPressed>(e);
-	//		
-	//	}
-	//	else if (e.type == sf::Event::KeyReleased) {
-	//		//std::remove(held_keys.begin(), held_keys.end(), e.key.code);
-	//	}
-	//}
+	// When keys and buttons are pressed, add them to the held list.
+	// When they are depressed, remove them
+
+	for (auto&& event: event_queue) {
+		if (event->type == vr::Event::KeyPressed) {
+			vr::KeyPressed *e = static_cast<vr::KeyPressed*>(event.get());
+			held_keys.push_back(e->code);
+		}
+		else if (event->type == vr::Event::KeyReleased) {
+			vr::KeyReleased *e = static_cast<vr::KeyReleased*>(event.get());
+			std::remove(held_keys.begin(), held_keys.end(), e->code);
+		}
+		else if (event->type == vr::Event::MouseButtonPressed) {
+			vr::MouseButtonPressed *e = static_cast<vr::MouseButtonPressed*>(event.get());
+			held_mouse_buttons.push_back(e->button);
+		}
+		else if (event->type == vr::Event::MouseButtonReleased) {
+			vr::MouseButtonReleased *e = static_cast<vr::MouseButtonReleased*>(event.get());
+			std::remove(held_mouse_buttons.begin(), held_mouse_buttons.end(), e->button);
+		}
+	}
+
+	// Generate Held events for each of the held buttons and keys
+
+	for (auto key : held_keys) {
+
+		// Not sure if this is a good idea, but I'm going to grab
+		// the real-time values of the mod keys and add them to the event
+
+		bool alt = false;
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt) || sf::Keyboard::isKeyPressed(sf::Keyboard::RAlt)) {
+			alt = true;
+		}
+		
+		bool control = false;
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) || sf::Keyboard::isKeyPressed(sf::Keyboard::RControl)) {
+			control = true;
+		}
+
+		bool shift = false;
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift)) {
+			shift = true;
+		}
+
+		bool system = false;
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::LSystem) || sf::Keyboard::isKeyPressed(sf::Keyboard::RSystem)) {
+			system = true;
+		}
+		
+		event_queue.push_back(std::make_unique<vr::KeyHeld>(vr::KeyHeld(key, alt, control, shift, system)));
+	}
+
+
+	for (auto mouse_button : held_mouse_buttons) {
+		
+		// Again, I'm going to poll the real-time status of this event
+		// to fill in the X and Y values. I can do this either with screen
+		// co-ords or with viewport co-ords. I don't have access to the window
+		// from here so for now I'm going to do screen co-ords
+
+		sf::Vector2i mouse_pos = sf::Mouse::getPosition();
+
+		event_queue.push_back(std::make_unique<vr::MouseButtonHeld>(vr::MouseButtonHeld(mouse_button, mouse_pos.x, mouse_pos.y)));
+	}
+
 }
 
 void Input::dispatch_events() {
 
 	while (event_queue.size() != 0) {
-		notify(*event_queue.front().get());
+		notify_subscribers(std::move(event_queue.front()));
 		event_queue.pop_front();
 	}
 
@@ -163,3 +220,4 @@ void Input::transpose_sf_events(std::list<sf::Event> sf_event_queue) {
 		}
 	}
 }
+
