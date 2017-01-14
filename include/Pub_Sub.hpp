@@ -119,9 +119,15 @@ public:
 			event_class = Event_Class::SensorEvent;
 		}
 
+		else {
+			std::cout << "Unable to classify sf::Event into Event_Class";
+			abort();
+		}
 
+		// get the bucket containing subscribers to that Event_Class
 		std::vector<SfEventSubscriber*> *event_type_bucket = &subscribers[event_class];
 
+		// Send them the event
 		for (auto s : *event_type_bucket) {
 			s->update(this, e);
 		}
