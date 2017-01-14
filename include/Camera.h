@@ -2,9 +2,9 @@
 #include <SFML/System/Vector3.hpp>
 #include <SFML/System/Vector2.hpp>
 #include "util.hpp"
-#include "Pub_Sub.hpp"
+#include "Pub_Sub.h"
 
-class Camera : public SfEventSubscriber{
+class Camera : public VrEventSubscriber{
 public:
 
 	enum DIRECTION { FORWARD, REARWARD, LEFT, RIGHT, UP, DOWN };
@@ -35,7 +35,7 @@ public:
 	sf::Vector2f get_direction();
 
 
-	virtual void update(SfEventPublisher* p, sf::Event e) override;
+	void update(VrEventPublisher* p, vr::Event e) override;
 
 private:
 

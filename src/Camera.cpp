@@ -1,5 +1,6 @@
+#pragma once
 #include "Camera.h"
-
+#include "Pub_Sub.h"
 
 
 Camera::Camera() {
@@ -86,17 +87,15 @@ int Camera::update(double delta_time) {
 	return 1;
 }
 
-void Camera::update(SfEventPublisher* p, sf::Event e)
-{
+void Camera::update(VrEventPublisher* p, vr::Event e) {
 
+	std::cout << "Cam event" << std::endl;
 }
 
 void Camera::look_at_center() {
 
 	direction = CartToNormalizedSphere(sf::Vector3f(75, 75, 75) - position);
-
 }
-
 
 sf::Vector2f* Camera::get_direction_pointer() {
 	return &direction;

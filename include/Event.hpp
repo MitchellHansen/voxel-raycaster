@@ -4,7 +4,7 @@
 #include <SFML/Window/Mouse.hpp>
 #include <SFML/Window/Joystick.hpp>
 #include <SFML/Window/Sensor.hpp>
-#include <GL/glew.h>
+
 
 
 namespace vr {
@@ -125,7 +125,7 @@ namespace vr {
 
 	class MouseWheelScrolled : public Event {
 	public:
-		MouseWheelScrolled(sf::Mouse::Wheel wheel, bool delta, bool x, bool y) :
+		MouseWheelScrolled(sf::Mouse::Wheel wheel, float delta, int x, int y) :
 			wheel(wheel), delta(delta), x(x), y(y), Event(vr::Event::EventType::MouseWheelScrolled) {};
 
 		sf::Mouse::Wheel	wheel;
@@ -136,7 +136,7 @@ namespace vr {
 
 	class MouseButtonPressed : public Event {
 	public:
-		MouseButtonPressed(sf::Mouse::Button button, bool x, bool y) :
+		MouseButtonPressed(sf::Mouse::Button button, int x, int y) :
 			button(button), x(x), y(y), Event(vr::Event::EventType::MouseButtonPressed) {};
 
 		sf::Mouse::Button	button;
@@ -146,7 +146,7 @@ namespace vr {
 
 	class MouseButtonReleased : public Event {
 	public:
-		MouseButtonReleased(sf::Mouse::Button button, bool x, bool y) :
+		MouseButtonReleased(sf::Mouse::Button button, int x, int y) :
 			button(button), x(x), y(y), Event(vr::Event::EventType::MouseButtonReleased) {};
 
 		sf::Mouse::Button	button;
@@ -156,7 +156,7 @@ namespace vr {
 
 	class MouseMoved : public Event {
 	public:
-		MouseMoved(bool x, bool y) :
+		MouseMoved(int x, int y) :
 			x(x), y(y), Event(vr::Event::EventType::MouseMoved) {};
 
 		int x;
@@ -165,7 +165,7 @@ namespace vr {
 
 	class MouseEntered : public Event {
 	public:
-		MouseEntered(bool x, bool y) :
+		MouseEntered(int x, int y) :
 			x(x), y(y), Event(vr::Event::EventType::MouseEntered) {};
 
 		int x;
@@ -174,7 +174,7 @@ namespace vr {
 
 	class MouseLeft : public Event {
 	public:
-		MouseLeft(bool x, bool y) :
+		MouseLeft(int x, int y) :
 			x(x), y(y), Event(vr::Event::EventType::MouseLeft) {};
 
 		int x;

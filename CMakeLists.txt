@@ -61,7 +61,11 @@ target_link_libraries (${PNAME} ${SFML_LIBRARIES} ${SFML_DEPENDENCIES})
 target_link_libraries (${PNAME} ${OpenCL_LIBRARY})
 target_link_libraries (${PNAME} ${OPENGL_LIBRARIES})
 target_link_libraries (${PNAME} ${GLEW_LIBRARIES})
-target_link_libraries (${PNAME} -lpthread)
+
+if (NOT WIN32)
+	target_link_libraries (${PNAME} -lpthread)
+endif()
+
 #target_link_libraries (${PNAME} ${Vulkan_LIBRARIES})
 
 # Setup to use C++11

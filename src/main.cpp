@@ -36,6 +36,7 @@
 #include <Camera.h>
 #include "Software_Caster.h"
 #include "Input.h"
+#include "Pub_Sub.h"
 
 
 const int WINDOW_X = 1920;
@@ -147,12 +148,13 @@ int main() {
 
 
 	Input input_handler;
-	input_handler.subscribe(camera, SfEventPublisher::Event_Class::KeyEvent);
+	input_handler.subscribe(camera, vr::Event::EventType::KeyPressed);
+
 	window.setKeyRepeatEnabled(false);
 
 	while (window.isOpen()) {
 
-		input_handler.consume_events(&window);
+		input_handler.consume_sf_events(&window);
 		input_handler.set_flags();
 		// Poll for events from the user
 		sf::Event event;

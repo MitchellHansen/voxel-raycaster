@@ -1,11 +1,12 @@
 ﻿#pragma once
 #include <SFML/Graphics.hpp>
 #include <list>
-#include "Pub_Sub.hpp"
 #include "Event.hpp"
+#include <memory>
+#include "Pub_Sub.h"
 
 
-class Input : public SfEventPublisher {
+class Input : public VrEventPublisher {
 public:
 	
 	Input();
@@ -34,6 +35,6 @@ private:
 
 private:
 	
-	std::list<vr::Event> event_queue;
+	std::list<std::unique_ptr<vr::Event>> event_queue;
 
 };
