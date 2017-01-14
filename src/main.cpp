@@ -1,4 +1,7 @@
-﻿#include "GL_Testing.h"
+﻿
+// This has to be up here or else glew will complain
+#include "GL_Testing.h"
+
 #ifdef linux
 #include <CL/cl.h>
 #include <CL/opencl.h>
@@ -17,27 +20,21 @@
 # include <OpenCL/opencl.h>
 #include <OpenCL/cl_gl_ext.h>
 #include <OpenCL/cl_ext.h>
-
 #endif
 
 #pragma once
 #include <iostream>
 #include <chrono>
-#include <fstream>
-#include <sstream>
-
-
 #include <SFML/Graphics.hpp>
 #include "Old_Map.h"
 #include "util.hpp"
 #include "RayCaster.h"
 #include "Hardware_Caster.h"
 #include "Vector4.hpp"
-#include <Camera.h>
+#include "Camera.h"
 #include "Software_Caster.h"
 #include "Input.h"
 #include "Pub_Sub.h"
-
 
 const int WINDOW_X = 1920;
 const int WINDOW_Y = 1080;
@@ -164,18 +161,6 @@ int main() {
 		sf::Event event;
 		while (window.pollEvent(event)) {
 
-			if (event.type == sf::Event::Closed)
-				window.close();
-
-			if (event.type == sf::Event::KeyPressed) {
-				std::cout << event.key.code << std::endl;
-			}
-			if (event.type == sf::Event::KeyReleased) {
-				std::cout << event.key.code << std::endl;
-			}
-
-
-
 			if (event.type == sf::Event::KeyPressed) {
 				if (event.key.code == sf::Keyboard::M) {
 					if (mouse_enabled)
@@ -208,8 +193,8 @@ int main() {
 				sf::Mouse::setPosition(fixed);
 				prev_pos = sf::Mouse::getPosition();
 				camera->slew_camera(sf::Vector2f(
-					deltas.y / 300.0f,
-					deltas.x / 300.0f
+					deltas.y / 600.0f,
+					deltas.x / 600.0f
 				));
 			}
 		}

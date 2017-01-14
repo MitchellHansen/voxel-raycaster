@@ -46,7 +46,7 @@ void Input::handle_held_keys() {
 		}
 		else if (event->type == vr::Event::KeyReleased) {
 			vr::KeyReleased *e = static_cast<vr::KeyReleased*>(event.get());
-			std::remove(held_keys.begin(), held_keys.end(), e->code);
+			held_keys.erase(std::remove(held_keys.begin(), held_keys.end(), e->code), held_keys.end());
 		}
 		else if (event->type == vr::Event::MouseButtonPressed) {
 			vr::MouseButtonPressed *e = static_cast<vr::MouseButtonPressed*>(event.get());
@@ -54,7 +54,7 @@ void Input::handle_held_keys() {
 		}
 		else if (event->type == vr::Event::MouseButtonReleased) {
 			vr::MouseButtonReleased *e = static_cast<vr::MouseButtonReleased*>(event.get());
-			std::remove(held_mouse_buttons.begin(), held_mouse_buttons.end(), e->button);
+			held_keys.erase(std::remove(held_keys.begin(), held_keys.end(), e->button), held_keys.end());
 		}
 	}
 
