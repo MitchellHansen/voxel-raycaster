@@ -4,7 +4,7 @@
 #include "SFML/Graphics.hpp"
 #include "CL_Wrapper.h"
 #include "Camera.h"
-#include "Old_map.h"
+#include "Old_Map.h"
 #include "RayCaster.h"
 
 // Renderer needs to handle the distinction between a few difference circumstances.
