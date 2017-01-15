@@ -7,10 +7,10 @@ Camera::Camera() {
 }
 
 
-Camera::Camera(sf::Vector3f position, sf::Vector2f direction) :
-	position(position), direction(direction)
+Camera::Camera(sf::Vector3f position, sf::Vector2f direction, sf::RenderWindow* window) :
+	position(position), direction(direction), window(window)
 	{
-
+		fixed = sf::Vector2i(sf::Vector2i(window->getSize().x/2, window->getSize().y/2));
 }
 
 Camera::~Camera() {
@@ -124,6 +124,36 @@ void Camera::recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Even
 		}
 	}
 
+	else if (event->type == vr::Event::KeyHeld) {
+		
+		vr::KeyPressed *key_event = static_cast<vr::KeyPressed*>(event.get());
+		
+		if (key_event->code == sf::Keyboard::M) {
+			if (mouse_enabled)
+				mouse_enabled = false;
+			else
+				mouse_enabled = true;
+		}
+	}
+
+	else if (event->type == vr::Event::MouseMoved) {
+
+		if (mouse_enabled) {
+
+			vr::MouseMoved *mouse_event = static_cast<vr::MouseMoved*>(event.get());
+
+			//deltas = fixed - sf::Mouse::getPosition();
+			deltas = fixed - sf::Vector2i(mouse_event->x, mouse_event->y);
+			if (deltas != sf::Vector2i(0, 0) && mouse_enabled == true) {
+
+				sf::Mouse::setPosition(fixed, *window);
+				slew_camera(sf::Vector2f(
+					deltas.y / 1200.0f,
+					deltas.x / 1200.0f
+				));
+			}
+		}
+	}
 
 }
 

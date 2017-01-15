@@ -138,14 +138,14 @@ void Old_Map::generate_terrain() {
 	}
 
 
-	//for (int x = 0; x < dimensions.x / 10; x++) {
-	//	for (int y = 0; y < dimensions.y / 10; y++) {
+	for (int x = 0; x < dimensions.x; x++) {
+		for (int y = 0; y < dimensions.y; y++) {
 	//		for (int z = 0; z < dimensions.z; z++) {
-	//			if (rand() % 1000 < 1)
-	//				voxel_data[x + dimensions.x * (y + dimensions.z * z)] = rand() % 6;
+				//if (rand() % 1000 < 1)
+					voxel_data[x + dimensions.x * (y + dimensions.z * 1)] = 6;
 	//		}
-	//	}
-	//}
+		}
+	}
 
 }
 

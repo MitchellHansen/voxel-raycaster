@@ -36,8 +36,8 @@
 #include "Input.h"
 #include "Pub_Sub.h"
 
-const int WINDOW_X = 1920;
-const int WINDOW_Y = 1080;
+const int WINDOW_X = 1000;
+const int WINDOW_Y = 1000;
 const int WORK_SIZE = WINDOW_X * WINDOW_Y;
 
 const int MAP_X = 512;
@@ -70,51 +70,64 @@ int main() {
 	//Map _map(sf::Vector3i(0, 0, 0));
 	//_map.generate_octree();
 
-
 	glewInit();
 
 	sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
+	window.setMouseCursorVisible(false);
 
-	GL_Testing t;
+	/*GL_Testing t;
 	t.compile_shader("../shaders/passthrough.frag", GL_Testing::Shader_Type::FRAGMENT);
 	t.compile_shader("../shaders/passthrough.vert", GL_Testing::Shader_Type::VERTEX);
 	t.create_program();
-	t.create_buffers();
+	t.create_buffers();*/
 
+	// Start up the raycaster
+	Hardware_Caster *raycaster = new Hardware_Caster();
 
-	RayCaster *rc = new Hardware_Caster();
-
-	if (rc->init() != 1) {
+	if (raycaster->init() != 1) {
 		abort();
 	}
 
-	// Set up the raycaster
-	std::cout << "map...";
-	sf::Vector3i map_dim(MAP_X, MAP_Y, MAP_Z);
-	Old_Map* map = new Old_Map(map_dim);
+	// Create and generate the old 3d array style map
+	Old_Map* map = new Old_Map(sf::Vector3i(MAP_X, MAP_Y, MAP_Z));
 	map->generate_terrain();
 
-	rc->assign_map(map);
+	// Send the data to the GPU
+	raycaster->assign_map(map);
 
+	// Create a new camera with (starting position, direction)
 	Camera *camera = new Camera(
 		sf::Vector3f(50, 50, 50),
-		sf::Vector2f(0.0f, 1.5707f)
+		sf::Vector2f(1.5f, 0.0f),
+		&window
 	);
 
-	rc->assign_camera(camera);
 
-	rc->create_viewport(WINDOW_X, WINDOW_Y, 50.0f, 80.0f);
 
+	// *link* the camera to the GPU
+	raycaster->assign_camera(camera);
+
+	// Generate and send the viewport to the GPU. Also creates the viewport texture
+	raycaster->create_viewport(WINDOW_X, WINDOW_Y, 50.0f, 50.0f);
+
+	float w = 60.0;
+	float h = 90.0;
+
+	// Light for the currently non functional Bling Phong shader
 	Light l;
-	l.direction_cartesian = sf::Vector3f(1.5f, 1.2f, 0.5f);
+	l.direction_cartesian = sf::Vector3f(+1.5f, -1.2f, -0.5f);
 	l.position = sf::Vector3f(100.0f, 100.0f, 100.0f);
 	l.rgbi = sf::Vector4f(0.3f, 0.4f, 0.3f, 1.0f);
 
-	rc->assign_lights(std::vector<Light>{l});
+	std::vector<Light> light_vec;
+	light_vec.push_back(l);
+	// *links* the lights to the GPU
+	raycaster->assign_lights(&light_vec);
 
-	rc->validate();
+	// Checks to see if proper data was uploaded, then sets the kernel args
+	raycaster->validate();
 
-	// Done setting up raycaster
+
 
 	// ========== DEBUG ==========
     fps_counter fps;
@@ -145,7 +158,9 @@ int main() {
 
 
 	Input input_handler;
-	input_handler.subscribe(camera, vr::Event::EventType::KeyHeld);
+
+	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyHeld);
+	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::MouseMoved);
 
 	WindowHandler win_hand(&window);
 	win_hand.subscribe_to_publisher(&input_handler, vr::Event::EventType::Closed);
@@ -157,46 +172,15 @@ int main() {
 		input_handler.consume_sf_events(&window);
 		input_handler.handle_held_keys();
 		input_handler.dispatch_events();
-		// Poll for events from the user
-		sf::Event event;
-		while (window.pollEvent(event)) {
 
-			if (event.type == sf::Event::KeyPressed) {
-				if (event.key.code == sf::Keyboard::M) {
-					if (mouse_enabled)
-						mouse_enabled = false;
-					else
-						mouse_enabled = true;
-				} if (event.key.code == sf::Keyboard::R) {
-					reset = true;
-				} if (event.key.code == sf::Keyboard::X) {
-					std::vector<float> tvf = sfml_get_float_input(&window);
-					if (tvf.size() == 3){
-						sf::Vector3f tv3(tvf.at(0), tvf.at(1), tvf.at(2));
-						camera->set_position(tv3);
-					}
-				}
-			}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Equal)) {
+			raycaster->test_edit_viewport(WINDOW_X, WINDOW_Y, w += 5, h += 5);
+		} 		
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Dash)) {
+			raycaster->test_edit_viewport(WINDOW_X, WINDOW_Y, w -= 5, h -= 5);
 		}
-
-		if (mouse_enabled) {
-			if (reset) {
-				reset = false;
-				sf::Mouse::setPosition(sf::Vector2i(2560/2, 1080/2));
-				prev_pos = sf::Vector2i(2560 / 2, 1080 / 2);
-			}
-
-			deltas = prev_pos - sf::Mouse::getPosition();
-			if (deltas != sf::Vector2i(0, 0) && mouse_enabled == true) {
-
-				// Mouse movement
-				sf::Mouse::setPosition(fixed);
-				prev_pos = sf::Mouse::getPosition();
-				camera->slew_camera(sf::Vector2f(
-					deltas.y / 600.0f,
-					deltas.x / 600.0f
-				));
-			}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::L)) {
+			light_vec.at(0).position.y += 0.5;
 		}
 
         // Time keeping
@@ -218,8 +202,8 @@ int main() {
 		window.clear(sf::Color::Black);
 
 		// Run the raycast
-		rc->compute();
-		rc->draw(&window);
+		raycaster->compute();
+		raycaster->draw(&window);
 		
 		window.popGLStates();
 

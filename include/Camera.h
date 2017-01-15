@@ -1,6 +1,6 @@
 #pragma once
 #include <SFML/System/Vector3.hpp>
-#include <SFML/System/Vector2.hpp>
+#include <SFML/System/Vector2.hpp> 
 #include "util.hpp"
 #include "Pub_Sub.h"
 
@@ -10,7 +10,7 @@ public:
 	enum DIRECTION { FORWARD, REARWARD, LEFT, RIGHT, UP, DOWN };
 
 	Camera();
-	Camera(sf::Vector3f position, sf::Vector2f direction);
+	Camera(sf::Vector3f position, sf::Vector2f direction, sf::RenderWindow *window);
 	~Camera();
 
 	int set_position(sf::Vector3f position);
@@ -50,5 +50,12 @@ private:
 
 	// These are spherical coords
 	sf::Vector2f direction;
+
+	bool mouse_enabled = true;
+	sf::Vector2i deltas;
+	sf::Vector2i fixed;
+	sf::Vector2i prev_pos;
+
+	sf::RenderWindow *window;
 };
 

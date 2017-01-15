@@ -158,7 +158,7 @@ void Hardware_Caster::create_viewport(int width, int height, float v_fov, float 
 		}
 	}
 
-	create_buffer("viewport_matrix", sizeof(float) * 4 * view_res.x * view_res.y, viewport_matrix);
+	create_buffer("viewport_matrix", sizeof(float) * 4 * view_res.x * view_res.y, viewport_matrix, CL_MEM_USE_HOST_PTR);
 
 	// Create the image that opencl's rays write to
 	viewport_image = new sf::Uint8[width * height * 4];
@@ -181,15 +181,13 @@ void Hardware_Caster::create_viewport(int width, int height, float v_fov, float 
 
 }
 
-void Hardware_Caster::assign_lights(std::vector<Light> lights) {
+void Hardware_Caster::assign_lights(std::vector<Light> *lights) {
 	
-	std::cout << sizeof(Light);
+	this->lights = lights;
 
-	this->lights = std::vector<Light>(lights);
+	light_count = static_cast<int>(lights->size());
 
-	light_count = static_cast<int>(lights.size());
-
-	create_buffer("lights", sizeof(float) * 10 * light_count, this->lights.data(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+	create_buffer("lights", sizeof(float) * 10 * light_count, this->lights->data(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 
 	create_buffer("light_count", sizeof(int), &light_count);
 
@@ -197,6 +195,53 @@ void Hardware_Caster::assign_lights(std::vector<Light> lights) {
 
 void Hardware_Caster::draw(sf::RenderWindow* window) {
 	window->draw(viewport_sprite);
+}
+
+void Hardware_Caster::test_edit_viewport(int width, int height, float v_fov, float h_fov)
+{
+	sf::Vector2i view_res(width, height);
+
+	double y_increment_radians = DegreesToRadians(v_fov / view_res.y);
+	double x_increment_radians = DegreesToRadians(h_fov / view_res.x);
+
+	for (int y = -view_res.y / 2; y < view_res.y / 2; y++) {
+		for (int x = -view_res.x / 2; x < view_res.x / 2; x++) {
+
+			// The base ray direction to slew from
+			sf::Vector3f ray(1, 0, 0);
+
+			// Y axis, pitch
+			ray = sf::Vector3f(
+				static_cast<float>(ray.z * sin(y_increment_radians * y) + ray.x * cos(y_increment_radians * y)),
+				static_cast<float>(ray.y),
+				static_cast<float>(ray.z * cos(y_increment_radians * y) - ray.x * sin(y_increment_radians * y))
+				);
+
+			// Z axis, yaw
+			ray = sf::Vector3f(
+				static_cast<float>(ray.x * cos(x_increment_radians * x) - ray.y * sin(x_increment_radians * x)),
+				static_cast<float>(ray.x * sin(x_increment_radians * x) + ray.y * cos(x_increment_radians * x)),
+				static_cast<float>(ray.z)
+				);
+
+			// correct for the base ray pointing to (1, 0, 0) as (0, 0). Should equal (1.57, 0)
+			ray = sf::Vector3f(
+				static_cast<float>(ray.z * sin(-1.57) + ray.x * cos(-1.57)),
+				static_cast<float>(ray.y),
+				static_cast<float>(ray.z * cos(-1.57) - ray.x * sin(-1.57))
+				);
+
+			int index = (x + view_res.x / 2) + view_res.x * (y + view_res.y / 2);
+			ray = Normalize(ray);
+
+			viewport_matrix[index] = sf::Vector4f(
+				ray.x,
+				ray.y,
+				ray.z,
+				0
+				);
+		}
+	}
 }
 
 int Hardware_Caster::acquire_platform_and_device() {

@@ -5,13 +5,38 @@ float4 white_light(float4 input, float3 light, int3 mask) {
 	input.w = input.w + acos(
 		dot(
 			normalize(light),
-			normalize(fabs(convert_float3(mask)))
+			normalize(convert_float3(mask * (-mask)))
 			)
 		) / 2;
 
 	return input;
 
 }
+
+
+float4 view_light(float4 in_color, float3 light, float3 view, int3 mask) {
+	
+	float diffuse = max(dot(normalize(convert_float3(mask)), normalize(light)), 0.0f);
+	if (dot(light, normalize(convert_float3(mask))) > 0.0)
+	{
+		float3 halfwayVector = normalize(normalize(light) + normalize(view));
+		float specTmp = max(dot(normalize(convert_float3(mask)), halfwayVector), 0.0f);
+		return in_color + pow(specTmp, 1.0f) * 0.01 +diffuse * 0.5;
+	}
+
+	//float3 halfwayDir = normalize(normalize(view) + normalize(light));
+	//float spec = pow(max(dot(normalize(convert_float3(mask)), halfwayDir), 0.0f), 32.0f);
+	in_color.w += 0.2;
+	return in_color;
+}
+
+
+void cast_ray(float3 ray_origin, float3 ray_direction) {
+
+}
+
+
+
 
 //  0  1  2  3  4  5  6  7   8   9
 // {r, g, b, i, x, y, z, x', y', z'}
@@ -99,21 +124,21 @@ __kernel void raycaster(
 		global int* seed_memory
 ){
 
-	// Get and set the random seed from seed memory
 	int global_id = get_global_id(0);
+	
+	// Get and set the random seed from seed memory
 	int seed = seed_memory[global_id];
 	int random_number = rand(&seed);
 	seed_memory[global_id] = seed;
 
-
-    size_t id = get_global_id(0);
-    int2 pixel = {id % (*resolution).x, id / (*resolution).x};
+	// Get the pixel on the viewport, and find the view matrix ray that matches it
+    int2 pixel = { global_id % (*resolution).x, global_id / (*resolution).x};
     float3 ray_dir = projection_matrix[pixel.x + (*resolution).x * pixel.y];
 
-	if (pixel.x == 960 && pixel.y == 540) {
-		write_imagef(image, pixel, (float4)(0.00, 1.00, 0.00, 1.00));
-		return;
-	}
+	//if (pixel.x == 960 && pixel.y == 540) {
+	//	write_imagef(image, pixel, (float4)(0.00, 1.00, 0.00, 1.00));
+	//	return;
+	//}
 
 	// Pitch
 	ray_dir = (float3)(
@@ -160,67 +185,53 @@ __kernel void raycaster(
 		intersection_t.z += delta_t.z;
 	}
 
-	// use a ghetto ass rng to give rays a "fog" appearance 
-	int2 randoms = { random_number, 14 };
-	uint tseed = randoms.x + id;
-	uint t = tseed ^ (tseed << 11);
-	uint result = randoms.y ^ (randoms.y >> 19) ^ (t ^ (t >> 8));
-
-	int max_dist = 800 + result % 100;
+	// Hard cut-off for how far the ray can travel
+	int max_dist = 800;
 	int dist = 0;
 
-	int3 mask = { 0, 0, 0 };
-	float4 color = { 0.73, 0.81, 0.89, 0.6 };
-	float4 c = (float4)(0.60, 0.00, 0.40, 0.1);
-	c.x += (result % 100) / 10;
+	
+	int3 face_mask = { 0, 0, 0 };
+	float4 fog_color = { 0.73, 0.81, 0.89, 0.8 };
+	float4 voxel_color = (float4)(0.25, 0.52, 0.30, 0.1);
+	float4 overshoot_color = { 0.25, 0.48, 0.52, 0.8 };
 
     // Andrew Woo's raycasting algo
     do {
 
-		mask = intersection_t.xyz <= min(intersection_t.yzx, intersection_t.zxy);
-		intersection_t += delta_t * fabs(convert_float3(mask.xyz));
-		voxel.xyz += voxel_step.xyz * mask.xyz;
+		// Fancy no branch version of the logic step
+		face_mask = intersection_t.xyz <= min(intersection_t.yzx, intersection_t.zxy);
+		intersection_t += delta_t * fabs(convert_float3(face_mask.xyz));
+		voxel.xyz += voxel_step.xyz * face_mask.xyz;
 
         // If the ray went out of bounds
 		int3 overshoot = voxel <= *map_dim;
 		int3 undershoot = voxel > 0;
 
 		if (overshoot.x == 0 || overshoot.y == 0 || overshoot.z == 0 || undershoot.x == 0 || undershoot.y == 0){
-			write_imagef(image, pixel, white_light(mix(color, (float4)(0.40, 0.00, 0.40, 0.2), 1.0 - max(dist / 700.0f, (float)0)), (float3)(lights[7], lights[8], lights[9]), mask));
+			write_imagef(image, pixel, white_light(mix(fog_color, overshoot_color, 1.0 - max(dist / 700.0f, (float)0)), (float3)(lights[7], lights[8], lights[9]), face_mask));
 			return;
 		}
 		if (undershoot.z == 0) {
-			write_imagef(image, pixel, white_light(mix(color, (float4)(0.40, 0.00, 0.40, 0.2), 1.0 - max(dist / 700.0f, (float)0)), (float3)(lights[7], lights[8], lights[9]), mask));
+			write_imagef(image, pixel, white_light(mix(fog_color, overshoot_color, 1.0 - max(dist / 700.0f, (float)0)), (float3)(lights[7], lights[8], lights[9]), face_mask));
 			return;
 		}
 		
         // If we hit a voxel
-		//int index = voxel.x * (*map_dim).y * (*map_dim).z + voxel.z * (*map_dim).z + voxel.y;
         int index = voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z));
         int voxel_data = map[index];
 
 		if (voxel_data != 0) {
 			switch (voxel_data) {
-			case 1:
-				write_imagef(image, pixel, (float4)(.50, .00, .00, 1));
-				return;
-			case 2:
-				write_imagef(image, pixel, (float4)(.00, .50, .40, 1.00));
-				return;
-			case 3:
-				write_imagef(image, pixel, (float4)(.00, .00, .50, 1.00));
-				return;
-			case 4:
-				write_imagef(image, pixel, (float4)(.25, .00, .25, 1.00));
-				return;
+
 			case 5:
 				
 				//write_imagef(image, pixel, (float4)(0.40, 0.00, 0.40, 0.2));
-				write_imagef(image, pixel, white_light(mix(color, c, 1.0 - max((dist/700.0f) - 0.3f, (float)0)), (float3)(lights[7], lights[8], lights[9]), mask));
+				write_imagef(image, pixel, view_light(voxel_color, (convert_float3(voxel) + offset) - (float3)(lights[4], lights[5], lights[6]), (convert_float3(voxel) + offset) - (*cam_pos), face_mask));
+				//write_imagef(image, pixel, white_light(mix(fog_color, voxel_color, 1.0 - max((dist/700.0f) - 0.3f, (float)0)), (float3)(lights[7], lights[8], lights[9]), face_mask));
 				return;
 
 				float3 vox = convert_float3(voxel);
-				float3 norm = normalize(convert_float3(mask) * convert_float3(voxel_step));
+				float3 norm = normalize(convert_float3(face_mask) * convert_float3(voxel_step));
 				float4 color = (float4)(0.95, 0.00, 0.25, 1.00);
 
 
@@ -235,12 +246,16 @@ __kernel void raycaster(
 					));
 
 				return;
-			
+
+	
+
 			case 6:
-				write_imagef(image, pixel, (float4)(.30, .80, .10, 1.00));
+				write_imagef(image, pixel, view_light((float4)(0.0, 0.239, 0.419, 0.3), (convert_float3(voxel) + offset) - (float3)(lights[4], lights[5], lights[6]), (convert_float3(voxel) + offset) - (*cam_pos), face_mask));
+				//write_imagef(image, pixel, white_light(mix((float4)(0.73, 0.81, 0.89, 0.6), (float4)(0.0, 0.239, 0.419, 0.3), 1.0 - max((dist / 700.0f) - 0.3f, (float)0)), (float3)(lights[7], lights[8], lights[9]), face_mask));
 				return;
+
 			default:
-				//write_imagef(image, pixel, (float4)(.30, .10, .10, 1.00));
+				write_imagef(image, pixel, (float4)(.30, .10, .10, 1.00));
 				continue;
 			}
 		}
@@ -249,7 +264,7 @@ __kernel void raycaster(
 
     } while (dist / 700.0f < 1);
 	//dist < max_dist
-	write_imagef(image, pixel, white_light(mix(color, (float4)(0.40, 0.00, 0.40, 0.2), 1.0 - max(dist / 700.0f, (float)0)), (float3)(lights[7], lights[8], lights[9]), mask));
+	write_imagef(image, pixel, white_light(mix(fog_color, (float4)(0.40, 0.00, 0.40, 0.2), 1.0 - max(dist / 700.0f, (float)0)), (float3)(lights[7], lights[8], lights[9]), face_mask));
     //write_imagef(image, pixel, (float4)(.73, .81, .89, 1.0));
     return;
 }

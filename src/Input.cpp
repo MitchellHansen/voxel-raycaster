@@ -40,6 +40,8 @@ void Input::handle_held_keys() {
 	// When they are depressed, remove them
 
 	for (auto&& event: event_queue) {
+
+		// Key
 		if (event->type == vr::Event::KeyPressed) {
 			vr::KeyPressed *e = static_cast<vr::KeyPressed*>(event.get());
 			held_keys.push_back(e->code);
@@ -48,6 +50,8 @@ void Input::handle_held_keys() {
 			vr::KeyReleased *e = static_cast<vr::KeyReleased*>(event.get());
 			held_keys.erase(std::remove(held_keys.begin(), held_keys.end(), e->code), held_keys.end());
 		}
+
+		// Mouse Button
 		else if (event->type == vr::Event::MouseButtonPressed) {
 			vr::MouseButtonPressed *e = static_cast<vr::MouseButtonPressed*>(event.get());
 			held_mouse_buttons.push_back(e->button);

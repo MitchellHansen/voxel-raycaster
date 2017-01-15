@@ -82,10 +82,10 @@ void Software_Caster::create_viewport(int width, int height, float v_fov, float 
 
 }
 
-void Software_Caster::assign_lights(std::vector<Light> lights) {
-	this->lights = std::vector<Light>(lights);
+void Software_Caster::assign_lights(std::vector<Light> *lights) {
+	this->lights = lights;
 
-	int light_count = static_cast<int>(lights.size());
+	int light_count = static_cast<int>(lights->size());
 }
 
 void Software_Caster::assign_map(Old_Map * map) {
@@ -330,7 +330,7 @@ sf::Color Software_Caster::global_light(sf::Color in, sf::Vector3i mask) {
 
 	in.a = in.a + (int)acos(
 				DotProduct(
-					Normalize(lights.at(0).direction_cartesian),
+					Normalize(lights->at(0).direction_cartesian),
 					Normalize(mask_f)
 					)
 				)/ 2;
