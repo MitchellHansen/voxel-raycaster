@@ -37,7 +37,7 @@ void Old_Map::generate_terrain() {
 	int DATA_SIZE = dimensions.x + 1;
 	//an initial seed value for the corners of the data
 	//srand(f_rand());
-	double SEED = rand() % 25 + 55;
+	double SEED = rand() % 30 + 55;
 
 	//seed the data
 	set_sample(0, 0, SEED);

@@ -39,7 +39,7 @@ bool cast_light_intersection_ray(
 
 	// Intersection T is the collection of the next intersection points
 	// for all 3 axis XYZ.
-	float3 intersection_t = delta_t * offset;
+	float3 intersection_t = delta_t *offset;
 
 	// for negative values, wrap around the delta_t, rather not do this
 	// component wise, but it doesn't appear to want to work
@@ -109,7 +109,7 @@ float4 view_light(float4 in_color, float3 light, float3 view, int3 mask) {
 
 	//float3 halfwayDir = normalize(normalize(view) + normalize(light));
 	//float spec = pow(max(dot(normalize(convert_float3(mask)), halfwayDir), 0.0f), 32.0f);
-	in_color.w += 0.2;
+	in_color += 0.02;
 	return in_color;
 }
 
@@ -274,7 +274,7 @@ __kernel void raycaster(
 	
 	int3 face_mask = { 0, 0, 0 };
 	float4 fog_color = { 0.73, 0.81, 0.89, 0.8 };
-	float4 voxel_color = (float4)(0.25, 0.52, 0.30, 0.1);
+	float4 voxel_color = (float4)(0.50, 0.0, 0.50, 0.1);
 	float4 overshoot_color = { 0.25, 0.48, 0.52, 0.8 };
 	
 
@@ -305,66 +305,44 @@ __kernel void raycaster(
 
 		if (voxel_data != 0) {
 
-			switch (voxel_data) {
+			//	write_imagef(image, pixel, (float4)(0.90, 0.00, 0.40, 0.9));
 
-			case 5:
-
-				//	write_imagef(image, pixel, (float4)(0.90, 0.00, 0.40, 0.9));
-
-				if (!cast_light_intersection_ray(
-					map,
-					map_dim,
-					(float3)(lights[4], lights[5], lights[6]) - (convert_float3(voxel) + offset),
-					(convert_float3(voxel) + offset + convert_float3(face_mask)/10.0f),
-					lights,
-					light_count
-					)) {
-
-					write_imagef(image, pixel, (float4)(0.90, 0.00, 0.40, 0.9));
-					return;
-				}
-
-				write_imagef(
-					image,
-					pixel,
-					view_light(
-						voxel_color,
-						(convert_float3(voxel) + offset) - (float3)(lights[4], lights[5], lights[6]),
-						(convert_float3(voxel) + offset) - (*cam_pos),
-						face_mask * voxel_step
-						)
-					);
-
-				return;
-
-				float3 vox = convert_float3(voxel);
-				float3 norm = normalize(convert_float3(face_mask) * convert_float3(voxel_step));
-				float4 color = (float4)(0.95, 0.00, 0.25, 1.00);
-
-
-				write_imagef(image, pixel,
-					cast_light_rays(
-						ray_dir,
-						vox,
-						color,
-						norm ,
-						lights,
-						light_count
-					));
-
-				return;
-
-	
-
-			case 6:
-				write_imagef(image, pixel, view_light((float4)(0.0, 0.239, 0.419, 0.3), (convert_float3(voxel) + offset) - (float3)(lights[4], lights[5], lights[6]), (convert_float3(voxel) + offset) - (*cam_pos), face_mask * voxel_step));
-				//write_imagef(image, pixel, white_light(mix((float4)(0.73, 0.81, 0.89, 0.6), (float4)(0.0, 0.239, 0.419, 0.3), 1.0 - max((dist / 700.0f) - 0.3f, (float)0)), (float3)(lights[7], lights[8], lights[9]), face_mask));
-				return;
-
-			default:
-				write_imagef(image, pixel, (float4)(.30, .10, .10, 1.00));
-				continue;
+			if (voxel_data == 6) {
+				voxel_color = (float4)(0.0, 0.239, 0.419, 0.3);
+			} 
+			else if (voxel_data == 5) {
+				voxel_color = (float4)(0.25, 0.52, 0.30, 0.1);
 			}
+
+
+			if (cast_light_intersection_ray(
+				map,
+				map_dim,
+				(float3)(lights[4], lights[5], lights[6]) - (convert_float3(voxel)),
+				(convert_float3(voxel) - convert_float3(face_mask * voxel_step)),
+				lights,
+				light_count
+				)) {
+					
+				write_imagef(image, pixel, voxel_color);
+				//write_imagef(image, pixel, voxel_color);
+				return;
+			}
+
+			write_imagef(
+				image,
+				pixel,
+				view_light(
+					voxel_color,
+					(convert_float3(voxel) + offset) - (float3)(lights[4], lights[5], lights[6]),
+					(convert_float3(voxel) + offset) - (*cam_pos),
+					face_mask * voxel_step
+					)
+				);
+
+			return;
+
+
 		}
 
         dist++;
