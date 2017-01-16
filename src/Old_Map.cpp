@@ -26,7 +26,8 @@ void Old_Map::generate_terrain() {
 		voxel_data[i] = 0;
 	}
 
-	set_voxel(sf::Vector3i(75, 75, 75), 5);
+	//set_voxel(sf::Vector3i(63, 63, 63), 1);
+
 
 	for (int i = 0; i < dimensions.x * dimensions.y; i++) {
 		height_map[i] = 0;
@@ -37,7 +38,7 @@ void Old_Map::generate_terrain() {
 	int DATA_SIZE = dimensions.x + 1;
 	//an initial seed value for the corners of the data
 	//srand(f_rand());
-	double SEED = rand() % 30 + 55;
+	double SEED = rand() % 5 + 10;
 
 	//seed the data
 	set_sample(0, 0, SEED);
@@ -45,7 +46,7 @@ void Old_Map::generate_terrain() {
 	set_sample(dimensions.x, 0, SEED);
 	set_sample(dimensions.x, dimensions.y, SEED);
 
-	double h = 30.0;//the range (-h -> +h) for the average offset
+	double h = 5.0;//the range (-h -> +h) for the average offset
 					//for the new value in range of h
 					//side length is distance of a single square side
 					//or distance of diagonal in diamond
@@ -134,6 +135,16 @@ void Old_Map::generate_terrain() {
 				}
 			}
 
+		}
+	}
+
+
+	for (int x = dimensions.x / 2; x < dimensions.x / 2 + dimensions.x / 16; x++) {
+		for (int y = dimensions.x / 2; y < dimensions.y / 2 + dimensions.x / 16; y++) {
+			for (int z = 0; z < 20; z++) {
+
+				voxel_data[x + dimensions.x * (y + dimensions.z * z)] = 6;
+			}
 		}
 	}
 

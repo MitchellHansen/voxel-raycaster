@@ -40,9 +40,9 @@ const int WINDOW_X = 1000;
 const int WINDOW_Y = 1000;
 const int WORK_SIZE = WINDOW_X * WINDOW_Y;
 
-const int MAP_X = 512;
-const int MAP_Y = 512;
-const int MAP_Z = 512;
+const int MAP_X = 128;
+const int MAP_Y = 128;
+const int MAP_Z = 128;
 
 float elap_time(){
 	static std::chrono::time_point<std::chrono::system_clock> start;
@@ -115,8 +115,8 @@ int main() {
 
 	// Light for the currently non functional Bling Phong shader
 	Light l;
-	l.direction_cartesian = sf::Vector3f(-0.2f, -0.2f, -1.5f);
-	l.position = sf::Vector3f(100.0f, 500.0f, 100.0f);
+	l.direction_cartesian = sf::Vector3f(-1.0f, -1.0f, -1.5f);
+	l.position = sf::Vector3f(256.0f, 256.0f, 256.0f);
 	l.rgbi = sf::Vector4f(0.3f, 0.4f, 0.3f, 1.0f);
 
 	std::vector<Light> light_vec;
@@ -157,6 +157,8 @@ int main() {
 	bool reset = false;
 
 
+	double timer_accumulator = 0.0;
+
 	Input input_handler;
 
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyHeld);
@@ -182,6 +184,19 @@ int main() {
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::L)) {
 			light_vec.at(0).position = camera->get_position();
 		}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::N)) {
+			light_vec.at(0).orbit_around_center(timer_accumulator += delta_time);
+		}
+
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::N)) {
+			std::string path = "../assets/";
+			std::string filename;
+			std::getline(std::cin, filename);
+			filename += ".png";
+
+			sf::Image image = window.capture();
+			image.saveToFile(path + filename);
+		}
 
         // Time keeping
 		elapsed_time = elap_time();
@@ -195,6 +210,8 @@ int main() {
 
             // ==== DELTA TIME LOCKED ====
         }
+
+		
 
         // ==== FPS LOCKED ====
 		camera->update(delta_time);
