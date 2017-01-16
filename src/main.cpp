@@ -115,8 +115,8 @@ int main() {
 
 	// Light for the currently non functional Bling Phong shader
 	Light l;
-	l.direction_cartesian = sf::Vector3f(+1.5f, -1.2f, -0.5f);
-	l.position = sf::Vector3f(100.0f, 100.0f, 100.0f);
+	l.direction_cartesian = sf::Vector3f(-0.2f, -0.2f, -1.5f);
+	l.position = sf::Vector3f(100.0f, 100.0f, 500.0f);
 	l.rgbi = sf::Vector4f(0.3f, 0.4f, 0.3f, 1.0f);
 
 	std::vector<Light> light_vec;
