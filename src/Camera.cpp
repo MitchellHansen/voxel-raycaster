@@ -126,11 +126,11 @@ void Camera::recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Even
 		}
 	}
 
-	else if (event->type == vr::Event::KeyHeld) {
+	else if (event->type == vr::Event::KeyPressed) {
 		
 		vr::KeyPressed *key_event = static_cast<vr::KeyPressed*>(event.get());
 		
-		if (key_event->code == sf::Keyboard::M) {
+		if (key_event->code == sf::Keyboard::Y) {
 			if (mouse_enabled)
 				mouse_enabled = false;
 			else

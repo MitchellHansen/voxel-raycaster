@@ -139,9 +139,9 @@ void Old_Map::generate_terrain() {
 	}
 
 
-	for (int x = dimensions.x / 2; x < dimensions.x / 2 + dimensions.x / 16; x++) {
-		for (int y = dimensions.x / 2; y < dimensions.y / 2 + dimensions.x / 16; y++) {
-			for (int z = 0; z < 20; z++) {
+	for (int x = dimensions.x / 2; x < dimensions.x / 2 + dimensions.x / 64; x++) {
+		for (int y = dimensions.x / 2; y < dimensions.y / 2 + dimensions.x / 64; y++) {
+			for (int z = 0; z < 5; z++) {
 
 				voxel_data[x + dimensions.x * (y + dimensions.z * z)] = 6;
 			}

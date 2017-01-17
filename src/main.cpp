@@ -162,6 +162,7 @@ int main() {
 	Input input_handler;
 
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyHeld);
+	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyPressed);
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::MouseMoved);
 
 	WindowHandler win_hand(&window);
@@ -181,14 +182,15 @@ int main() {
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Dash)) {
 			raycaster->test_edit_viewport(WINDOW_X, WINDOW_Y, w -= 5, h -= 5);
 		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::L)) {
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt)) {
 			light_vec.at(0).position = camera->get_position();
+			light_vec.at(0).direction_cartesian = SphereToCart(camera->get_direction());
 		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::N)) {
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::O)) {
 			light_vec.at(0).orbit_around_center(timer_accumulator += delta_time);
 		}
 
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::N)) {
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::M)) {
 			std::string path = "../assets/";
 			std::string filename;
 			std::getline(std::cin, filename);
