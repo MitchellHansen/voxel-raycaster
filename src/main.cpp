@@ -176,18 +176,22 @@ int main() {
 		input_handler.handle_held_keys();
 		input_handler.dispatch_events();
 
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Equal)) {
-			raycaster->test_edit_viewport(WINDOW_X, WINDOW_Y, w += 5, h += 5);
-		} 		
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Dash)) {
-			raycaster->test_edit_viewport(WINDOW_X, WINDOW_Y, w -= 5, h -= 5);
+
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::F11)) {
+			while (raycaster->debug_quick_recompile() != 0);
 		}
+		//if (sf::Keyboard::isKeyPressed(sf::Keyboard::Equal)) {
+		//	raycaster->test_edit_viewport(WINDOW_X, WINDOW_Y, w += 5, h += 5);
+		//} 		
+		//if (sf::Keyboard::isKeyPressed(sf::Keyboard::Dash)) {
+		//	raycaster->test_edit_viewport(WINDOW_X, WINDOW_Y, w -= 5, h -= 5);
+		//}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt)) {
 			light_vec.at(0).position = camera->get_position();
 			light_vec.at(0).direction_cartesian = SphereToCart(camera->get_direction());
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::O)) {
-			light_vec.at(0).orbit_around_center(timer_accumulator += delta_time);
+		//	light_vec.at(0).orbit_around_center(timer_accumulator += delta_time);
 		}
 
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::M)) {

@@ -158,6 +158,10 @@ inline float AngleBetweenVectors(sf::Vector3f a, sf::Vector3f b){
 	return acos(DotProduct(a, b) / (Magnitude(a) * Magnitude(b)));
 }
 
+inline float DistanceBetweenPoints(sf::Vector3f a, sf::Vector3f b) {
+	return sqrt(DotProduct(a, b));
+}
+
 inline float DegreesToRadians(float in) {
 	return static_cast<float>(in * PI / 180.0f);
 }

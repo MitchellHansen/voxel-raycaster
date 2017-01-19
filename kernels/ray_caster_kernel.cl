@@ -47,7 +47,9 @@ int rand(int* seed) // 1 <= *seed < m
 	return(*seed);
 }
 
-
+float DistanceBetweenPoints(float3 a, float3 b) {
+	return sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2) + pow(a.z - b.z, 2));
+}
 
 // =================================== Boolean ray intersection ============================
 // =========================================================================================
@@ -61,6 +63,8 @@ bool cast_light_intersection_ray(
 	global int* light_count 
 	
 	){
+
+	float distance_to_light = DistanceBetweenPoints(ray_pos, (float3)(lights[4], lights[5], lights[6]));
 
 	// Setup the voxel step based on what direction the ray is pointing
 	int3 voxel_step = { 1, 1, 1 };
@@ -80,28 +84,13 @@ bool cast_light_intersection_ray(
 	// for all 3 axis XYZ.
 	float3 intersection_t = delta_t *offset;
 
-	// for negative values, wrap around the delta_t, rather not do this
-	// component wise, but it doesn't appear to want to work
-	if (intersection_t.x < 0) {
-		intersection_t.x += delta_t.x;
-	}
-	if (intersection_t.y < 0) {
-		intersection_t.y += delta_t.y;
-	}
-	if (intersection_t.z < 0) {
-		intersection_t.z += delta_t.z;
-	}
-
-	// Hard cut-off for how far the ray can travel
-	int max_dist = 800;
-	int dist = 0;
+	// for negative values, wrap around the delta_t
+	intersection_t += delta_t * -convert_float3(isless(intersection_t, 0));
 
 	int3 face_mask = { 0, 0, 0 };
 
 	// Andrew Woo's raycasting algo
 	do {
-
-
 
 		// Fancy no branch version of the logic step
 		face_mask = intersection_t.xyz <= min(intersection_t.yzx, intersection_t.zxy);
@@ -112,10 +101,8 @@ bool cast_light_intersection_ray(
 		int3 overshoot = voxel < *map_dim;
 		int3 undershoot = voxel >= 0;
 
-		if (overshoot.x == 0 || overshoot.y == 0 || overshoot.z == 0 || undershoot.x == 0 || undershoot.y == 0) {
-			return false;
-		}
-		if (undershoot.z == 0) {
+		if (any(overshoot  == (int3)(0, 0, 0)) ||
+			any(undershoot == (int3)(0, 0, 0))) {
 			return false;
 		}
 
@@ -123,14 +110,14 @@ bool cast_light_intersection_ray(
 		int index = voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z));
 		int voxel_data = map[index];
 
-		if (voxel_data != 0) {
+		if (voxel_data != 0)
 			return true;
-		}
 
-		dist++;
-
-	} while (dist < 700);
-
+	//} while (any(isless(intersection_t, (float3)(distance_to_light - 1))));
+	} while (intersection_t.x < distance_to_light - 1 ||
+		     intersection_t.y < distance_to_light - 1 || 
+		     intersection_t.z < distance_to_light - 1 );
+	
 	return false;
 }
 
@@ -284,19 +271,11 @@ __kernel void raycaster(
 
 	// Intersection T is the collection of the next intersection points
     // for all 3 axis XYZ.
-	float3 intersection_t = delta_t * (offset);
+	float3 intersection_t = delta_t * offset;
 
-	// for negative values, wrap around the delta_t, rather not do this
-	// component wise, but it doesn't appear to want to work
-	if (intersection_t.x < 0) {
-		intersection_t.x += delta_t.x;
-	}
-	if (intersection_t.y < 0) {
-		intersection_t.y += delta_t.y;
-	}
-	if (intersection_t.z < 0) {
-		intersection_t.z += delta_t.z;
-	}
+	// for negative values, wrap around the delta_t
+	intersection_t += delta_t * -convert_float3(isless(intersection_t, 0));
+	
 
 	// Hard cut-off for how far the ray can travel
 	int max_dist = 800;
@@ -350,64 +329,62 @@ __kernel void raycaster(
 			}
 
 			// set to which face
-			float3 face_position = convert_float3(face_mask * voxel_step);
+			float3 face_position = (float)(0); //convert_float3(-face_mask * voxel_step);// convert_float3(face_mask * voxel_step) * -1;
 
-			
-			
-			if (face_mask.x * voxel_step.x == -1) {
 
-				float z_percent = (intersection_t.x - (intersection_t.z - delta_t.z)) / delta_t.z;
-				float y_percent = (intersection_t.x - (intersection_t.y - delta_t.y)) / delta_t.y;
+			if (face_mask.x == -1) {
+
+				//float z_percent = ((intersection_t.z - delta_t.z) - intersection_t.x) / delta_t.z;
+				//float y_percent = ((intersection_t.y - delta_t.y) - intersection_t.x) / delta_t.y;
+
+				float z_percent = (intersection_t.z - (intersection_t.x - delta_t.x)) / delta_t.z;
+				float y_percent = (intersection_t.y - (intersection_t.x - delta_t.x)) / delta_t.y;
+
+				//if (z_percent > 0 && z_percent > 1)
+				//	face_position = (float3)(-1.0f, 1-y_percent, 1-z_percent);
 
 				face_position = (float3)(1.0f, y_percent, z_percent);
-
-				if (face_mask.x == 1)
-					face_position *= -1;
-
 			}
+			else if (face_mask.y == -1) {
 
-			if (face_mask.y * voxel_step.y == -1) {
+				//float x_percent = ((intersection_t.x - delta_t.x) - intersection_t.y) / delta_t.x;
+				//float z_percent = ((intersection_t.z - delta_t.z) - intersection_t.y) / delta_t.z;
 
-				float x_percent = (intersection_t.y - (intersection_t.x - delta_t.x)) / delta_t.x;
-				float z_percent = (intersection_t.y - (intersection_t.z - delta_t.z)) / delta_t.z;
+				float x_percent = (intersection_t.x - (intersection_t.y - delta_t.y)) / delta_t.x;
+				float z_percent = (intersection_t.z - (intersection_t.y - delta_t.y)) / delta_t.z;
 
 				face_position = (float3)(x_percent, 1.0f, z_percent);
 
-				if (face_mask.y == 1)
-					face_position *= -1;
 			}
-		
-			if (face_mask.z * voxel_step.z == -1) {
+
+			else if (face_mask.z == -1) {
+
+				//float x_percent = ((intersection_t.x - delta_t.x) - intersection_t.z) / delta_t.x;
+				//float y_percent = ((intersection_t.y - delta_t.y) - intersection_t.z) / delta_t.y;
+
+				float x_percent = (intersection_t.x - (intersection_t.z - delta_t.z)) / delta_t.x;
+				float y_percent = (intersection_t.y - (intersection_t.z - delta_t.z)) / delta_t.y;
 				
-				float vx = intersection_t.x - delta_t.x;
-				float vy = intersection_t.y - delta_t.y;
-				float vz = intersection_t.z - delta_t.z;
-
-				float x_percent = (intersection_t.z - (intersection_t.x - delta_t.x)) / delta_t.x;
-				float y_percent = (intersection_t.z - (intersection_t.y - delta_t.y)) / delta_t.y;
-
 				face_position = (float3)(x_percent, y_percent, 1.0f);
 
-				if (face_mask.z == 1)
-					face_position *= -1;
-
 			}
 
-			
-			// set the xy for that face
-			//face_position += 
-			//	convert_float3(face_mask == (int3)(1,1,1))
-			//	convert_float3(face_mask == (int3)(0,0,0)) * (intersection_t - delta_t);
 
+			if (ray_dir.x > 0)
+				face_position.x =  - face_position.x - 1;
 
+			if (ray_dir.y > 0)
+				face_position.y =  - face_position.y - 1;
 
-			//face_position += convert_float3(face_mask == (int3)(0,0,0)) * (rand(&seed) % 10) / 50.0;
+			if (ray_dir.z > 0)
+				face_position.z =  - face_position.z - 1;
+
 
 			if (cast_light_intersection_ray(
 				map,
 				map_dim,
-				normalize((float3)(lights[4], lights[5], lights[6]) - (convert_float3(voxel))),
-				(convert_float3(voxel) + face_position),//convert_float3(face_mask * voxel_step)),//face_position),//
+				normalize((float3)(lights[4], lights[5], lights[6]) - (convert_float3(voxel) + face_position)),
+				(convert_float3(voxel) + face_position),
 				lights, 
 				light_count
 			)) {

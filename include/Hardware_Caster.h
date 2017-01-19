@@ -61,6 +61,7 @@ public:
 	void draw(sf::RenderWindow* window) override;
 
 
+	int debug_quick_recompile();
 	void test_edit_viewport(int width, int height, float v_fov, float h_fov);
 private:
 

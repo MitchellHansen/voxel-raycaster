@@ -197,6 +197,17 @@ void Hardware_Caster::draw(sf::RenderWindow* window) {
 	window->draw(viewport_sprite);
 }
 
+int Hardware_Caster::debug_quick_recompile()
+{
+	int error = compile_kernel("../kernels/ray_caster_kernel.cl", true, "raycaster");
+	if (assert(error, "compile_kernel")) {
+		std::cin.get(); // hang the output window so we can read the error
+		return error;
+	}
+	validate();
+
+}
+
 void Hardware_Caster::test_edit_viewport(int width, int height, float v_fov, float h_fov)
 {
 	sf::Vector2i view_res(width, height);
@@ -439,6 +450,7 @@ int Hardware_Caster::compile_kernel(std::string kernel_source, bool is_path, std
 	size_t kernel_source_size = strlen(source);
 
 	// Load the source into CL's data structure
+
 	cl_program program = clCreateProgramWithSource(
 		context, 1,
 		&source,
@@ -474,7 +486,9 @@ int Hardware_Caster::compile_kernel(std::string kernel_source, bool is_path, std
 	if (assert(error, "clCreateKernel"))
 		return OPENCL_ERROR;
 
-	kernel_map.emplace(std::make_pair(kernel_name, kernel));
+	// Do I want these to overlap when repeated??
+	kernel_map[kernel_name] = kernel;
+	//kernel_map.emplace(std::make_pair(kernel_name, kernel));
 
 	return 1;
 }
