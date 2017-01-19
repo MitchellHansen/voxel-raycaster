@@ -402,8 +402,8 @@ __kernel void raycaster(
 				pixel,
 				view_light(
 					voxel_color,
-					(convert_float3(voxel) ) - (float3)(lights[4], lights[5], lights[6]),
-					(convert_float3(voxel) ) - (*cam_pos),
+					(convert_float3(voxel) + face_position) - (float3)(lights[4], lights[5], lights[6]),
+					(convert_float3(voxel) + face_position) - (*cam_pos),
 					face_mask * voxel_step
 					)
 				);
