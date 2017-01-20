@@ -2,10 +2,10 @@ Building this project is not difficult, but the setup prior can be. You must hav
 
 Featuring...
 
-Efficient Sparse Voxel Octrees, Laine et al.
-A fast voxel traversal algorithm for ray tracing, Woo et al.
-Blinn-Phong lighting
-Shadowing
+* Efficient Sparse Voxel Octrees, Laine et al.
+* A fast voxel traversal algorithm for ray tracing, Woo et al.
+* Blinn-Phong lighting
+* Shadowing
 
 
 ![alt tag](https://github.com/MitchellHansen/voxel-raycaster/blob/master/assets/screenshot1.png)
