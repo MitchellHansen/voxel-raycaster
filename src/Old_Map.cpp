@@ -38,7 +38,7 @@ void Old_Map::generate_terrain() {
 	int DATA_SIZE = dimensions.x + 1;
 	//an initial seed value for the corners of the data
 	//srand(f_rand());
-	double SEED = rand() % 5 + 10;
+	double SEED = rand() % 10 + 40;
 
 	//seed the data
 	set_sample(0, 0, SEED);
@@ -46,7 +46,7 @@ void Old_Map::generate_terrain() {
 	set_sample(dimensions.x, 0, SEED);
 	set_sample(dimensions.x, dimensions.y, SEED);
 
-	double h = 5.0;//the range (-h -> +h) for the average offset
+	double h = 40.0;//the range (-h -> +h) for the average offset
 					//for the new value in range of h
 					//side length is distance of a single square side
 					//or distance of diagonal in diamond

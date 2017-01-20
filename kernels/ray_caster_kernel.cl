@@ -7,7 +7,7 @@ float4 white_light(float4 input, float3 light, int3 mask) {
 			normalize(light),
 			normalize(convert_float3(mask * (-mask)))
 			)
-		) / 2;
+		) / 8;
 
 	return input;
 
@@ -18,6 +18,7 @@ float4 white_light(float4 input, float3 light, int3 mask) {
 
 //  0  1  2  3  4  5  6  7   8   9
 // {r, g, b, i, x, y, z, x', y', z'}
+
 
 float4 view_light(float4 in_color, float3 light, float3 view, int3 mask) {
 
@@ -31,8 +32,6 @@ float4 view_light(float4 in_color, float3 light, float3 view, int3 mask) {
 		in_color += pow(specTmp, 1.0f) * 0.1;
 	}
 
-	//float3 halfwayDir = normalize(normalize(view) + normalize(light));
-	//float spec = pow(max(dot(normalize(convert_float3(mask)), halfwayDir), 0.0f), 32.0f);
 	in_color += 0.02;
 	return in_color;
 }
@@ -334,21 +333,12 @@ __kernel void raycaster(
 
 			if (face_mask.x == -1) {
 
-				//float z_percent = ((intersection_t.z - delta_t.z) - intersection_t.x) / delta_t.z;
-				//float y_percent = ((intersection_t.y - delta_t.y) - intersection_t.x) / delta_t.y;
-
 				float z_percent = (intersection_t.z - (intersection_t.x - delta_t.x)) / delta_t.z;
 				float y_percent = (intersection_t.y - (intersection_t.x - delta_t.x)) / delta_t.y;
-
-				//if (z_percent > 0 && z_percent > 1)
-				//	face_position = (float3)(-1.0f, 1-y_percent, 1-z_percent);
 
 				face_position = (float3)(1.001f, y_percent, z_percent);
 			}
 			else if (face_mask.y == -1) {
-
-				//float x_percent = ((intersection_t.x - delta_t.x) - intersection_t.y) / delta_t.x;
-				//float z_percent = ((intersection_t.z - delta_t.z) - intersection_t.y) / delta_t.z;
 
 				float x_percent = (intersection_t.x - (intersection_t.y - delta_t.y)) / delta_t.x;
 				float z_percent = (intersection_t.z - (intersection_t.y - delta_t.y)) / delta_t.z;
@@ -358,9 +348,6 @@ __kernel void raycaster(
 			}
 
 			else if (face_mask.z == -1) {
-
-				//float x_percent = ((intersection_t.x - delta_t.x) - intersection_t.z) / delta_t.x;
-				//float y_percent = ((intersection_t.y - delta_t.y) - intersection_t.z) / delta_t.y;
 
 				float x_percent = (intersection_t.x - (intersection_t.z - delta_t.z)) / delta_t.x;
 				float y_percent = (intersection_t.y - (intersection_t.z - delta_t.z)) / delta_t.y;
@@ -397,9 +384,9 @@ __kernel void raycaster(
 				lights, 
 				light_count
 			)) {
-					
-				write_imagef(image, pixel, voxel_color);
-				//write_imagef(image, pixel, voxel_color);
+
+				float4 ambient_color = white_light(voxel_color, (float3)(lights[4], lights[5], lights[6]), face_mask);
+				write_imagef(image, pixel, ambient_color);
 				return;
 			}
 
