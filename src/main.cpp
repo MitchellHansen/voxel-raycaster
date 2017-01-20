@@ -191,7 +191,7 @@ int main() {
 			light_vec.at(0).direction_cartesian = SphereToCart(camera->get_direction());
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::O)) {
-		//	light_vec.at(0).orbit_around_center(timer_accumulator += delta_time);
+			light_vec.at(0).orbit_around_center(timer_accumulator += delta_time);
 		}
 
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::M)) {

@@ -343,7 +343,7 @@ __kernel void raycaster(
 				//if (z_percent > 0 && z_percent > 1)
 				//	face_position = (float3)(-1.0f, 1-y_percent, 1-z_percent);
 
-				face_position = (float3)(1.0f, y_percent, z_percent);
+				face_position = (float3)(1.001f, y_percent, z_percent);
 			}
 			else if (face_mask.y == -1) {
 
@@ -353,7 +353,7 @@ __kernel void raycaster(
 				float x_percent = (intersection_t.x - (intersection_t.y - delta_t.y)) / delta_t.x;
 				float z_percent = (intersection_t.z - (intersection_t.y - delta_t.y)) / delta_t.z;
 
-				face_position = (float3)(x_percent, 1.0f, z_percent);
+				face_position = (float3)(x_percent, 1.001f, z_percent);
 
 			}
 
@@ -365,19 +365,28 @@ __kernel void raycaster(
 				float x_percent = (intersection_t.x - (intersection_t.z - delta_t.z)) / delta_t.x;
 				float y_percent = (intersection_t.y - (intersection_t.z - delta_t.z)) / delta_t.y;
 				
-				face_position = (float3)(x_percent, y_percent, 1.0f);
+				face_position = (float3)(x_percent, y_percent, 1.001f);
 
 			}
 
 
 			if (ray_dir.x > 0)
-				face_position.x =  - face_position.x - 1;
+				face_position.x =  - face_position.x + 1;
+
+			if (ray_dir.x < 0)
+				face_position.x = face_position.x + 0;
 
 			if (ray_dir.y > 0)
-				face_position.y =  - face_position.y - 1;
+				face_position.y =  - face_position.y + 1;
+
+			if (ray_dir.y < 0)
+				face_position.y = face_position.y + 0;
 
 			if (ray_dir.z > 0)
-				face_position.z =  - face_position.z - 1;
+				face_position.z =  - face_position.z + 1;
+
+			if (ray_dir.z < 0)
+				face_position.z = face_position.z + 0;
 
 
 			if (cast_light_intersection_ray(
