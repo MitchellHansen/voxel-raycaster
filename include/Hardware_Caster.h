@@ -49,11 +49,15 @@ public:
 	// Otherwise, it will create the pixel buffer and pass that in as an image, retrieving it each draw
 	// Both will create the view matrix, view res buffer
 	void create_viewport(int width, int height, float v_fov, float h_fov) override;
-
+	
 	void assign_lights(std::vector<Light> *lights) override;
 	void assign_map(Old_Map *map) override;
 	void assign_camera(Camera *camera) override;
 	void validate() override;
+
+	// TODO: Hoist this to the base class
+	void create_texture_atlas(sf::Texture *t, sf::Vector2i tile_dim);
+
 
 	// draw will abstract the gl sharing and software rendering
 	// methods of retrieving the screen buffer
@@ -74,7 +78,7 @@ private:
 
 	int check_cl_khr_gl_sharing();
 
-	int create_image_buffer(std::string buffer_name, cl_uint size, void* data);
+	int create_image_buffer(std::string buffer_name, cl_uint size, sf::Texture* texture);
 	int create_buffer(std::string buffer_name, cl_uint size, void* data);
 	int create_buffer(std::string buffer_name, cl_uint size, void* data, cl_mem_flags flags);
 	int store_buffer(cl_mem, std::string buffer_name);

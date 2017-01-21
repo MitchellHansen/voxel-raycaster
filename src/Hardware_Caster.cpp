@@ -87,11 +87,26 @@ void Hardware_Caster::validate()
 		set_kernel_arg("raycaster", 7, "light_count");
 		set_kernel_arg("raycaster", 8, "image");
 		set_kernel_arg("raycaster", 9, "seed");
+		set_kernel_arg("raycaster", 10, "texture_atlas");
+		set_kernel_arg("raycaster", 11, "atlas_dim");
+		set_kernel_arg("raycaster", 12, "tile_dim");
 
 		//print_kernel_arguments();
 	}
 
 	
+}
+
+void Hardware_Caster::create_texture_atlas(sf::Texture *t, sf::Vector2i tile_dim) {
+	
+	create_image_buffer("texture_atlas", t->getSize().x * t->getSize().x * 4 * sizeof(float), t);
+	
+	// create_buffer observes arg 3's
+	
+	sf::Vector2u v = t->getSize();
+	create_buffer("atlas_dim", sizeof(sf::Vector2u) , &v);
+
+	create_buffer("tile_dim", sizeof(sf::Vector2i), &tile_dim);
 }
 
 void Hardware_Caster::compute()
@@ -177,7 +192,7 @@ void Hardware_Caster::create_viewport(int width, int height, float v_fov, float 
 	viewport_sprite.setTexture(viewport_texture);
 
 	// Pass the buffer to opencl
-	create_image_buffer("image", sizeof(sf::Uint8) * width * height * 4, viewport_image);
+	create_image_buffer("image", sizeof(sf::Uint8) * width * height * 4, &viewport_texture);
 
 }
 
@@ -511,7 +526,7 @@ int Hardware_Caster::set_kernel_arg(
 
 }
 
-int Hardware_Caster::create_image_buffer(std::string buffer_name, cl_uint size, void* data) {
+int Hardware_Caster::create_image_buffer(std::string buffer_name, cl_uint size, sf::Texture* texture) {
 
 	// I can imagine overwriting buffers will be common, so I think
 	// this is safe to overwrite / release old buffers quietly
@@ -522,7 +537,7 @@ int Hardware_Caster::create_image_buffer(std::string buffer_name, cl_uint size, 
 	int error;
 	cl_mem buff = clCreateFromGLTexture(
 		getContext(), CL_MEM_WRITE_ONLY, GL_TEXTURE_2D,
-		0, viewport_texture.getNativeHandle(), &error);
+		0, texture->getNativeHandle(), &error);
 
 	if (assert(error, "clCreateFromGLTexture"))
 		return OPENCL_ERROR;

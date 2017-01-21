@@ -23,13 +23,13 @@ float4 white_light(float4 input, float3 light, int3 mask) {
 float4 view_light(float4 in_color, float3 light, float3 view, int3 mask) {
 
 	float diffuse = max(dot(normalize(convert_float3(mask)), normalize(light)), 0.0f);
-	in_color += diffuse * 0.5;
+	in_color += diffuse * 0.2;
 
 	if (dot(light, normalize(convert_float3(mask))) > 0.0)
 	{
 		float3 halfwayVector = normalize(normalize(light) + normalize(view));
 		float specTmp = max(dot(normalize(convert_float3(mask)), halfwayVector), 0.0f);
-		in_color += pow(specTmp, 1.0f) * 0.1;
+		in_color += pow(specTmp, 1.0f) * 0.5;
 	}
 
 	//in_color += 0.02;
@@ -134,7 +134,10 @@ __kernel void raycaster(
 		global float* lights,
 		global int* light_count,
         __write_only image2d_t image,
-		global int* seed_memory
+		global int* seed_memory,
+		__read_only image2d_t texture_atlas,
+		global int2 *atlas_dim,
+		global int2 *tile_dim
 ){
 
 	int global_id = get_global_id(0);
@@ -230,27 +233,23 @@ __kernel void raycaster(
 
 		if (voxel_data != 0) {
 
+			// Determine where on the 2d plane the ray intersected
 
-			if (voxel_data == 6) {
-				voxel_color = (float4)(0.0, 0.239, 0.419, 0.3);
-			} 
-			else if (voxel_data == 5) {
-				voxel_color = (float4)(0.25, 0.52, 0.30, 0.1);
-			}
-			else if (voxel_data == 1) {
-				voxel_color = (float4)(0.929, 0.957, 0.027, 0.7);
-			}
-
-			// set to which face
 			float3 face_position = (float)(0);
+			float2 texture_position = (float)(0);
 
 
+			// First determine the percent of the way the ray is towards the next intersection_t
+			// in relation to the xyz position on the plane
 			if (face_mask.x == -1) {
 
 				float z_percent = (intersection_t.z - (intersection_t.x - delta_t.x)) / delta_t.z;
 				float y_percent = (intersection_t.y - (intersection_t.x - delta_t.x)) / delta_t.y;
 
+				// Since we intersected face x, we know that we are at the face (1.0)
+				// Not entirely sure what is causing the 1.0 vs 1.001 rendering bug
 				face_position = (float3)(1.001f, y_percent, z_percent);
+				texture_position = (float2)(y_percent, z_percent);
 			}
 			else if (face_mask.y == -1) {
 
@@ -258,7 +257,7 @@ __kernel void raycaster(
 				float z_percent = (intersection_t.z - (intersection_t.y - delta_t.y)) / delta_t.z;
 
 				face_position = (float3)(x_percent, 1.001f, z_percent);
-
+				texture_position = (float2)(x_percent, z_percent);
 			}
 
 			else if (face_mask.z == -1) {
@@ -267,28 +266,55 @@ __kernel void raycaster(
 				float y_percent = (intersection_t.y - (intersection_t.z - delta_t.z)) / delta_t.y;
 				
 				face_position = (float3)(x_percent, y_percent, 1.001f);
+				texture_position = (float2)(x_percent, y_percent);
 
 			}
 
+			// We now need to account for the ray wanting to skip the axis in which
+			// it flips its sign
 
-			if (ray_dir.x > 0)
-				face_position.x =  - face_position.x + 1;
+			// TODO: improve this
 
-			if (ray_dir.x < 0)
-				face_position.x = face_position.x + 0;
+			if (ray_dir.x > 0) {
+				face_position.x = -face_position.x + 1;
+				texture_position.x = -texture_position.x + 1.0;
+			}
+			//if (ray_dir.x < 0)
+			//	face_position.x = face_position.x + 0;
 
-			if (ray_dir.y > 0)
+			if (ray_dir.y > 0){
 				face_position.y =  - face_position.y + 1;
+				texture_position.y = -texture_position.y + 1.0;
+			}
 
-			if (ray_dir.y < 0)
-				face_position.y = face_position.y + 0;
+			//if (ray_dir.y < 0)
+			//	face_position.y = face_position.y + 0;
 
-			if (ray_dir.z > 0)
+			if (ray_dir.z > 0) {
 				face_position.z =  - face_position.z + 1;
+				texture_position.y = -texture_position.y + 1.0;
+			}
 
-			if (ray_dir.z < 0)
-				face_position.z = face_position.z + 0;
+			//if (ray_dir.z < 0)
+			//	face_position.z = face_position.z + 0;
 
+
+			// Now either use the face position to retrieve a texture sample, or
+			// just a plain color for the voxel color
+
+			if (voxel_data == 6) {
+				voxel_color = (float4)(0.0, 0.239, 0.419, 0.3);
+			}
+			else if (voxel_data == 5) {
+				float2 tile_size = convert_float2(*atlas_dim / *tile_dim);
+				voxel_color = read_imagef(texture_atlas, convert_int2(texture_position * tile_size) + convert_int2((float2)(3, 0) * tile_size));
+					//voxel_color = (float4)(0.25, 0.52, 0.30, 0.1);
+			}
+			else if (voxel_data == 1) {
+				voxel_color = (float4)(0.929, 0.957, 0.027, 0.7);
+			}
+
+			// 
 
 			if (cast_light_intersection_ray(
 				map,

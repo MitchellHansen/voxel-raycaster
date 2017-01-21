@@ -124,10 +124,17 @@ int main() {
 	// *links* the lights to the GPU
 	raycaster->assign_lights(&light_vec);
 
+
+	// Load in the spritesheet texture
+	sf::Texture spritesheet;
+	spritesheet.loadFromFile("../assets/textures/minecraft_tiles.png");
+	spritesheet.getNativeHandle();
+	raycaster->create_texture_atlas(&spritesheet, sf::Vector2i(16, 16));
+
+
 	// Checks to see if proper data was uploaded, then sets the kernel args
+	// ALL DATA LOADING MUST BE FINISHED
 	raycaster->validate();
-
-
 
 	// ========== DEBUG ==========
     fps_counter fps;
