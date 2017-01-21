@@ -40,8 +40,8 @@ const int WINDOW_X = 1000;
 const int WINDOW_Y = 1000;
 const int WORK_SIZE = WINDOW_X * WINDOW_Y;
 
-const int MAP_X = 256;
-const int MAP_Y = 256;
+const int MAP_X = 1024;
+const int MAP_Y = 1024;
 const int MAP_Z = 256;
 
 float elap_time(){
@@ -180,29 +180,23 @@ int main() {
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::F11)) {
 			while (raycaster->debug_quick_recompile() != 0);
 		}
-		//if (sf::Keyboard::isKeyPressed(sf::Keyboard::Equal)) {
-		//	raycaster->test_edit_viewport(WINDOW_X, WINDOW_Y, w += 5, h += 5);
-		//} 		
-		//if (sf::Keyboard::isKeyPressed(sf::Keyboard::Dash)) {
-		//	raycaster->test_edit_viewport(WINDOW_X, WINDOW_Y, w -= 5, h -= 5);
-		//}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
-			light_vec.at(0).position.x -= delta_time * 10;
+			light_vec.at(0).position.x -= delta_time * 100;
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
-			light_vec.at(0).position.x += delta_time * 10;
+			light_vec.at(0).position.x += delta_time * 100;
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
-			light_vec.at(0).position.y += delta_time * 10;
+			light_vec.at(0).position.y += delta_time * 100;
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
-			light_vec.at(0).position.y -= delta_time * 10;
+			light_vec.at(0).position.y -= delta_time * 100;
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Home)) {
-			light_vec.at(0).position.z += delta_time * 10;
+			light_vec.at(0).position.z += delta_time * 100;
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::End)) {
-			light_vec.at(0).position.z -= delta_time * 10;
+			light_vec.at(0).position.z -= delta_time * 100;
 		}
 		
 
@@ -212,7 +206,7 @@ int main() {
 			light_vec.at(0).direction_cartesian = SphereToCart(camera->get_direction());
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::O)) {
-			light_vec.at(0).orbit_around_center(fmod(timer_accumulator += delta_time, 3));
+			light_vec.at(0).orbit_around_center(timer_accumulator += delta_time);
 		}
 
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::M)) {
