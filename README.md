@@ -6,6 +6,7 @@ Featuring...
 * A fast voxel traversal algorithm for ray tracing, Woo et al.
 * Blinn-Phong lighting
 * Shadowing
+* Textures
 
 
 ![alt tag](https://github.com/MitchellHansen/voxel-raycaster/blob/master/assets/screenshot1.png)
