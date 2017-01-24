@@ -94,7 +94,7 @@ void Camera::recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Even
 		vr::KeyHeld *held_event = static_cast<vr::KeyHeld*>(event.get());
 
 		if (held_event->code == sf::Keyboard::LShift) {
-			default_impulse = 0.1f;
+			default_impulse = 0.01f;
 		}
 		if (held_event->code == sf::Keyboard::RShift) {
 			default_impulse = 1.0f;

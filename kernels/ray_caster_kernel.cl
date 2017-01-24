@@ -236,7 +236,7 @@ __kernel void raycaster(
 			// Determine where on the 2d plane the ray intersected
 
 			float3 face_position = (float)(0);
-			float2 texture_position = (float)(0);
+			float2 tile_face_position = (float)(0);
 
 
 			// First determine the percent of the way the ray is towards the next intersection_t
@@ -249,7 +249,7 @@ __kernel void raycaster(
 				// Since we intersected face x, we know that we are at the face (1.0)
 				// Not entirely sure what is causing the 1.0 vs 1.001 rendering bug
 				face_position = (float3)(1.001f, y_percent, z_percent);
-				texture_position = (float2)(y_percent, z_percent);
+				tile_face_position = (float2)(y_percent, z_percent);
 			}
 			else if (face_mask.y == -1) {
 
@@ -257,7 +257,7 @@ __kernel void raycaster(
 				float z_percent = (intersection_t.z - (intersection_t.y - delta_t.y)) / delta_t.z;
 
 				face_position = (float3)(x_percent, 1.001f, z_percent);
-				texture_position = (float2)(x_percent, z_percent);
+				tile_face_position = (float2)(x_percent, z_percent);
 			}
 
 			else if (face_mask.z == -1) {
@@ -266,7 +266,7 @@ __kernel void raycaster(
 				float y_percent = (intersection_t.y - (intersection_t.z - delta_t.z)) / delta_t.y;
 				
 				face_position = (float3)(x_percent, y_percent, 1.001f);
-				texture_position = (float2)(x_percent, y_percent);
+				tile_face_position = (float2)(x_percent, y_percent);
 
 			}
 
@@ -277,26 +277,30 @@ __kernel void raycaster(
 
 			if (ray_dir.x > 0) {
 				face_position.x = -face_position.x + 1;
-				texture_position.x = -texture_position.x + 1.0;
+				//tile_face_position.x = -tile_face_position.x + 1.0;
 			}
-			//if (ray_dir.x < 0)
-			//	face_position.x = face_position.x + 0;
+			if (ray_dir.x < 0) {
+				//face_position.x = face_position.x + 0;
+				//tile_face_position.x = tile_face_position.x;
+			}
 
 			if (ray_dir.y > 0){
 				face_position.y =  - face_position.y + 1;
-				texture_position.y = -texture_position.y + 1.0;
+				//tile_face_position.y = -tile_face_position.y + 1.0;
 			}
-
-			//if (ray_dir.y < 0)
-			//	face_position.y = face_position.y + 0;
+			if (ray_dir.y < 0) {
+				//face_position.y = face_position.y + 0;
+				//tile_face_position.y = -tile_face_position.y + 1.0;
+			}
 
 			if (ray_dir.z > 0) {
 				face_position.z =  - face_position.z + 1;
-				texture_position.y = -texture_position.y + 1.0;
+				//tile_face_position.y = tile_face_position.y + 0.0;
 			}
 
-			//if (ray_dir.z < 0)
-			//	face_position.z = face_position.z + 0;
+			if (ray_dir.z < 0) {
+				//face_position.z = face_position.z + 0;
+			}
 
 
 			// Now either use the face position to retrieve a texture sample, or
@@ -307,7 +311,7 @@ __kernel void raycaster(
 			}
 			else if (voxel_data == 5) {
 				float2 tile_size = convert_float2(*atlas_dim / *tile_dim);
-				voxel_color = read_imagef(texture_atlas, convert_int2(texture_position * tile_size) + convert_int2((float2)(3, 0) * tile_size));
+				voxel_color = read_imagef(texture_atlas, convert_int2(tile_face_position * tile_size) + convert_int2((float2)(3, 0) * tile_size));
 					//voxel_color = (float4)(0.25, 0.52, 0.30, 0.1);
 			}
 			else if (voxel_data == 1) {

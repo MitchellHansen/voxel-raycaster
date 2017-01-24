@@ -26,6 +26,7 @@
 #include <iostream>
 #include <chrono>
 #include <SFML/Graphics.hpp>
+#include <SFML/Network.hpp>
 #include "Old_Map.h"
 #include "util.hpp"
 #include "RayCaster.h"
@@ -40,8 +41,8 @@ const int WINDOW_X = 1000;
 const int WINDOW_Y = 1000;
 const int WORK_SIZE = WINDOW_X * WINDOW_Y;
 
-const int MAP_X = 1024;
-const int MAP_Y = 1024;
+const int MAP_X = 256;
+const int MAP_Y = 256;
 const int MAP_Z = 256;
 
 float elap_time(){
@@ -64,8 +65,65 @@ sf::Texture window_texture;
 // Y: -1.57 is straight up
 // Y: 1.57 is straight down
 
+struct CustomPacket {
+	
+	char data[1024];
+	int position = 0;
+	int size = 12;
+
+};
 
 int main() {
+
+
+
+	// Create a listener to wait for incoming connections on port 55001
+	sf::TcpListener listener;
+	listener.listen(5000);
+
+	// Wait for a connection
+	sf::TcpSocket socket;
+	listener.accept(socket);
+	std::cout << "New client connected: " << socket.getRemoteAddress() << std::endl;
+
+	// Receive a message from the client
+	char buffer[1024];
+	
+	std::vector<CustomPacket> packets;
+
+	sf::TcpSocket::Status status;
+
+	do {
+
+		std::size_t received = 0;
+		status = socket.receive(buffer, 1024, received);
+
+		while (received < 12) {
+			std::size_t tack_on;
+			status = socket.receive(&buffer[received], 1024 - received, tack_on);
+			received += tack_on;
+		}
+
+
+		int position = 0;
+		while (position < received) {
+			CustomPacket p;
+			memcpy(p.data, &buffer[position], p.size);
+			packets.push_back(p);
+			position += p.size;
+		}
+
+		std::cout << "packet_count = " << packets.size() << std::endl;
+
+		int left_over = 12 - (position - received);
+		memcpy(buffer, &buffer[received - left_over], left_over);
+
+	} while (status != sf::TcpSocket::Status::Disconnected);
+
+	
+
+
+
 
 	//Map _map(sf::Vector3i(0, 0, 0));
 	//_map.generate_octree();
