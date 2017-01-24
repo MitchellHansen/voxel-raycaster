@@ -25,8 +25,6 @@ private:
 
 	void transpose_sf_events(std::list<sf::Event> event_queue);
 
-	// Network controller class
-
 	std::vector<sf::Keyboard::Key> held_keys;
 	std::vector<sf::Mouse::Button> held_mouse_buttons;
 	
@@ -36,7 +34,6 @@ private:
 private:
 	
 	std::list<std::unique_ptr<vr::Event>> event_queue;
-
 };
 
 class WindowHandler : public VrEventSubscriber {

@@ -36,6 +36,7 @@
 #include "Software_Caster.h"
 #include "Input.h"
 #include "Pub_Sub.h"
+#include "NetworkInput.h"
 
 const int WINDOW_X = 1000;
 const int WINDOW_Y = 1000;
@@ -65,65 +66,13 @@ sf::Texture window_texture;
 // Y: -1.57 is straight up
 // Y: 1.57 is straight down
 
-struct CustomPacket {
-	
-	char data[1024];
-	int position = 0;
-	int size = 12;
-
-};
 
 int main() {
 
 
-
-	// Create a listener to wait for incoming connections on port 55001
-	sf::TcpListener listener;
-	listener.listen(5000);
-
-	// Wait for a connection
-	sf::TcpSocket socket;
-	listener.accept(socket);
-	std::cout << "New client connected: " << socket.getRemoteAddress() << std::endl;
-
-	// Receive a message from the client
-	char buffer[1024];
+	NetworkInput ni;
+	ni.listen_for_clients(5000);
 	
-	std::vector<CustomPacket> packets;
-
-	sf::TcpSocket::Status status;
-
-	do {
-
-		std::size_t received = 0;
-		status = socket.receive(buffer, 1024, received);
-
-		while (received < 12) {
-			std::size_t tack_on;
-			status = socket.receive(&buffer[received], 1024 - received, tack_on);
-			received += tack_on;
-		}
-
-
-		int position = 0;
-		while (position < received) {
-			CustomPacket p;
-			memcpy(p.data, &buffer[position], p.size);
-			packets.push_back(p);
-			position += p.size;
-		}
-
-		std::cout << "packet_count = " << packets.size() << std::endl;
-
-		int left_over = 12 - (position - received);
-		memcpy(buffer, &buffer[received - left_over], left_over);
-
-	} while (status != sf::TcpSocket::Status::Disconnected);
-
-	
-
-
-
 
 	//Map _map(sf::Vector3i(0, 0, 0));
 	//_map.generate_octree();
@@ -229,6 +178,7 @@ int main() {
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyHeld);
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyPressed);
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::MouseMoved);
+	camera->subscribe_to_publisher(&ni, vr::Event::EventType::JoystickMoved);
 
 	WindowHandler win_hand(&window);
 	win_hand.subscribe_to_publisher(&input_handler, vr::Event::EventType::Closed);
@@ -240,6 +190,7 @@ int main() {
 		input_handler.consume_sf_events(&window);
 		input_handler.handle_held_keys();
 		input_handler.dispatch_events();
+		ni.dispatch_events();
 
 
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::F11)) {
@@ -274,7 +225,7 @@ int main() {
 			light_vec.at(0).orbit_around_center(timer_accumulator += delta_time);
 		}
 
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::M)) {
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Num0)) {
 			std::string path = "../assets/";
 			std::string filename;
 			std::getline(std::cin, filename);

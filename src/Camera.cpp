@@ -96,10 +96,9 @@ void Camera::recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Even
 		if (held_event->code == sf::Keyboard::LShift) {
 			default_impulse = 0.01f;
 		}
-		if (held_event->code == sf::Keyboard::RShift) {
+		else if (held_event->code == sf::Keyboard::RShift) {
 			default_impulse = 1.0f;
 		}
-
 		else if (held_event->code == sf::Keyboard::C) {
 			look_at_center();
 		}
@@ -130,7 +129,7 @@ void Camera::recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Even
 		
 		vr::KeyPressed *key_event = static_cast<vr::KeyPressed*>(event.get());
 		
-		if (key_event->code == sf::Keyboard::Y) {
+		if (key_event->code == sf::Keyboard::M) {
 			if (mouse_enabled)
 				mouse_enabled = false;
 			else
@@ -155,6 +154,22 @@ void Camera::recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Even
 				));
 			}
 		}
+	}
+	else if (event->type == vr::Event::JoystickMoved) {
+
+		vr::JoystickMoved *joystick_event = static_cast<vr::JoystickMoved*>(event.get());
+
+		if (joystick_event->axis == sf::Joystick::Axis::X) {
+			movement.x -= joystick_event->position / 5;
+			//add_relative_impulse(Camera::DIRECTION::FORWARD, joystick_event->position);
+		}
+		else if (joystick_event->axis == sf::Joystick::Axis::Y) {
+			movement.y += joystick_event->position / 5;
+			//add_relative_impulse(Camera::DIRECTION::RIGHT, joystick_event->position);
+		}
+		//else if (joystick_event->axis == sf::Joystick::Axis::Z) {
+		//	add_relative_impulse(Camera::DIRECTION::DOWN, joystick_event->position);
+		//}
 	}
 
 }
