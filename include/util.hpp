@@ -8,6 +8,8 @@
 #include <sstream>
 #include <string>
 #include <iterator>
+#include <list>
+#include <algorithm>
 
 
 const double PI = 3.141592653589793238463;
@@ -292,3 +294,4 @@ struct Light {
 		look_at_center();
 	};
 };
+

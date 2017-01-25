@@ -4,6 +4,7 @@
 #include <SFML/System/Vector2.hpp>
 #include "util.hpp"
 #include <Old_Map.h>
+#include <algorithm>
 
 Old_Map::Old_Map(sf::Vector3i dim) {
 	dimensions = dim;
@@ -12,6 +13,69 @@ Old_Map::Old_Map(sf::Vector3i dim) {
 
 Old_Map::~Old_Map() {
 }
+
+void generate_at(int x, int y, std::vector<std::vector<int>> *grid) {
+
+	int x_bound = grid->size();
+	int y_bound = grid->at(0).size();
+
+	//					   N  S  E  W
+	std::vector<int> t = { 1, 2, 3, 4 };
+	std::random_shuffle(t.begin(), t.end());
+
+	while (t.size() > 0) {
+
+		switch (t.back()) {
+
+			// 20 lines to hard code, a headache to do it cleverly
+		case 1: {
+			if (y + 1 < y_bound && grid->at(x).at(y + 1) == 0) {
+				grid->at(x).at(y) = 1;
+				grid->at(x).at(y + 1) = 2;
+				generate_at(x, y + 1, grid);
+			}
+			break;
+		}
+		case 2: {
+			if (y - 1 >= 0 && grid->at(x).at(y - 1) == 0) {
+				grid->at(x).at(y) = 2;
+				grid->at(x).at(y - 1) = 1;
+				generate_at(x, y - 1, grid);
+			}
+			break;
+		}
+		case 3: {
+			if (x + 1 < x_bound && grid->at(x+1).at(y) == 0) {
+				grid->at(x).at(y) = 3;
+				grid->at(x + 1).at(y) = 4;
+				generate_at(x + 1, y, grid);
+			}
+			break;
+		}
+		case 4: {
+			if (x - 1 >= 0 && grid->at(x-1).at(y) == 0) {
+				grid->at(x).at(y) = 4;
+				grid->at(x - 1).at(y) = 3;
+				generate_at(x - 1, y, grid);
+			}
+			break;
+		}
+		}
+
+		t.pop_back();
+	}
+}
+
+std::vector<std::vector<int>> generate_maze(sf::Vector2i dimensions, sf::Vector2i start_point) {
+
+	std::vector<std::vector<int>> grid(dimensions.x, std::vector<int>(dimensions.y, 0));
+
+	generate_at(start_point.x, start_point.y, &grid);
+
+	return grid;
+}
+
+
 
 
 void Old_Map::generate_terrain() {
@@ -122,49 +186,105 @@ void Old_Map::generate_terrain() {
 	}
 
 
-	for (int x = 0; x < dimensions.x; x++) {
-		for (int y = 0; y < dimensions.y; y++) {
+	//for (int x = 0; x < dimensions.x; x++) {
+	//	for (int y = 0; y < dimensions.y; y++) {
 
-			if (height_map[x + y * dimensions.x] > 0) {
-		
-				int z = static_cast<int>(height_map[x + y * dimensions.x]);
+	//		if (height_map[x + y * dimensions.x] > 0) {
+	//	
+	//			int z = static_cast<int>(height_map[x + y * dimensions.x]);
 
-				while (z > 0) {
-					voxel_data[x + dimensions.x * (y + dimensions.z * z)] = 5;
-					z--;
-				}
-			}
-
-		}
-	}
-
-
-	for (int x = dimensions.x / 2; x < dimensions.x / 2 + dimensions.x / 64; x++) {
-		for (int y = dimensions.x / 2; y < dimensions.y / 2 + dimensions.x / 64; y++) {
-			for (int z = 0; z < 5; z++) {
-
-				voxel_data[x + dimensions.x * (y + dimensions.z * z)] = 6;
-			}
-		}
-	}
-
-
-	for (int x = 0; x < dimensions.x; x++) {
-		for (int y = 0; y < dimensions.y; y++) {
-	//		for (int z = 0; z < dimensions.z; z++) {
-				//if (rand() % 1000 < 1)
-					voxel_data[x + dimensions.x * (y + dimensions.z * 1)] = 6;
+	//			while (z > 0) {
+	//				voxel_data[x + dimensions.x * (y + dimensions.z * z)] = 5;
+	//				z--;
+	//			}
 	//		}
+
+	//	}
+	//}
+
+
+	//for (int x = dimensions.x / 2; x < dimensions.x / 2 + dimensions.x / 64; x++) {
+	//	for (int y = dimensions.x / 2; y < dimensions.y / 2 + dimensions.x / 64; y++) {
+	//		for (int z = 0; z < 5; z++) {
+
+	//			voxel_data[x + dimensions.x * (y + dimensions.z * z)] = 6;
+	//		}
+	//	}
+	//}
+
+
+	//for (int x = 0; x < dimensions.x; x++) {
+	//	for (int y = 0; y < dimensions.y; y++) {
+	////		for (int z = 0; z < dimensions.z; z++) {
+	//			//if (rand() % 1000 < 1)
+	//				voxel_data[x + dimensions.x * (y + dimensions.z * 1)] = 6;
+	////		}
+	//	}
+	//}
+
+	//for (int x = 30; x < 60; x++) {
+	//	//for (int y = 0; y < dimensions.y; y++) {
+	//		for (int z = 0; z < 25; z++) {
+	//			voxel_data[x + dimensions.x * (50 + dimensions.z * z)] = 6;
+	//		}
+	//	//}
+	//}
+
+	// Hand code in some constructions
+
+	std::vector<std::vector<int>> maze = 
+		generate_maze(sf::Vector2i(8, 8), sf::Vector2i(0, 0));
+
+	for (int x = 0; x < maze.size(); x++) {
+		for (int y = 0; y < maze.at(0).size(); y++) {
+			
+			switch(maze.at(x).at(y)) {
+				
+			case 1: { // North
+				voxel_data[x * 3 + 1 + dimensions.x * (y * 3     + dimensions.z * 1)] = 6;
+				voxel_data[x * 3 + 1 + dimensions.x * (y * 3 + 1 + dimensions.z * 1)] = 6;
+				voxel_data[x * 3 + 1 + dimensions.x * (y * 3 + 2 + dimensions.z * 1)] = 5;
+				//voxel_data[x * 3     + dimensions.x * (y * 3 + 2 + dimensions.z * 1)] = 6;
+				//voxel_data[x * 3 + 2 + dimensions.x * (y * 3 + 2 + dimensions.z * 1)] = 6;
+				break;
+			}
+			case 2: { // South
+				voxel_data[x * 3 + 1 + dimensions.x * (y * 3     + dimensions.z * 1)] = 5;
+				voxel_data[x * 3 + 1 + dimensions.x * (y * 3 + 1 + dimensions.z * 1)] = 6;
+				voxel_data[x * 3 + 1 + dimensions.x * (y * 3 + 2 + dimensions.z * 1)] = 6;
+				//voxel_data[x * 3     + dimensions.x * (y * 3     + dimensions.z * 1)] = 6;
+				//voxel_data[x * 3 + 2 + dimensions.x * (y * 3     + dimensions.z * 1)] = 6;
+				break;
+			}
+			case 3: { // East
+				voxel_data[x * 3     + dimensions.x * (y * 3 + 1 + dimensions.z * 1)] = 6;
+				voxel_data[x * 3 + 1 + dimensions.x * (y * 3 + 1 + dimensions.z * 1)] = 6;
+				voxel_data[x * 3 + 2 + dimensions.x * (y * 3 + 1 + dimensions.z * 1)] = 5;
+				//voxel_data[x * 3 + 2 + dimensions.x * (y * 3     + dimensions.z * 1)] = 6;
+				//voxel_data[x * 3 + 2 + dimensions.x * (y * 3 + 2 + dimensions.z * 1)] = 6;
+				break;
+			}
+			case 4: { // West
+				voxel_data[x * 3     + dimensions.x * (y * 3 + 1 + dimensions.z * 1)] = 5;
+				voxel_data[x * 3 + 1 + dimensions.x * (y * 3 + 1 + dimensions.z * 1)] = 6;
+				voxel_data[x * 3 + 2 + dimensions.x * (y * 3 + 1 + dimensions.z * 1)] = 6;
+				//voxel_data[x * 3     + dimensions.x * (y * 3     + dimensions.z * 1)] = 6;
+				//voxel_data[x * 3     + dimensions.x * (y * 3 + 2 + dimensions.z * 1)] = 6;
+				break;
+			}
+					
+			}
+			
+			
 		}
 	}
 
-	for (int x = 30; x < 60; x++) {
-		//for (int y = 0; y < dimensions.y; y++) {
-			for (int z = 0; z < 25; z++) {
-				voxel_data[x + dimensions.x * (50 + dimensions.z * z)] = 6;
-			}
-		//}
-	}
+
+	//for (int x = 0; x < dimensions.x; x++) {
+	//	for (int y = 0; y < dimensions.y; y++) {
+	//		voxel_data[x + dimensions.x * (y + dimensions.z * 1)] = 6;
+	//	}
+	//}
 
 	set_voxel(sf::Vector3i(45, 70, 5), 1);
 	set_voxel(sf::Vector3i(47, 70, 5), 1);
