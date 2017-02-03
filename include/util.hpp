@@ -272,26 +272,26 @@ inline std::vector<float> sfml_get_float_input(sf::RenderWindow *window) {
 
 }
 
-struct Light {
-	sf::Vector4f rgbi;
-
-	// I believe that Vector3's get padded to Vector4's. Give them a non-garbage value
-	sf::Vector3f position;
-
-	sf::Vector3f direction_cartesian;
-
-	void look_at_center() {
-		direction_cartesian = SphereToCart(CartToNormalizedSphere(sf::Vector3f(256, 256, 256) - position));
-	};
-
-	void orbit_around_center(double time) {
-		position = sf::Vector3f(
-			position.x * cos(time/1000) - position.y * sin(time/1000),
-			position.x * sin(time/1000) + position.y * cos(time/1000),
-			position.z
-		);
-
-		look_at_center();
-	};
-};
+//struct Light {
+//	sf::Vector4f rgbi;
+//
+//	// I believe that Vector3's get padded to Vector4's. Give them a non-garbage value
+//	sf::Vector3f position;
+//
+//	sf::Vector3f direction_cartesian;
+//
+//	void look_at_center() {
+//		direction_cartesian = SphereToCart(CartToNormalizedSphere(sf::Vector3f(256, 256, 256) - position));
+//	};
+//
+//	void orbit_around_center(double time) {
+//		position = sf::Vector3f(
+//			position.x * cos(time/1000) - position.y * sin(time/1000),
+//			position.x * sin(time/1000) + position.y * cos(time/1000),
+//			position.z
+//		);
+//
+//		look_at_center();
+//	};
+//};
 

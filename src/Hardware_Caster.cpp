@@ -221,6 +221,7 @@ int Hardware_Caster::debug_quick_recompile()
 	}
 	validate();
 
+	return 1;
 }
 
 void Hardware_Caster::test_edit_viewport(int width, int height, float v_fov, float h_fov)

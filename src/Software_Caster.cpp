@@ -326,14 +326,16 @@ void Software_Caster::blit_pixel(sf::Color color, sf::Vector2i position, sf::Vec
 
 sf::Color Software_Caster::global_light(sf::Color in, sf::Vector3i mask) {
 
-	sf::Vector3f mask_f(mask);
+	// I think I may scrap this whole software fallback caster thing
 
-	in.a = in.a + (int)acos(
-				DotProduct(
-					Normalize(lights->at(0).direction_cartesian),
-					Normalize(mask_f)
-					)
-				)/ 2;
+	//sf::Vector3f mask_f(mask);
+
+	//in.a = in.a + (int)acos(
+	//			DotProduct(
+	//				Normalize(lights->at(0).direction_cartesian),
+	//				Normalize(mask_f)
+	//				)
+	//			)/ 2;
 
 	return in;
 

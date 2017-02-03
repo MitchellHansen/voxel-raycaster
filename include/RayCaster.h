@@ -4,6 +4,7 @@
 #include <Map.h>
 #include "Old_Map.h"
 #include "Camera.h"
+#include "Light.h"
 
 
 class RayCaster {

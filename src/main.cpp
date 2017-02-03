@@ -37,6 +37,7 @@
 #include "Input.h"
 #include "Pub_Sub.h"
 #include "NetworkInput.h"
+#include "light.h"
 
 const int WINDOW_X = 1000;
 const int WINDOW_Y = 1000;
@@ -123,10 +124,11 @@ int main() {
 	float h = 90.0;
 
 	// Light for the currently non functional Bling Phong shader
-	Light l;
-	l.direction_cartesian = sf::Vector3f(-1.0f, -1.0f, -1.5f);
-	l.position = sf::Vector3f(256.0f, 256.0f, 256.0f);
-	l.rgbi = sf::Vector4f(0.3f, 0.4f, 0.3f, 1.0f);
+	Light l(
+		sf::Vector3f(256.0f, 256.0f, 256.0f), 
+		sf::Vector3f(-1.0f, -1.0f, -1.5f), 
+		&window
+	);
 
 	std::vector<Light> light_vec;
 	light_vec.push_back(l);
@@ -198,34 +200,31 @@ int main() {
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::F11)) {
 			while (raycaster->debug_quick_recompile() != 0);
 		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
-			light_vec.at(0).position.x -= delta_time * 100;
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
-			light_vec.at(0).position.x += delta_time * 100;
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
-			light_vec.at(0).position.y += delta_time * 100;
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
-			light_vec.at(0).position.y -= delta_time * 100;
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Home)) {
-			light_vec.at(0).position.z += delta_time * 100;
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::End)) {
-			light_vec.at(0).position.z -= delta_time * 100;
-		}
-		
-
-
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt)) {
-			light_vec.at(0).position = camera->get_position();
-			light_vec.at(0).direction_cartesian = SphereToCart(camera->get_direction());
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::O)) {
-			light_vec.at(0).orbit_around_center(timer_accumulator += delta_time);
-		}
+		//if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
+		//	light_vec.at(0).position.x -= delta_time * 100;
+		//}
+		//if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
+		//	light_vec.at(0).position.x += delta_time * 100;
+		//}
+		//if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
+		//	light_vec.at(0).position.y += delta_time * 100;
+		//}
+		//if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
+		//	light_vec.at(0).position.y -= delta_time * 100;
+		//}
+		//if (sf::Keyboard::isKeyPressed(sf::Keyboard::Home)) {
+		//	light_vec.at(0).position.z += delta_time * 100;
+		//}
+		//if (sf::Keyboard::isKeyPressed(sf::Keyboard::End)) {
+		//	light_vec.at(0).position.z -= delta_time * 100;
+		//}
+		//if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt)) {
+		//	light_vec.at(0).position = camera->get_position();
+		//	light_vec.at(0).direction_cartesian = SphereToCart(camera->get_direction());
+		//}
+		//if (sf::Keyboard::isKeyPressed(sf::Keyboard::O)) {
+		//	light_vec.at(0).orbit_around_center(timer_accumulator += delta_time);
+		//}
 
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Num0)) {
 			std::string path = "../assets/";

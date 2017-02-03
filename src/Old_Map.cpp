@@ -186,49 +186,49 @@ void Old_Map::generate_terrain() {
 	}
 
 
-	//for (int x = 0; x < dimensions.x; x++) {
-	//	for (int y = 0; y < dimensions.y; y++) {
+	for (int x = 0; x < dimensions.x; x++) {
+		for (int y = 0; y < dimensions.y; y++) {
 
-	//		if (height_map[x + y * dimensions.x] > 0) {
-	//	
-	//			int z = static_cast<int>(height_map[x + y * dimensions.x]);
+			if (height_map[x + y * dimensions.x] > 0) {
+		
+				int z = static_cast<int>(height_map[x + y * dimensions.x]);
 
-	//			while (z > 0) {
-	//				voxel_data[x + dimensions.x * (y + dimensions.z * z)] = 5;
-	//				z--;
-	//			}
+				while (z > 0) {
+					voxel_data[x + dimensions.x * (y + dimensions.z * z)] = 5;
+					z--;
+				}
+			}
+
+		}
+	}
+
+
+	for (int x = dimensions.x / 2; x < dimensions.x / 2 + dimensions.x / 64; x++) {
+		for (int y = dimensions.x / 2; y < dimensions.y / 2 + dimensions.x / 64; y++) {
+			for (int z = 0; z < 5; z++) {
+
+				voxel_data[x + dimensions.x * (y + dimensions.z * z)] = 6;
+			}
+		}
+	}
+
+
+	for (int x = 0; x < dimensions.x; x++) {
+		for (int y = 0; y < dimensions.y; y++) {
+	//		for (int z = 0; z < dimensions.z; z++) {
+				//if (rand() % 1000 < 1)
+					voxel_data[x + dimensions.x * (y + dimensions.z * 1)] = 6;
 	//		}
+		}
+	}
 
-	//	}
-	//}
-
-
-	//for (int x = dimensions.x / 2; x < dimensions.x / 2 + dimensions.x / 64; x++) {
-	//	for (int y = dimensions.x / 2; y < dimensions.y / 2 + dimensions.x / 64; y++) {
-	//		for (int z = 0; z < 5; z++) {
-
-	//			voxel_data[x + dimensions.x * (y + dimensions.z * z)] = 6;
-	//		}
-	//	}
-	//}
-
-
-	//for (int x = 0; x < dimensions.x; x++) {
-	//	for (int y = 0; y < dimensions.y; y++) {
-	////		for (int z = 0; z < dimensions.z; z++) {
-	//			//if (rand() % 1000 < 1)
-	//				voxel_data[x + dimensions.x * (y + dimensions.z * 1)] = 6;
-	////		}
-	//	}
-	//}
-
-	//for (int x = 30; x < 60; x++) {
-	//	//for (int y = 0; y < dimensions.y; y++) {
-	//		for (int z = 0; z < 25; z++) {
-	//			voxel_data[x + dimensions.x * (50 + dimensions.z * z)] = 6;
-	//		}
-	//	//}
-	//}
+	for (int x = 30; x < 60; x++) {
+		//for (int y = 0; y < dimensions.y; y++) {
+			for (int z = 0; z < 25; z++) {
+				voxel_data[x + dimensions.x * (50 + dimensions.z * z)] = 6;
+			}
+		//}
+	}
 
 	// Hand code in some constructions
 
