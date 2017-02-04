@@ -50,7 +50,8 @@ public:
 	// Both will create the view matrix, view res buffer
 	void create_viewport(int width, int height, float v_fov, float h_fov) override;
 	
-	void assign_lights(std::vector<Light> *lights) override;
+	void assign_lights(std::vector<LightController> *lights) override;
+	void assign_lights();
 	void assign_map(Old_Map *map) override;
 	void assign_camera(Camera *camera) override;
 	void validate() override;

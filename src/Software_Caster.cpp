@@ -82,10 +82,11 @@ void Software_Caster::create_viewport(int width, int height, float v_fov, float 
 
 }
 
-void Software_Caster::assign_lights(std::vector<Light> *lights) {
-	this->lights = lights;
+void Software_Caster::assign_lights(std::vector<LightController::PackedData> *data) {
 
-	int light_count = static_cast<int>(lights->size());
+	this->lights = data;
+
+	int light_count = static_cast<int>(data->size());
 }
 
 void Software_Caster::assign_map(Old_Map * map) {

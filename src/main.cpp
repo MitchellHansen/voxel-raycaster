@@ -37,7 +37,7 @@
 #include "Input.h"
 #include "Pub_Sub.h"
 #include "NetworkInput.h"
-#include "light.h"
+#include "LightController.h"
 
 const int WINDOW_X = 1000;
 const int WINDOW_Y = 1000;
@@ -124,16 +124,14 @@ int main() {
 	float h = 90.0;
 
 	// Light for the currently non functional Bling Phong shader
-	Light l(
+	LightController l(
 		sf::Vector3f(256.0f, 256.0f, 256.0f), 
-		sf::Vector3f(-1.0f, -1.0f, -1.5f), 
-		&window
+		sf::Vector3f(-1.0f, -1.0f, -1.5f),
+		sf::Vector4f(1.0f, 1.0f, 1.0f, 1.0f)
 	);
 
-	std::vector<Light> light_vec;
-	light_vec.push_back(l);
 	// *links* the lights to the GPU
-	raycaster->assign_lights(&light_vec);
+	raycaster->assign_lights();
 
 
 	// Load in the spritesheet texture

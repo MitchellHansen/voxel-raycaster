@@ -2,7 +2,7 @@
 #define GAME_RENDERER_H
 
 #include "SFML/Graphics.hpp"
-#include "CL_Wrapper.h"
+
 #include "Camera.h"
 #include "Old_Map.h"
 #include "RayCaster.h"
@@ -35,14 +35,13 @@ public:
 	void register_map(Old_Map* map);
 	void register_lights();
 	void create_viewport(float v_fov, float h_fov, int height, int width);
-	void register_light(Light l);
+	void register_light(LightController l);
 
     void draw();
     sf::RenderWindow* get_window();
 
 private:
 
-    CL_Wrapper *cl;
 	RayCaster *rc;
 
     bool sharing_supported = false;
@@ -51,7 +50,7 @@ private:
 	sf::Uint8 *drawing_surface;
     sf::RenderWindow* window;
 
-	std::vector<Light> lights;
+	std::vector<LightController> lights;
 	Old_Map* map;
 	Camera* camera;
 	sf::Uint8 *view_matrix;
