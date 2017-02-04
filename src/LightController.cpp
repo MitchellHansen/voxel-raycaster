@@ -2,14 +2,12 @@
 #include "LightController.h"
 #include "Pub_Sub.h"
 
-
-LightController::LightController() {
-}
-
-
-LightController::LightController(sf::Vector3f position, sf::Vector3f direction, sf::Vector4f rgbi) {
-	packed_index = packed_data.size() / packed_size;
-	packed_data.emplace_back(Light(position, direction, rgbi));
+LightController::LightController(std::shared_ptr<RayCaster> raycaster) : 
+	raycaster(raycaster) {
+	
+	
+	
+	//packed_index = packed_data.size() / packed_size;
 }
 
 LightController::~LightController() {
@@ -32,22 +30,22 @@ int LightController::add_relative_impulse(DIRECTION impulse_direction, float spe
 	switch (impulse_direction) {
 
 	case DIRECTION::FORWARD:
-		dir = sf::Vector2f(packed_data.at(packed_index).direction_cartesian.y, packed_data.at(packed_index).direction_cartesian.x);
+		dir = sf::Vector2f(packed_data_array.at(packed_index).direction_cartesian.y, packed_data_array.at(packed_index).direction_cartesian.x);
 		break;
 	case DIRECTION::REARWARD:
-		dir = sf::Vector2f(packed_data.at(packed_index).direction_cartesian.y, packed_data.at(packed_index).direction_cartesian.x + PI_F);
+		dir = sf::Vector2f(packed_data_array.at(packed_index).direction_cartesian.y, packed_data_array.at(packed_index).direction_cartesian.x + PI_F);
 		break;
 	case DIRECTION::LEFT:
-		dir = sf::Vector2f(packed_data.at(packed_index).direction_cartesian.y + PI_F + PI_F / 2, PI_F / 2);
+		dir = sf::Vector2f(packed_data_array.at(packed_index).direction_cartesian.y + PI_F + PI_F / 2, PI_F / 2);
 		break;
 	case DIRECTION::RIGHT:
-		dir = sf::Vector2f(packed_data.at(packed_index).direction_cartesian.y + PI_F / 2, PI_F / 2);
+		dir = sf::Vector2f(packed_data_array.at(packed_index).direction_cartesian.y + PI_F / 2, PI_F / 2);
 		break;
 	case DIRECTION::UP:
-		dir = sf::Vector2f(packed_data.at(packed_index).direction_cartesian.y, packed_data.at(packed_index).direction_cartesian.x + PI_F / 2);
+		dir = sf::Vector2f(packed_data_array.at(packed_index).direction_cartesian.y, packed_data_array.at(packed_index).direction_cartesian.x + PI_F / 2);
 		break;
 	case DIRECTION::DOWN:
-		dir = sf::Vector2f(packed_data.at(packed_index).direction_cartesian.y + PI_F, (packed_data.at(packed_index).direction_cartesian.x * -1) + PI_F / 2);
+		dir = sf::Vector2f(packed_data_array.at(packed_index).direction_cartesian.y + PI_F, (packed_data_array.at(packed_index).direction_cartesian.x * -1) + PI_F / 2);
 		break;
 
 	}
@@ -97,7 +95,11 @@ void LightController::recieve_event(VrEventPublisher* publisher, std::unique_ptr
 
 }
 
-std::vector<LightController::Light>* LightController::get_lights() {
+void LightController::erase_light() {
+	//packed_data.emplace_back(PackedData(position, direction, rgbi));
+}
+
+std::vector<LightController::PackedData>* LightController::get_lights() {
 	return &packed_data;
 }
 

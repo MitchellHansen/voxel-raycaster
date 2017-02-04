@@ -92,8 +92,9 @@ int main() {
 	t.create_buffers();*/
 
 	// Start up the raycaster
-	Hardware_Caster *raycaster = new Hardware_Caster();
-
+	//Hardware_Caster *raycaster = new Hardware_Caster();
+	std::shared_ptr<Hardware_Caster> raycaster(new Hardware_Caster());
+	
 	if (raycaster->init() != 1) {
 		abort();
 	}
@@ -123,12 +124,13 @@ int main() {
 	float w = 60.0;
 	float h = 90.0;
 
-	// Light for the currently non functional Bling Phong shader
-	LightController l(
-		sf::Vector3f(256.0f, 256.0f, 256.0f), 
+	/*sf::Vector3f(256.0f, 256.0f, 256.0f),
 		sf::Vector3f(-1.0f, -1.0f, -1.5f),
 		sf::Vector4f(1.0f, 1.0f, 1.0f, 1.0f)
-	);
+*/
+
+	// Light for the currently non functional Bling Phong shader
+	LightController l(raycaster);
 
 	// *links* the lights to the GPU
 	raycaster->assign_lights();
