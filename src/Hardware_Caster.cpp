@@ -210,10 +210,10 @@ void Hardware_Caster::create_viewport(int width, int height, float v_fov, float 
 //
 //}
 
-void Hardware_Caster::assign_lights(std::vector<LightController::PackedData> *data) {
+void Hardware_Caster::assign_lights(std::vector<char> *data) {
 
 	// Get a pointer to the packed light data
-	this->lights = data;
+//	this->lights = data;
 
 	light_count = static_cast<int>(lights->size());
 
@@ -222,8 +222,6 @@ void Hardware_Caster::assign_lights(std::vector<LightController::PackedData> *da
 	create_buffer("lights", packed_size * light_count, lights->data(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 
 	create_buffer("light_count", sizeof(int), &light_count);
-
-	
 
 }
 

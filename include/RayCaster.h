@@ -6,7 +6,6 @@
 #include "Camera.h"
 #include "LightController.h"
 
-
 class RayCaster {
 public:
 
@@ -25,7 +24,7 @@ public:
 	virtual void assign_map(Old_Map *map) = 0;
 	virtual void assign_camera(Camera *camera) = 0;
 	virtual void create_viewport(int width, int height, float v_fov, float h_fov) = 0;
-	virtual void assign_lights(std::vector<LightController::PackedData> *data) = 0;
+	virtual void assign_lights(std::vector<char> *data) = 0;
 	virtual void validate() = 0;
 
 	// draw will abstract the gl sharing and software rendering
@@ -40,7 +39,8 @@ protected:
 
 	Old_Map * map = nullptr;
 	Camera *camera = nullptr;
-	std::vector<LightController::PackedData> *lights;
+//	std::vector<LightController::PackedData> *lights;
+	std::vector<char> *lights;
 	int light_count = 0;
 	sf::Uint8 *viewport_image = nullptr;
 	sf::Vector4f *viewport_matrix = nullptr;

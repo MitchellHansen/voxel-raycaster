@@ -130,10 +130,11 @@ int main() {
 */
 
 	// Light for the currently non functional Bling Phong shader
-	LightController l(raycaster);
+	std::shared_ptr<RayCaster> asdf;
+	//LightController l(asdf);
 
 	// *links* the lights to the GPU
-	raycaster->assign_lights();
+	//raycaster->assign_lights();
 
 
 	// Load in the spritesheet texture
