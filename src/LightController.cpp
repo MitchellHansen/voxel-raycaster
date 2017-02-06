@@ -1,4 +1,3 @@
-#pragma once
 #include "LightController.h"
 
 //LightController::LightController(std::shared_ptr<RayCaster> raycaster) {

@@ -1,7 +1,9 @@
 # Check versions
 message(STATUS "CMake version: ${CMAKE_VERSION}")
 cmake_minimum_required(VERSION 3.1)
+
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
 # Set the project name
 set(PNAME Game)
 project(${PNAME})
@@ -61,13 +63,12 @@ target_link_libraries (${PNAME} ${SFML_LIBRARIES} ${SFML_DEPENDENCIES})
 target_link_libraries (${PNAME} ${OpenCL_LIBRARY})
 target_link_libraries (${PNAME} ${OPENGL_LIBRARIES})
 target_link_libraries (${PNAME} ${GLEW_LIBRARIES})
+#target_link_libraries (${PNAME} ${Vulkan_LIBRARIES})
 
 if (NOT WIN32)
 	target_link_libraries (${PNAME} -lpthread)
 endif()
 
-#target_link_libraries (${PNAME} ${Vulkan_LIBRARIES})
-
-# Setup to use C++11
-set_property(TARGET ${PNAME} PROPERTY CXX_STANDARD 14) # Use C++11
+# Setup to use C++14
+set_property(TARGET ${PNAME} PROPERTY CXX_STANDARD 14)
 

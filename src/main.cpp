@@ -22,7 +22,6 @@
 #include <OpenCL/cl_ext.h>
 #endif
 
-#pragma once
 #include <iostream>
 #include <chrono>
 #include <SFML/Graphics.hpp>
@@ -233,7 +232,11 @@ int main() {
 			std::getline(std::cin, filename);
 			filename += ".png";
 
-			sf::Image image = window.capture();
+			sf::Texture window_texture;
+			window_texture.create(window.getSize().x, window.getSize().y);
+			window_texture.update(window);
+
+			sf::Image image = window_texture.copyToImage();
 			image.saveToFile(path + filename);
 		}
 

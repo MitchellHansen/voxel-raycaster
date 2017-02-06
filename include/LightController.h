@@ -6,6 +6,7 @@
 #include "RayCaster.h"
 #include "LightHandle.h"
 
+
 class LightController : public VrEventSubscriber {
 public:
 
@@ -46,10 +47,10 @@ private:
 	//// Need to allow N byte light class to be packed into 10 byte packets
 	//int packed_size = sizeof(PackedData);
 
-	//std::vector<PackedData> packed_data_array;
+	std::vector<PackedData> packed_data_array;
 	//
 	//
-	//std::unordered_map<std::string, LightHandle> light_map;
+	std::unordered_map<std::string, LightHandle> light_map;
 	//
 	//std::shared_ptr<RayCaster> raycaster;
 

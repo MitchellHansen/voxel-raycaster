@@ -1,4 +1,3 @@
-#pragma once
 #include <vector>
 #include "Event.hpp"
 #include "Pub_Sub.h"

@@ -1,4 +1,3 @@
-#pragma once
 #include <iostream>
 #include <SFML/System/Vector3.hpp>
 #include <SFML/System/Vector2.hpp>

@@ -36,7 +36,7 @@ int Hardware_Caster::init() {
 		return error;
 	}
 
-	srand(NULL);
+	srand(time(NULL));
 
 	int *seed_memory = new int[1920*1080];
 

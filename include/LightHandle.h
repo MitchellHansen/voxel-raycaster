@@ -1,7 +1,7 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 #include <util.hpp>
-#include "LightController.h"
+#include <memory>
 
 // We need to be able to :
 //		- Allow lights to exist outside the context of a LightController
