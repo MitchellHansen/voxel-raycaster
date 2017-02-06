@@ -1,5 +1,7 @@
 #include "NetworkInput.h"
 #include <iostream>
+#include <cstring>
+#include <memory>
 
 NetworkInput::NetworkInput() {
 
@@ -119,7 +121,7 @@ void NetworkInput::threaded_client_listener(int port) {
 							int position = 0;
 							while (position < received) {
 								CustomPacket p;
-								memcpy(p.data, &buffer[position], p.size);
+								std::memcpy(p.data, &buffer[position], p.size);
 								packets.push_back(p);
 								position += p.size;
 							}
@@ -127,7 +129,7 @@ void NetworkInput::threaded_client_listener(int port) {
 							std::cout << "packet_count = " << packets.size() << std::endl;
 
 							int left_over = 12 - (position - received);
-							memcpy(buffer, &buffer[received - left_over], left_over);
+							std::memcpy(buffer, &buffer[received - left_over], left_over);
 
 						} while (status != sf::TcpSocket::Status::Done);
 

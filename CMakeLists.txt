@@ -69,5 +69,5 @@ endif()
 #target_link_libraries (${PNAME} ${Vulkan_LIBRARIES})
 
 # Setup to use C++11
-set_property(TARGET ${PNAME} PROPERTY CXX_STANDARD 11) # Use C++11
+set_property(TARGET ${PNAME} PROPERTY CXX_STANDARD 14) # Use C++11
 
