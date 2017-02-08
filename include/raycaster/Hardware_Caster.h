@@ -1,5 +1,5 @@
 #pragma once
-#include <RayCaster.h>
+#include <raycaster/RayCaster.h>
 #include <vector>
 #include <iostream>
 #include "util.hpp"

@@ -63,7 +63,6 @@ foreach (source IN ITEMS ${SOURCES})
 		
 		string(REGEX MATCHALL "src(.*)" substrings ${filename})
 		list(GET substrings 0 substring)
-
 		
 		SOURCE_GROUP(${substring} FILES ${source}) 
 		
@@ -79,7 +78,6 @@ foreach (source IN ITEMS ${HEADERS})
 		
 		string(REGEX MATCHALL "include(.*)" substrings ${filename})
 		list(GET substrings 0 substring)
-
 		
 		SOURCE_GROUP(${substring} FILES ${source}) 
 		
@@ -95,7 +93,6 @@ foreach (source IN ITEMS ${KERNELS})
 		
 		string(REGEX MATCHALL "kernels(.*)" substrings ${filename})
 		list(GET substrings 0 substring)
-
 		
 		SOURCE_GROUP(${substring} FILES ${source}) 
 		
@@ -111,7 +108,6 @@ foreach (source IN ITEMS ${SHADERS})
 		
 		string(REGEX MATCHALL "shaders(.*)" substrings ${filename})
 		list(GET substrings 0 substring)
-
 		
 		SOURCE_GROUP(${substring} FILES ${source}) 
 		
