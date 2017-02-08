@@ -51,11 +51,78 @@ file(GLOB_RECURSE SHADERS "shaders/*.vert" "shaders/*.tesc" "shaders/*.tese" "sh
 
 add_executable(${PNAME} ${SOURCES} ${HEADERS} ${KERNELS} ${SHADERS})
 
+# Follow the sub directory structure to add sub-filters in VS
+# Gotta do it one by one unfortunately
+
+foreach (source IN ITEMS ${SOURCES})
+	if (IS_ABSOLUTE "${source}")
+
+		get_filename_component(filename ${source} DIRECTORY)
+
+		STRING(REGEX REPLACE "/" "\\\\" filename ${filename})
+		
+		string(REGEX MATCHALL "src(.*)" substrings ${filename})
+		list(GET substrings 0 substring)
+
+		
+		SOURCE_GROUP(${substring} FILES ${source}) 
+		
+	endif()
+endforeach()
+
+foreach (source IN ITEMS ${HEADERS})
+	if (IS_ABSOLUTE "${source}")
+
+		get_filename_component(filename ${source} DIRECTORY)
+
+		STRING(REGEX REPLACE "/" "\\\\" filename ${filename})
+		
+		string(REGEX MATCHALL "include(.*)" substrings ${filename})
+		list(GET substrings 0 substring)
+
+		
+		SOURCE_GROUP(${substring} FILES ${source}) 
+		
+	endif()
+endforeach()
+
+foreach (source IN ITEMS ${KERNELS})
+	if (IS_ABSOLUTE "${source}")
+
+		get_filename_component(filename ${source} DIRECTORY)
+
+		STRING(REGEX REPLACE "/" "\\\\" filename ${filename})
+		
+		string(REGEX MATCHALL "kernels(.*)" substrings ${filename})
+		list(GET substrings 0 substring)
+
+		
+		SOURCE_GROUP(${substring} FILES ${source}) 
+		
+	endif()
+endforeach()
+
+foreach (source IN ITEMS ${SHADERS})
+	if (IS_ABSOLUTE "${source}")
+
+		get_filename_component(filename ${source} DIRECTORY)
+
+		STRING(REGEX REPLACE "/" "\\\\" filename ${filename})
+		
+		string(REGEX MATCHALL "shaders(.*)" substrings ${filename})
+		list(GET substrings 0 substring)
+
+		
+		SOURCE_GROUP(${substring} FILES ${source}) 
+		
+	endif()
+endforeach()
+
 # put all the sources into their own filter folders
-SOURCE_GROUP("kernels" FILES ${KERNELS}) 
-SOURCE_GROUP("headers" FILES ${HEADERS}) 
-SOURCE_GROUP("sources" FILES ${SOURCES})
-SOURCE_GROUP("shaders" FILES ${SHADERS})
+#SOURCE_GROUP("kernels" FILES ${KERNELS}) 
+#SOURCE_GROUP("headers" FILES ${HEADERS}) 
+#SOURCE_GROUP("sources" FILES ${SOURCES})
+#SOURCE_GROUP("shaders" FILES ${SHADERS})
 
 
 # Link CL, GL, and SFML
