@@ -18,39 +18,7 @@ void NetworkInput::stop_listening_for_clients() {
 
 void NetworkInput::recieve_from_clients()
 {
-	//// Receive a message from the client
-	//char buffer[1024];
 
-	//std::vector<CustomPacket> packets;
-
-	//sf::TcpSocket::Status status;
-
-	//do {
-
-	//	std::size_t received = 0;
-	//	status = socket.receive(buffer, 1024, received);
-
-	//	while (received < 12) {
-	//		std::size_t tack_on;
-	//		status = socket.receive(&buffer[received], 1024 - received, tack_on);
-	//		received += tack_on;
-	//	}
-
-
-	//	int position = 0;
-	//	while (position < received) {
-	//		CustomPacket p;
-	//		memcpy(p.data, &buffer[position], p.size);
-	//		packets.push_back(p);
-	//		position += p.size;
-	//	}
-
-	//	std::cout << "packet_count = " << packets.size() << std::endl;
-
-	//	int left_over = 12 - (position - received);
-	//	memcpy(buffer, &buffer[received - left_over], left_over);
-
-	//} while (status != sf::TcpSocket::Status::Disconnected);
 }
 
 void NetworkInput::dispatch_events()
@@ -128,7 +96,7 @@ void NetworkInput::threaded_client_listener(int port) {
 
 							std::cout << "packet_count = " << packets.size() << std::endl;
 
-							int left_over = 12 - (position - received);
+							int left_over = 12 - static_cast<int>(position - received);
 							std::memcpy(buffer, &buffer[received - left_over], left_over);
 
 						} while (status != sf::TcpSocket::Status::Done);

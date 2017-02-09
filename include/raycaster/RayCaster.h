@@ -4,7 +4,8 @@
 #include <Map.h>
 #include "Old_Map.h"
 #include "Camera.h"
-#include "LightController.h"
+
+struct PackedData;
 
 class RayCaster {
 public:
@@ -24,7 +25,7 @@ public:
 	virtual void assign_map(Old_Map *map) = 0;
 	virtual void assign_camera(Camera *camera) = 0;
 	virtual void create_viewport(int width, int height, float v_fov, float h_fov) = 0;
-	virtual void assign_lights(std::vector<char> *data) = 0;
+	virtual void assign_lights(std::vector<PackedData> *data) = 0;
 	virtual void validate() = 0;
 
 	// draw will abstract the gl sharing and software rendering

@@ -32,7 +32,6 @@
 #include "raycaster/Hardware_Caster.h"
 #include "Vector4.hpp"
 #include "Camera.h"
-#include "raycaster/Software_Caster.h"
 #include "Input.h"
 #include "Pub_Sub.h"
 #include "NetworkInput.h"
@@ -92,7 +91,8 @@ int main() {
 
 	// Start up the raycaster
 	//Hardware_Caster *raycaster = new Hardware_Caster();
-	std::shared_ptr<Hardware_Caster> raycaster(new Hardware_Caster());
+	Hardware_Caster *raycaster = new Hardware_Caster();
+	//std::shared_ptr<Hardware_Caster> raycaster(new Hardware_Caster());
 	
 	if (raycaster->init() != 1) {
 		abort();
@@ -129,8 +129,8 @@ int main() {
 */
 
 	// Light for the currently non functional Bling Phong shader
-	std::shared_ptr<RayCaster> asdf;
-	//LightController l(asdf);
+	//std::unique_ptr<RayCaster> asdf(raycaster);
+	//LightController light_controller(std::move(raycaster));
 
 	// *links* the lights to the GPU
 	//raycaster->assign_lights();

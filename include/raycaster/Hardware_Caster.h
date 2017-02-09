@@ -36,6 +36,8 @@ struct device {
 	cl_uint comp_units;
 };
 
+struct PackedData;
+
 class Hardware_Caster : public RayCaster
 {
 public:
@@ -50,7 +52,7 @@ public:
 	// Both will create the view matrix, view res buffer
 	void create_viewport(int width, int height, float v_fov, float h_fov) override;
 	
-	void assign_lights(std::vector<char> *data) override;
+	void assign_lights(std::vector<PackedData> *data) override;
 	void assign_map(Old_Map *map) override;
 	void assign_camera(Camera *camera) override;
 	void validate() override;

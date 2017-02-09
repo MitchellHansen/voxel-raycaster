@@ -1,5 +1,6 @@
 #include "raycaster/Hardware_Caster.h"
-
+#include <raycaster/RayCaster.h>
+#include "LightController.h"
 
 Hardware_Caster::Hardware_Caster() {
 
@@ -35,7 +36,7 @@ int Hardware_Caster::init() {
 		return error;
 	}
 
-	srand(time(NULL));
+	srand(time(nullptr));
 
 	int *seed_memory = new int[1920*1080];
 
@@ -209,14 +210,14 @@ void Hardware_Caster::create_viewport(int width, int height, float v_fov, float 
 //
 //}
 
-void Hardware_Caster::assign_lights(std::vector<char> *data) {
+void Hardware_Caster::assign_lights(std::vector<PackedData> *data) {
 
 	// Get a pointer to the packed light data
 //	this->lights = data;
 
 	light_count = static_cast<int>(lights->size());
 
-	size_t packed_size = sizeof(LightController::PackedData);
+	cl_uint packed_size = 0;// sizeof(PackedData);
 
 	create_buffer("lights", packed_size * light_count, lights->data(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 

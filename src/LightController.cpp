@@ -1,48 +1,39 @@
 #include "LightController.h"
+#include "LightHandle.h"
+#include <numeric>
 
-//LightController::LightController(std::shared_ptr<RayCaster> raycaster) {
-//	//:raycaster(raycaster) {
-//	
-//	
-//	
-//	//packed_index = packed_data.size() / packed_size;
-//}
+
+
+LightController::LightController(std::shared_ptr<Hardware_Caster> raycaster) : packed_data_array(reserved_count), open_list(reserved_count) {
+
+	std::iota(open_list.begin(), open_list.end(), 0);
+
+	raycaster->assign_lights(&packed_data_array);
+}
 
 LightController::~LightController() {
+	
 }
 
-//void LightController::create_light(LightController::PackedData light_data, std::string light_name) {
-//	
-//	//if (light_map.count(light_name) == 1) {
-//	//	// light already exists, TODO: error out
-//	//	return;
-//	//}
-//
-//	
-//}
+std::unique_ptr<LightHandle> LightController::create_light(LightPrototype light_prototype) {
 
-//LightHandle LightController::get_light_handle(std::string light_name) {
+	unsigned int index = open_list.front();
+	open_list.pop_front();
+	
+	std::unique_ptr<PackedData> data(&packed_data_array.at(index));
 
-//}
-
-void LightController::set_position(sf::Vector3f position) {
+	std::unique_ptr<LightHandle> handle(new LightHandle(this, index, light_prototype, std::move(data)));
+	
+	return handle;
 
 }
 
 
+void LightController::remove_light(unsigned int light_index) {
 
+	// Sanitization is currently handled by the light handler	
+	open_list.push_front(light_index);
 
-int LightController::update(double delta_time) {
-
-	double multiplier = 40;
-
-	//position.x += static_cast<float>(movement.x * delta_time * multiplier);
-	//position.y += static_cast<float>(movement.y * delta_time * multiplier);
-	//position.z += static_cast<float>(movement.z * delta_time * multiplier);
-
-	//movement *= static_cast<float>(1.0f * delta_time * multiplier);
-
-	return 1;
 }
 
 void LightController::recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Event> event) {
@@ -69,17 +60,3 @@ void LightController::recieve_event(VrEventPublisher* publisher, std::unique_ptr
 	}
 
 }
-
-void LightController::erase_light() {
-	//packed_data.emplace_back(PackedData(position, direction, rgbi));
-}
-
-//std::vector<LightController::PackedData>* LightController::get_lights() {
-//	return &packed_data_array;
-//}
-
-void LightController::look_at_center() {
-
-	//direction_cartesian = CartToNormalizedSphere(sf::Vector3f(75, 75, 75) - position);
-}
-

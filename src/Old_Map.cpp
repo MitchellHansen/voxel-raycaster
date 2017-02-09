@@ -15,8 +15,8 @@ Old_Map::~Old_Map() {
 
 void generate_at(int x, int y, std::vector<std::vector<int>> *grid) {
 
-	int x_bound = grid->size();
-	int y_bound = grid->at(0).size();
+	size_t x_bound = grid->size();
+	size_t y_bound = grid->at(0).size();
 
 	//					   N  S  E  W
 	std::vector<int> t = { 1, 2, 3, 4 };
