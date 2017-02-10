@@ -1,4 +1,7 @@
-Building this project is not difficult, but the setup prior can be. You must have OpenCL and SFML development libraries installed. You must also have OpenCL compatible hardware to run it on. The CMake file should take care of most of the configuration, but you have to point it to your SFML root directory before it will generate. Working in VS2015, I don't have Linux compatible hardware, but it does compile and run on the backup renderer albeit horrendously slowly. The macOS build was working around commit 50, but I no longer have access to a mac.
+
+In order to build this project you must have Cmake, GLEW, SFML, and the OpenCL development libraries installed / downloaded. You're also going to need OpenCL compatable hardware that supports the cl_khr_gl_sharing extension. The VS2015 build is working, Linux compiles but I don't have hardware that works, and Mac should compile and run, but I don't have access to a Mac.
+
+Note on cl_khr_gl_sharing: The cl_khr_gl_sharing extension, or cl_APPLE_gl_sharing for macOS, is only supported on certain hardware. Further, cl_khr_gl_sharing is not supported on intel CPU's running linux. You might be able to install and use beignet to get around this. The program will warn you if your CL device doesn't support this extension.
 
 Featuring...
 
