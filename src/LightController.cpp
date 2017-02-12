@@ -1,6 +1,7 @@
 #include "LightController.h"
 #include "LightHandle.h"
 #include <numeric>
+#include <SFML/System/Time.hpp>
 
 
 
@@ -9,20 +10,22 @@ LightController::LightController(std::shared_ptr<Hardware_Caster> raycaster) : p
 	std::iota(open_list.begin(), open_list.end(), 0);
 
 	raycaster->assign_lights(&packed_data_array);
+	
 }
 
 LightController::~LightController() {
 	
 }
 
-std::unique_ptr<LightHandle> LightController::create_light(LightPrototype light_prototype) {
+
+std::shared_ptr<LightHandle> LightController::create_light(LightPrototype light_prototype) {
 
 	unsigned int index = open_list.front();
 	open_list.pop_front();
 	
-	std::unique_ptr<PackedData> data(&packed_data_array.data()[index]);
+	PackedData* data = &packed_data_array.data()[index];
 
-	std::unique_ptr<LightHandle> handle(new LightHandle(this, index, light_prototype, std::move(data)));
+	std::shared_ptr<LightHandle> handle(new LightHandle(this, index, light_prototype, data));
 	
 	return handle;
 

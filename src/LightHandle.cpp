@@ -2,10 +2,8 @@
 #include "LightController.h"
 
 
-LightHandle::LightHandle(LightController *const light_controller, unsigned int light_id, LightPrototype light_prototype, std::unique_ptr<PackedData> data_reference) :
-	light_controller_ref(light_controller), light_id(light_id) {
-
-	data_reference = std::move(data_reference);
+LightHandle::LightHandle(LightController *const light_controller, unsigned int light_id, LightPrototype light_prototype, PackedData *const data_reference) :
+	light_controller_ref(light_controller), light_id(light_id), data_reference(data_reference) {
 
 	friction_coefficient = light_prototype.friction;
 	default_impulse = light_prototype.impulse;
@@ -28,6 +26,7 @@ LightHandle::~LightHandle() {
 	light_controller_ref->remove_light(light_id);
 
 }
+
 
 void LightHandle::set_friction(float friction)
 {

@@ -35,6 +35,7 @@ struct PackedData {
 		position(position), direction_cartesian(direction_cartesian), rgbi(rgbi) {
 	}
 	PackedData() {};
+	~PackedData() {};
 	sf::Vector4f rgbi;
 	sf::Vector3f position;
 	sf::Vector3f direction_cartesian;
@@ -50,7 +51,7 @@ public:
 	LightController(std::shared_ptr<Hardware_Caster> raycaster);
 	~LightController();
 
-	std::unique_ptr<LightHandle> create_light(LightPrototype light_prototype);
+	std::shared_ptr<LightHandle> create_light(LightPrototype light_prototype);
 	void remove_light(unsigned int light_index);
 
 	void recieve_event(VrEventPublisher* p, std::unique_ptr<vr::Event> event) override;

@@ -55,7 +55,7 @@ public:
 
 private:
 
-	LightHandle(LightController *const light_controller, unsigned int light_id, LightPrototype light_prototype, std::unique_ptr<PackedData> data_reference);
+	LightHandle(LightController *const light_controller, unsigned int light_id, LightPrototype light_prototype, PackedData *const data_reference);
 
 	// Reference to the LightController to handle deconstruction and removal using the light_id
 	LightController *const light_controller_ref;
@@ -67,5 +67,5 @@ private:
 	sf::Vector3f movement;
 
 	// Reference to the packed data in the LightController
-	std::unique_ptr<PackedData> data_reference;
+	PackedData *const data_reference;
 };

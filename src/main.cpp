@@ -132,17 +132,8 @@ int main() {
 		sf::Vector3f(-1.0f, -1.0f, -1.5f),
 		sf::Vector4f(1.0f, 1.0f, 1.0f, 1.0f)
 	);
-
-	std::unique_ptr<LightHandle> handle = light_controller.create_light(prototype);
-
 	
-
-	// Light for the currently non functional Bling Phong shader
-	//std::unique_ptr<RayCaster> asdf(raycaster);
-	//LightController light_controller(std::move(raycaster));
-
-	// *links* the lights to the GPU
-	//raycaster->assign_lights();
+	std::shared_ptr<LightHandle> handle(light_controller.create_light(prototype));
 
 
 	// Load in the spritesheet texture
@@ -191,7 +182,7 @@ int main() {
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyHeld);
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyPressed);
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::MouseMoved);
-	camera->subscribe_to_publisher(&ni, vr::Event::EventType::JoystickMoved);
+	//camera->subscribe_to_publisher(&ni, vr::Event::EventType::JoystickMoved);
 
 	WindowHandler win_hand(&window);
 	win_hand.subscribe_to_publisher(&input_handler, vr::Event::EventType::Closed);
@@ -203,7 +194,7 @@ int main() {
 		input_handler.consume_sf_events(&window);
 		input_handler.handle_held_keys();
 		input_handler.dispatch_events();
-		ni.dispatch_events();
+		//ni.dispatch_events();
 
 
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::F11)) {
