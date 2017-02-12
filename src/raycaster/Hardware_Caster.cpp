@@ -213,15 +213,15 @@ void Hardware_Caster::create_viewport(int width, int height, float v_fov, float 
 void Hardware_Caster::assign_lights(std::vector<PackedData> *data) {
 
 	// Get a pointer to the packed light data
-//	this->lights = data;
+	this->lights = data;
 
 	light_count = static_cast<int>(lights->size());
 
-	cl_uint packed_size = 0;// sizeof(PackedData);
+	cl_uint packed_size = sizeof(PackedData);
 
 	create_buffer("lights", packed_size * light_count, lights->data(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 
-	create_buffer("light_count", sizeof(int), &light_count);
+	create_buffer("light_count", 8, &light_count);
 
 }
 

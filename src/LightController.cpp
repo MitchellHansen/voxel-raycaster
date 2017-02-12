@@ -20,7 +20,7 @@ std::unique_ptr<LightHandle> LightController::create_light(LightPrototype light_
 	unsigned int index = open_list.front();
 	open_list.pop_front();
 	
-	std::unique_ptr<PackedData> data(&packed_data_array.at(index));
+	std::unique_ptr<PackedData> data(&packed_data_array.data()[index]);
 
 	std::unique_ptr<LightHandle> handle(new LightHandle(this, index, light_prototype, std::move(data)));
 	

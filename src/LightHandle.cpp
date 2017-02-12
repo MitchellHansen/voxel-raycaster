@@ -3,11 +3,17 @@
 
 
 LightHandle::LightHandle(LightController *const light_controller, unsigned int light_id, LightPrototype light_prototype, std::unique_ptr<PackedData> data_reference) :
-	light_controller_ref(light_controller), data_reference(std::move(data_reference)) {
+	light_controller_ref(light_controller), light_id(light_id) {
+
+	data_reference = std::move(data_reference);
 
 	friction_coefficient = light_prototype.friction;
 	default_impulse = light_prototype.impulse;
 	movement = light_prototype.movement;
+
+	data_reference->direction_cartesian = light_prototype.direction_cartesian;
+	data_reference->position = light_prototype.position;
+	data_reference->rgbi = light_prototype.rgbi;
 
 }
 

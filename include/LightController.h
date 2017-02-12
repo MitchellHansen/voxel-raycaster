@@ -9,6 +9,16 @@
 
 struct LightPrototype {
 	
+	LightPrototype(
+		sf::Vector3f position,
+		sf::Vector3f direction_cartesian,
+		sf::Vector4f rgbi
+		) : 
+		position(position), 
+		direction_cartesian(direction_cartesian),
+		rgbi(rgbi) {	};
+
+
 	sf::Vector3f position;
 	sf::Vector3f direction_cartesian;
 	sf::Vector4f rgbi;
@@ -25,9 +35,10 @@ struct PackedData {
 		position(position), direction_cartesian(direction_cartesian), rgbi(rgbi) {
 	}
 	PackedData() {};
+	sf::Vector4f rgbi;
 	sf::Vector3f position;
 	sf::Vector3f direction_cartesian;
-	sf::Vector4f rgbi;
+	
 };
 
 class LightHandle;

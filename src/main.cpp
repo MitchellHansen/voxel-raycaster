@@ -22,6 +22,7 @@
 #include <OpenCL/cl_ext.h>
 #endif
 
+#pragma once
 #include <iostream>
 #include <chrono>
 #include <SFML/Graphics.hpp>
@@ -36,6 +37,7 @@
 #include "Pub_Sub.h"
 #include "NetworkInput.h"
 #include "LightController.h"
+#include "LightHandle.h"
 
 const int WINDOW_X = 1000;
 const int WINDOW_Y = 1000;
@@ -91,8 +93,8 @@ int main() {
 
 	// Start up the raycaster
 	//Hardware_Caster *raycaster = new Hardware_Caster();
-	Hardware_Caster *raycaster = new Hardware_Caster();
-	//std::shared_ptr<Hardware_Caster> raycaster(new Hardware_Caster());
+	//Hardware_Caster *raycaster = new Hardware_Caster();
+	std::shared_ptr<Hardware_Caster> raycaster(new Hardware_Caster());
 	
 	if (raycaster->init() != 1) {
 		abort();
@@ -123,10 +125,17 @@ int main() {
 	float w = 60.0;
 	float h = 90.0;
 
-	/*sf::Vector3f(256.0f, 256.0f, 256.0f),
+
+	LightController light_controller(raycaster);
+	LightPrototype prototype(
+		sf::Vector3f(256.0f, 256.0f, 256.0f),
 		sf::Vector3f(-1.0f, -1.0f, -1.5f),
 		sf::Vector4f(1.0f, 1.0f, 1.0f, 1.0f)
-*/
+	);
+
+	std::unique_ptr<LightHandle> handle = light_controller.create_light(prototype);
+
+	
 
 	// Light for the currently non functional Bling Phong shader
 	//std::unique_ptr<RayCaster> asdf(raycaster);

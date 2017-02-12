@@ -41,7 +41,7 @@ protected:
 	Old_Map * map = nullptr;
 	Camera *camera = nullptr;
 //	std::vector<LightController::PackedData> *lights;
-	std::vector<char> *lights;
+	std::vector<PackedData> *lights;
 	int light_count = 0;
 	sf::Uint8 *viewport_image = nullptr;
 	sf::Vector4f *viewport_matrix = nullptr;
