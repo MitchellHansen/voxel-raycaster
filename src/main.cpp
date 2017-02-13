@@ -39,8 +39,8 @@
 #include "LightController.h"
 #include "LightHandle.h"
 
-const int WINDOW_X = 1000;
-const int WINDOW_Y = 1000;
+const int WINDOW_X = 1440;
+const int WINDOW_Y = 900;
 const int WORK_SIZE = WINDOW_X * WINDOW_Y;
 
 const int MAP_X = 256;
@@ -114,13 +114,11 @@ int main() {
 		&window
 	);
 
-
-
 	// *link* the camera to the GPU
 	raycaster->assign_camera(camera);
 
 	// Generate and send the viewport to the GPU. Also creates the viewport texture
-	raycaster->create_viewport(WINDOW_X, WINDOW_Y, 50.0f, 50.0f);
+	raycaster->create_viewport(WINDOW_X, WINDOW_Y, 0.625f * 90.0f, 90.0f);
 
 	float w = 60.0;
 	float h = 90.0;
@@ -128,7 +126,7 @@ int main() {
 
 	LightController light_controller(raycaster);
 	LightPrototype prototype(
-		sf::Vector3f(256.0f, 256.0f, 256.0f),
+		sf::Vector3f(100.0f, 100.0f, 30.0f),
 		sf::Vector3f(-1.0f, -1.0f, -1.5f),
 		sf::Vector4f(1.0f, 1.0f, 1.0f, 1.0f)
 	);
@@ -183,6 +181,7 @@ int main() {
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyPressed);
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::MouseMoved);
 	//camera->subscribe_to_publisher(&ni, vr::Event::EventType::JoystickMoved);
+	handle->subscribe_to_publisher(&ni, vr::Event::EventType::JoystickMoved);
 
 	WindowHandler win_hand(&window);
 	win_hand.subscribe_to_publisher(&input_handler, vr::Event::EventType::Closed);
@@ -194,7 +193,7 @@ int main() {
 		input_handler.consume_sf_events(&window);
 		input_handler.handle_held_keys();
 		input_handler.dispatch_events();
-		//ni.dispatch_events();
+		ni.dispatch_events();
 
 
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::F11)) {
@@ -257,6 +256,7 @@ int main() {
 
         // ==== FPS LOCKED ====
 		camera->update(delta_time);
+		handle->update(delta_time);
 
 		window.clear(sf::Color::Black);
 

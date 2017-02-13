@@ -63,3 +63,35 @@ void LightHandle::set_rgbi(sf::Vector4f rgbi)
 
 }
 
+void LightHandle::recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Event> event)
+{
+		if (event->type == vr::Event::JoystickMoved) {
+
+			vr::JoystickMoved *joystick_event = static_cast<vr::JoystickMoved*>(event.get());
+
+			if (joystick_event->axis == sf::Joystick::Axis::X) {
+				movement.x = -joystick_event->position / 5;
+				//add_relative_impulse(Camera::DIRECTION::FORWARD, joystick_event->position);
+			}
+			else if (joystick_event->axis == sf::Joystick::Axis::Y) {
+				movement.y = joystick_event->position / 5;
+				//add_relative_impulse(Camera::DIRECTION::RIGHT, joystick_event->position);
+			}
+			//else if (joystick_event->axis == sf::Joystick::Axis::Z) {
+			//	add_relative_impulse(Camera::DIRECTION::DOWN, joystick_event->position);
+			//}
+		}
+}
+
+void LightHandle::update(double delta_time) {
+	
+	double multiplier = 40;
+
+	data_reference->position.x += static_cast<float>(movement.x * delta_time * multiplier);
+	data_reference->position.y += static_cast<float>(movement.y * delta_time * multiplier);
+	data_reference->position.z += static_cast<float>(movement.z * delta_time * multiplier);
+
+	//movement *= static_cast<float>(friction_coefficient * delta_time * multiplier);
+
+}
+

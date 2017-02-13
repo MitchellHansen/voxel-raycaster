@@ -75,7 +75,7 @@ void Camera::set_camera(sf::Vector3f input) {
 
 int Camera::update(double delta_time) {
 	
-	double multiplier = 40;
+	double multiplier = 80;
 
 	position.x += static_cast<float>(movement.x * delta_time * multiplier);
 	position.y += static_cast<float>(movement.y * delta_time * multiplier);

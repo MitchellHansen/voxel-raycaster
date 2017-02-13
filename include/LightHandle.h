@@ -2,6 +2,7 @@
 #include <SFML/Graphics.hpp>
 #include <util.hpp>
 #include <memory>
+#include "Pub_Sub.h"
 
 
 // Light Handle :
@@ -31,7 +32,7 @@ struct LightPrototype;
 class LightController;
 struct PackedData;
 
-class LightHandle {
+class LightHandle : public VrEventSubscriber{
 
 public:
 
@@ -51,7 +52,10 @@ public:
 	void set_direction(sf::Vector3f direction);
 	void set_rgbi(sf::Vector4f rgbi);
 
-	// void update(double delta_time);
+
+	virtual void recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Event> event) override;
+
+	void update(double delta_time);
 
 private:
 

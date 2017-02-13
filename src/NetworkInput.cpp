@@ -116,7 +116,7 @@ void NetworkInput::threaded_client_listener(int port) {
 							event_queue.push_back(std::make_unique<vr::JoystickMoved>(vr::JoystickMoved(sf::Joystick::Axis::Y, 0, y)));
 							event_queue.push_back(std::make_unique<vr::JoystickMoved>(vr::JoystickMoved(sf::Joystick::Axis::Z, 0, z)));
 
-							std::cout << "X: " << x << " Y: " << y << " Z: " << z << std::endl;
+							//std::cout << "X: " << x << " Y: " << y << " Z: " << z << std::endl;
 						}
 					}
 				}

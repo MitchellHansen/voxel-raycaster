@@ -184,6 +184,17 @@ void Old_Map::generate_terrain() {
 		}
 	}
 
+	for (int x = 100; x < 150; x += 10) {
+		for (int y = 100; y < 150; y += 10) {
+			for (int z = 0; z < 10; z += 1) {
+				
+				voxel_data[x + dimensions.x * (y + dimensions.z * z)] = 5;
+
+			}
+		}
+	}
+
+
 
 	for (int x = 0; x < dimensions.x; x++) {
 		for (int y = 0; y < dimensions.y; y++) {
