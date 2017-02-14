@@ -13,7 +13,12 @@ void NetworkInput::listen_for_clients(int port) {
 }
 
 void NetworkInput::stop_listening_for_clients() {
-	delete client_listener_thread;
+	listening = false;
+	listener.close();
+	socket_selector.clear();
+
+	client_listener_thread->join();
+
 }
 
 void NetworkInput::recieve_from_clients()
@@ -34,11 +39,12 @@ void NetworkInput::threaded_client_listener(int port) {
 	listener.listen(port);
 	socket_selector.add(listener);
 
-	while (true)
+	while (listening)
 	{
 		// Make the selector wait for data on any socket
-		if (socket_selector.wait())
+		if (socket_selector.wait(sf::Time(sf::milliseconds(100))))
 		{
+			
 			// Test the listener
 			if (socket_selector.isReady(listener))
 			{

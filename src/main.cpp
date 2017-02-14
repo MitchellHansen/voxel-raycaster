@@ -72,18 +72,26 @@ sf::Texture window_texture;
 
 int main() {
 
+	// Keep at this at the top of main. I think it has to do with it and
+	// sf::RenderWindow stepping on each others feet
+	glewInit();
 
+	// The socket listener for interacting with the TCP streaming android controller
 	NetworkInput ni;
 	ni.listen_for_clients(5000);
-	
 
-	//Map _map(sf::Vector3i(0, 0, 0));
-	//_map.generate_octree();
-
-	glewInit();
+	// Currently just close it right away for debug
+	ni.stop_listening_for_clients();
 
 	sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
 	window.setMouseCursorVisible(false);
+
+	// =============================
+	Map _map(sf::Vector3i(0, 0, 0));
+	_map.generate_octree();
+	// =============================
+
+
 
 	/*GL_Testing t;
 	t.compile_shader("../shaders/passthrough.frag", GL_Testing::Shader_Type::FRAGMENT);
@@ -92,8 +100,6 @@ int main() {
 	t.create_buffers();*/
 
 	// Start up the raycaster
-	//Hardware_Caster *raycaster = new Hardware_Caster();
-	//Hardware_Caster *raycaster = new Hardware_Caster();
 	std::shared_ptr<Hardware_Caster> raycaster(new Hardware_Caster());
 	
 	if (raycaster->init() != 1) {
@@ -165,22 +171,12 @@ int main() {
 			accumulator_time = 0.0,
 			current_time = 0.0;
 
-	// Mouse capture
-	sf::Vector2i deltas;
-	sf::Vector2i fixed(window.getSize());
-	sf::Vector2i prev_pos;
-	bool mouse_enabled = true;
-	bool reset = false;
-
-
-	double timer_accumulator = 0.0;
 
 	Input input_handler;
 
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyHeld);
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyPressed);
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::MouseMoved);
-	//camera->subscribe_to_publisher(&ni, vr::Event::EventType::JoystickMoved);
 	handle->subscribe_to_publisher(&ni, vr::Event::EventType::JoystickMoved);
 
 	WindowHandler win_hand(&window);
@@ -195,35 +191,9 @@ int main() {
 		input_handler.dispatch_events();
 		ni.dispatch_events();
 
-
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::F11)) {
 			while (raycaster->debug_quick_recompile() != 0);
 		}
-		//if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
-		//	light_vec.at(0).position.x -= delta_time * 100;
-		//}
-		//if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
-		//	light_vec.at(0).position.x += delta_time * 100;
-		//}
-		//if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
-		//	light_vec.at(0).position.y += delta_time * 100;
-		//}
-		//if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
-		//	light_vec.at(0).position.y -= delta_time * 100;
-		//}
-		//if (sf::Keyboard::isKeyPressed(sf::Keyboard::Home)) {
-		//	light_vec.at(0).position.z += delta_time * 100;
-		//}
-		//if (sf::Keyboard::isKeyPressed(sf::Keyboard::End)) {
-		//	light_vec.at(0).position.z -= delta_time * 100;
-		//}
-		//if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt)) {
-		//	light_vec.at(0).position = camera->get_position();
-		//	light_vec.at(0).direction_cartesian = SphereToCart(camera->get_direction());
-		//}
-		//if (sf::Keyboard::isKeyPressed(sf::Keyboard::O)) {
-		//	light_vec.at(0).orbit_around_center(timer_accumulator += delta_time);
-		//}
 
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Num0)) {
 			std::string path = "../assets/";

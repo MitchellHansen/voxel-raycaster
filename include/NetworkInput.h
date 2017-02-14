@@ -40,5 +40,6 @@ private:
 	void threaded_client_reciever();
 
 	sf::TcpListener listener;
+	bool listening = true;
 
 };
