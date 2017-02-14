@@ -109,8 +109,7 @@ void Hardware_Caster::create_texture_atlas(sf::Texture *t, sf::Vector2i tile_dim
 	create_buffer("tile_dim", sizeof(sf::Vector2i), &tile_dim);
 }
 
-void Hardware_Caster::compute()
-{
+void Hardware_Caster::compute() {
 	// correlating work size with texture size? good, bad?
 	run_kernel("raycaster", viewport_texture.getSize().x * viewport_texture.getSize().y);
 }
@@ -195,20 +194,6 @@ void Hardware_Caster::create_viewport(int width, int height, float v_fov, float 
 	create_image_buffer("image", sizeof(sf::Uint8) * width * height * 4, &viewport_texture);
 
 }
-
-//void Hardware_Caster::assign_lights(std::vector<LightController> *lights) {
-//	
-//	//this->lights = ;
-//
-//	std::cout << sizeof(LightController);
-//	std::cout << sizeof(float);
-//	light_count = static_cast<int>(lights->size());
-//
-//	//create_buffer("lights", sizeof(float) * 10 * light_count, this->lights->data(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
-//
-//	create_buffer("light_count", sizeof(int), &light_count);
-//
-//}
 
 void Hardware_Caster::assign_lights(std::vector<PackedData> *data) {
 

@@ -91,7 +91,7 @@ int main() {
 	_map.generate_octree();
 	// =============================
 
-
+	return 0;
 
 	/*GL_Testing t;
 	t.compile_shader("../shaders/passthrough.frag", GL_Testing::Shader_Type::FRAGMENT);

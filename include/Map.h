@@ -13,12 +13,13 @@
 #include <unordered_map>
 #include <bitset>
 #include <cstring>
+#include <queue>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
 
 #define CHUNK_DIM 32
-#define OCT_DIM 64
+#define OCT_DIM 8
 
 struct XYZHasher {
 	std::size_t operator()(const sf::Vector3i& k) const {
@@ -35,7 +36,7 @@ public:
 		// initialize the first stack block
 		stack.push_back(new uint64_t[0x8000]);
 		for (int i = 0; i < 0x8000; i++) {
-			stack.back() = 0;
+			stack.back()[i] = 0;
 		}
 	};
 
@@ -69,6 +70,25 @@ public:
 		return stack_pos;
 	};
 
+	// This might need to be a recursive function. But it needs to be easily ported to
+	// OpenCL C. Might spend some time thinking about how to do this in a linear algorithm
+	bool get_voxel(sf::Vector2i position) {
+		
+		std::queue<uint64_t> parent_stack;
+
+		uint64_t head = stack.front()[stack_pos];
+
+		parent_stack.push(head);
+
+		uint64_t index = cp_to_index(head);
+
+
+
+
+		return true;
+	}
+
+
 	void print_block(int block_pos) {
 		std::stringstream sss;
 		for (int i = 0; i < (int)pow(2, 15); i++) {
@@ -78,8 +98,13 @@ public:
 		DumpLog(&sss, "raw_data.txt");
 	}
 
+private:
 
+	uint64_t cp_to_index(uint64_t descriptor) {
+		return descriptor >> 64 - 15;
+	};
 
+	uint64_t is_leaf(uint64_t descriptor, )
 	
 
 };
