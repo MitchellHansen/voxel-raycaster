@@ -11,6 +11,9 @@ Featuring...
 * Shadowing
 * Textures
 
-![alt tag](https://www.youtube.com/watch?v=DHcg2ZKend0)
+Video demo:
+[![Video demo](http://img.youtube.com/vi/DHcg2ZKend0/0.jpg)](http://www.youtube.com/watch?v=DHcg2ZKend0)
+
+Screenshots:
 ![alt tag](https://github.com/MitchellHansen/voxel-raycaster/blob/master/assets/screenshot1.png)
 ![alt tag](https://github.com/MitchellHansen/voxel-raycaster/blob/master/assets/screenshot.PNG)
