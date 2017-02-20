@@ -34,15 +34,15 @@ public:
 	Octree() {
 
 		// initialize the first stack block
-		stack.push_back(new uint64_t[0x8000]);
+		block_stack.push_back(new uint64_t[0x8000]);
 		for (int i = 0; i < 0x8000; i++) {
-			stack.back()[i] = 0;
+			block_stack.back()[i] = 0;
 		}
 	};
 
 	~Octree() {};
 
-	std::list<uint64_t*> stack;
+	std::list<uint64_t*> block_stack;
 	uint64_t stack_pos = 0x8000;
 	uint64_t global_pos = 0;
 	
@@ -59,7 +59,7 @@ public:
 
 		// Check for the far bit
 
-		memcpy(&stack.front()[stack_pos + global_pos], children.data(), children.size() * sizeof(uint64_t));
+		memcpy(&block_stack.front()[stack_pos + global_pos], children.data(), children.size() * sizeof(uint64_t));
 		
 		// Return the bitmask encoding the index of that value
 		// If we tripped the far bit, allocate a far index to the stack and place
@@ -83,13 +83,13 @@ public:
 
 		std::queue<uint64_t> parent_stack;
 
-		uint64_t head = stack.front()[stack_pos];
+		uint64_t head = block_stack.front()[stack_pos];
 
 		parent_stack.push(head);
 
 		uint64_t index = cp_to_index(head);
 
-
+		uint64_t child = block_stack.front()[index];
 
 
 		return true;
@@ -99,7 +99,7 @@ public:
 	void print_block(int block_pos) {
 		std::stringstream sss;
 		for (int i = 0; i < (int)pow(2, 15); i++) {
-			PrettyPrintUINT64(stack.front()[i], &sss);
+			PrettyPrintUINT64(block_stack.front()[i], &sss);
 			sss << "\n";
 		}
 		DumpLog(&sss, "raw_data.txt");
