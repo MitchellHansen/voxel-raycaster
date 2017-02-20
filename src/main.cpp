@@ -89,9 +89,11 @@ int main() {
 	// =============================
 	Map _map(sf::Vector3i(0, 0, 0));
 	_map.generate_octree();
+
+	_map.a.get_voxel(sf::Vector3i(0, 0, 0));
 	// =============================
 
-	return 0;
+	//return 0;
 
 	/*GL_Testing t;
 	t.compile_shader("../shaders/passthrough.frag", GL_Testing::Shader_Type::FRAGMENT);

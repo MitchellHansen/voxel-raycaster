@@ -122,9 +122,6 @@ uint64_t Map::generate_children(sf::Vector3i pos, int dim) {
 	}
 	else {
 
-		// 2339 is the iterative anomoly
-		// 30454 is the stack anomoly
-
 		uint64_t tmp = 0;
 		uint64_t child = 0;
 
@@ -171,12 +168,33 @@ uint64_t Map::generate_children(sf::Vector3i pos, int dim) {
 
 void Map::generate_octree() {
 
-	generate_children(sf::Vector3i(0, 0, 0), OCT_DIM/2);
+	// Launch the recursive generator at (0,0,0) as the first point
+	// and the octree dimension as the initial block size
+	uint64_t root_node = generate_children(sf::Vector3i(0, 0, 0), OCT_DIM/2);
+	uint64_t tmp = 0;
+
+	PrettyPrintUINT64(root_node, &ss);
+	ss << "    " << OCT_DIM << "    " << counter++ << std::endl;
+
+	if (IsLeaf(root_node)) {
+		if (CheckLeafSign(root_node))
+			SetBit(0 + 16, &tmp);
+
+		SetBit(0 + 16 + 8, &tmp);
+	}
+
+	else {
+		SetBit(0 + 16, &tmp);
+		
+	}
+
+	tmp |= a.copy_to_stack(std::vector<uint64_t>{root_node});
+
 	DumpLog(&ss, "raw_output.txt");
 
 	a.print_block(0);
 
-	a.get_voxel(sf::Vector2i(0, 0));
+	//a.get_voxel(sf::Vector2i(0, 0));
 }
 
 void Map::load_unload(sf::Vector3i world_position) {
@@ -227,6 +245,11 @@ void Map::setVoxel(sf::Vector3i world_position, int val) {
 	//chunk_map.at(chunk_pos).voxel_data[in_chunk_pos.x + CHUNK_DIM * (in_chunk_pos.y + CHUNK_DIM * in_chunk_pos.z)] 
 	//	= val;
 
+}
+
+char Map::getVoxelFromOctree(sf::Vector3i position)
+{
+	return a.get_voxel(position);
 }
 
 char Map::getVoxel(sf::Vector3i pos){

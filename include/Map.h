@@ -70,10 +70,17 @@ public:
 		return stack_pos;
 	};
 
+
+	int get_idx(sf::Vector3i voxel_pos) {
+	
+		return 1;
+		
+	}
+
 	// This might need to be a recursive function. But it needs to be easily ported to
 	// OpenCL C. Might spend some time thinking about how to do this in a linear algorithm
-	bool get_voxel(sf::Vector2i position) {
-		
+	bool get_voxel(sf::Vector3i position) {
+
 		std::queue<uint64_t> parent_stack;
 
 		uint64_t head = stack.front()[stack_pos];
@@ -101,10 +108,13 @@ public:
 private:
 
 	uint64_t cp_to_index(uint64_t descriptor) {
-		return descriptor >> 64 - 15;
+
+		const uint64_t cp_mask = 0x0000000000007fff;
+		return descriptor & cp_mask;
+
 	};
 
-	uint64_t is_leaf(uint64_t descriptor, )
+	//uint64_t is_leaf(uint64_t descriptor, )
 	
 
 };
@@ -125,6 +135,8 @@ public:
 	//sf::Vector3i dimensions;
 
 	void setVoxel(sf::Vector3i position, int val);
+
+	char getVoxelFromOctree(sf::Vector3i position);
 
 	void moveLight(sf::Vector2f in);
 	sf::Vector3f global_light;
