@@ -29,6 +29,10 @@ struct XYZHasher {
 	}
 };
 
+
+
+
+
 class Octree {
 public:
 	Octree() {
@@ -89,8 +93,11 @@ public:
 
 		uint64_t index = cp_to_index(head);
 
-		uint64_t child = block_stack.front()[index];
+		uint64_t child1 = block_stack.front()[index];
+        uint64_t child2 = block_stack.front()[index+1];
 
+        std::bitset<64> t(index);
+        auto val = t.count();
 
 		return true;
 	}

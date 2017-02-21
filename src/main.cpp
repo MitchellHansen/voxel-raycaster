@@ -83,8 +83,7 @@ int main() {
 	// Currently just close it right away for debug
 	ni.stop_listening_for_clients();
 
-	sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
-	window.setMouseCursorVisible(false);
+
 
 	// =============================
 	Map _map(sf::Vector3i(0, 0, 0));
@@ -93,7 +92,10 @@ int main() {
 	_map.a.get_voxel(sf::Vector3i(0, 0, 0));
 	// =============================
 
-	//return 0;
+	return 0;
+
+    sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
+    window.setMouseCursorVisible(false);
 
 	/*GL_Testing t;
 	t.compile_shader("../shaders/passthrough.frag", GL_Testing::Shader_Type::FRAGMENT);
