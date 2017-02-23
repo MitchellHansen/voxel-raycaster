@@ -42,6 +42,8 @@ public:
 		for (int i = 0; i < 0x8000; i++) {
 			block_stack.back()[i] = 0;
 		}
+
+
 	};
 
 	~Octree() {};
@@ -91,7 +93,24 @@ public:
 
 		parent_stack.push(head);
 
-		uint64_t index = cp_to_index(head);
+		uint64_t index = head & child_pointer_mask;
+
+		int dimension = OCT_DIM;
+		sf::Vector3i quad_position(0, 0, 0);
+
+		while (dimension > 1) {
+			
+			sf::Vector3i p;
+			if (position.x >= (dimension / 2) + quad_position.x)
+				quad_position.x += (dimension / 2);
+			if (position.y >= (dimension / 2) + quad_position.y)
+				quad_position.y += (dimension / 2);
+			if (position.z >= (dimension / 2) + quad_position.z)
+				quad_position.z += (dimension / 2);
+
+			dimension /= 2;
+
+		}
 
 		uint64_t child1 = block_stack.front()[index];
         uint64_t child2 = block_stack.front()[index+1];
@@ -114,14 +133,14 @@ public:
 
 private:
 
-	uint64_t cp_to_index(uint64_t descriptor) {
+	const uint64_t child_pointer_mask = 0x0000000000007fff;
+	const uint64_t far_bit_mask = 0x8000;
+	const uint64_t valid_mask = 0xFF0000;
+	const uint64_t leaf_mask = 0xFF000000;
+	const uint64_t contour_pointer_mask = 0xFFFFFF00000000;
+	const uint64_t contour_mask = 0xFF00000000000000;
 
-		const uint64_t cp_mask = 0x0000000000007fff;
-		return descriptor & cp_mask;
-
-	};
-
-	//uint64_t is_leaf(uint64_t descriptor, )
+	
 	
 
 };
