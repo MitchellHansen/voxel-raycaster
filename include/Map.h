@@ -83,33 +83,41 @@ public:
 		
 	}
 
-	// This might need to be a recursive function. But it needs to be easily ported to
-	// OpenCL C. Might spend some time thinking about how to do this in a linear algorithm
+
 	bool get_voxel(sf::Vector3i position) {
 
+		// Init the parent stack and push the head node
 		std::queue<uint64_t> parent_stack;
-
+		
 		uint64_t head = block_stack.front()[stack_pos];
-
 		parent_stack.push(head);
 
+		// Get the index of the first child of the head node
 		uint64_t index = head & child_pointer_mask;
 
+		// Init the idx stack
+		std::vector<std::bitset<3>> scale_stack(log2(OCT_DIM));
+
+		// Set our initial dimension and the position we use to keep track what oct were in
 		int dimension = OCT_DIM;
 		sf::Vector3i quad_position(0, 0, 0);
 
 		while (dimension > 1) {
 			
-			sf::Vector3i p;
-			if (position.x >= (dimension / 2) + quad_position.x)
+			if (position.x >= (dimension / 2) + quad_position.x) {
 				quad_position.x += (dimension / 2);
-			if (position.y >= (dimension / 2) + quad_position.y)
+				scale_stack.at(log2(OCT_DIM) - log2(dimension)).set(0);
+			}
+			if (position.y >= (dimension / 2) + quad_position.y) {
 				quad_position.y += (dimension / 2);
-			if (position.z >= (dimension / 2) + quad_position.z)
+				scale_stack.at(log2(OCT_DIM) - log2(dimension)).set(1);
+			}
+			if (position.z >= (dimension / 2) + quad_position.z) {
 				quad_position.z += (dimension / 2);
+				scale_stack.at(log2(OCT_DIM) - log2(dimension)).set(2);
+			}
 
 			dimension /= 2;
-
 		}
 
 		uint64_t child1 = block_stack.front()[index];
