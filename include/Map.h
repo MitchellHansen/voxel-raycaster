@@ -104,6 +104,8 @@ public:
 
 		while (dimension > 1) {
 			
+			// Do the logic steps to find which sub oct we step down into
+
 			if (position.x >= (dimension / 2) + quad_position.x) {
 				quad_position.x += (dimension / 2);
 				scale_stack.at(log2(OCT_DIM) - log2(dimension)).set(0);
@@ -117,7 +119,12 @@ public:
 				scale_stack.at(log2(OCT_DIM) - log2(dimension)).set(2);
 			}
 
+			// Set the new dimension
 			dimension /= 2;
+
+
+
+
 		}
 
 		uint64_t child1 = block_stack.front()[index];
