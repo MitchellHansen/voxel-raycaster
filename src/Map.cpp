@@ -189,7 +189,6 @@ void Map::generate_octree() {
 
 	a.print_block(0);
 
-	//a.get_voxel(sf::Vector2i(0, 0));
 }
 
 void Map::load_unload(sf::Vector3i world_position) {

@@ -89,7 +89,7 @@ int main() {
 	Map _map(sf::Vector3i(0, 0, 0));
 	_map.generate_octree();
 
-	_map.a.get_voxel(sf::Vector3i(0, 0, 0));
+	_map.a.get_voxel(sf::Vector3i(5, 5, 0));
 	// =============================
 
 	return 0;
