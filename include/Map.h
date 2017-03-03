@@ -29,10 +29,6 @@ struct XYZHasher {
 	}
 };
 
-
-
-
-
 class Octree {
 public:
 	Octree() {

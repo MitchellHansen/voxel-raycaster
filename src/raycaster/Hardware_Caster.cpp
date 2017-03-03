@@ -99,7 +99,7 @@ void Hardware_Caster::validate()
 
 void Hardware_Caster::create_texture_atlas(sf::Texture *t, sf::Vector2i tile_dim) {
 	
-	create_image_buffer("texture_atlas", t->getSize().x * t->getSize().x * 4 * sizeof(float), t);
+	create_image_buffer("texture_atlas", t->getSize().x * t->getSize().x * 4 * sizeof(float), t, CL_MEM_READ_ONLY);
 	
 	// create_buffer observes arg 3's
 	
@@ -191,7 +191,7 @@ void Hardware_Caster::create_viewport(int width, int height, float v_fov, float 
 	viewport_sprite.setTexture(viewport_texture);
 
 	// Pass the buffer to opencl
-	create_image_buffer("image", sizeof(sf::Uint8) * width * height * 4, &viewport_texture);
+	create_image_buffer("image", sizeof(sf::Uint8) * width * height * 4, &viewport_texture, CL_MEM_WRITE_ONLY);
 
 }
 
@@ -529,7 +529,7 @@ int Hardware_Caster::set_kernel_arg(
 
 }
 
-int Hardware_Caster::create_image_buffer(std::string buffer_name, cl_uint size, sf::Texture* texture) {
+int Hardware_Caster::create_image_buffer(std::string buffer_name, cl_uint size, sf::Texture* texture, cl_int access_type) {
 
 	// I can imagine overwriting buffers will be common, so I think
 	// this is safe to overwrite / release old buffers quietly
@@ -539,7 +539,7 @@ int Hardware_Caster::create_image_buffer(std::string buffer_name, cl_uint size, 
 
 	int error;
 	cl_mem buff = clCreateFromGLTexture(
-		getContext(), CL_MEM_WRITE_ONLY, GL_TEXTURE_2D,
+		getContext(), access_type, GL_TEXTURE_2D,
 		0, texture->getNativeHandle(), &error);
 
 	if (assert(error, "clCreateFromGLTexture"))
