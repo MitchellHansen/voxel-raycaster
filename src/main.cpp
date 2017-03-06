@@ -68,7 +68,11 @@ sf::Texture window_texture;
 // Y: 1.57 is straight down
 
 
-
+// TODO: 
+// - Texture axis sign flipping issue
+// - Diffuse fog hard cut off
+// - Infinite light distance, no inverse square
+// - Inconsistent lighting constants. GUI manipulation
 
 int main() {
 
@@ -92,7 +96,7 @@ int main() {
 	_map.a.get_voxel(sf::Vector3i(5, 5, 0));
 	// =============================
 
-
+	return 0;
 
     sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
     window.setMouseCursorVisible(false);

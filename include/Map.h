@@ -79,17 +79,40 @@ public:
 		
 	}
 
+	// (X, Y, Z) mask for the idx
+	uint8_t idx_set_x_mask = 0x1;
+	uint8_t idx_set_y_mask = 0x2;
+	uint8_t idx_set_z_mask = 0x4;
 
+	uint8_t mask_8[8] = {
+		0x0, 0x1, 0x2, 0x3,
+		0x4, 0x5, 0x6, 0x7
+	};
+
+	uint8_t count_mask_8[8]{
+		0x1,  0x3,  0x7,  0xF,
+		0x1F, 0x3F, 0x7F, 0xFF
+	};
+
+	// With a position and the head of the stack. Traverse down the voxel hierarchy to find
+	// the IDX and stack position of the highest resolution (maybe set resolution?) oct
 	bool get_voxel(sf::Vector3i position) {
 
 		// Init the parent stack and push the head node
-		std::queue<uint64_t> parent_stack;
+		//std::queue<uint64_t> parent_stack;
+
+		int parent_stack_position = 0;
+		uint64_t parent_stack[32] = {0};
 		
 		uint64_t head = block_stack.front()[stack_pos];
-		parent_stack.push(head);
+		parent_stack[parent_stack_position] = head;
+		
 
 		// Get the index of the first child of the head node
 		uint64_t index = head & child_pointer_mask;
+
+		uint8_t scale = 0;
+		uint8_t idx_stack[32] = {0};
 
 		// Init the idx stack
 		std::vector<std::bitset<3>> scale_stack(log2(OCT_DIM));
@@ -100,31 +123,83 @@ public:
 
 		while (dimension > 1) {
 			
-			// Do the logic steps to find which sub oct we step down into
+			// So we can be a little bit tricky here and increment our
+			// array index that holds our masks as we build the idx. 
+			// Adding 1 for X, 2 for Y, and 4 for Z
+			int mask_index = 0;
 
+
+			// Do the logic steps to find which sub oct we step down into
 			if (position.x >= (dimension / 2) + quad_position.x) {
+
+				// Set our voxel position to the (0,0) of the correct oct
 				quad_position.x += (dimension / 2);
+
+				// increment the mask index and mentioned above
+				mask_index += 1;
+
+				// Set the idx to represent the move
+				idx_stack[scale] |= idx_set_x_mask;
+
+				// Debug
 				scale_stack.at(log2(OCT_DIM) - log2(dimension)).set(0);
+				
 			}
 			if (position.y >= (dimension / 2) + quad_position.y) {
-				quad_position.y += (dimension / 2);
+
+				quad_position.y |= (dimension / 2);
+
+				mask_index += 2;
+
+				idx_stack[scale] ^= idx_set_y_mask;
 				scale_stack.at(log2(OCT_DIM) - log2(dimension)).set(1);
 			}
 			if (position.z >= (dimension / 2) + quad_position.z) {
+
 				quad_position.z += (dimension / 2);
+
+				mask_index += 4;
+
+				idx_stack[scale] |= idx_set_z_mask;
 				scale_stack.at(log2(OCT_DIM) - log2(dimension)).set(2);
 			}
 
-			// Set the new dimension
-			dimension /= 2;
+			// Check to see if we are on a valid oct
+			if ((head >> 16) & mask_8[mask_index]) {
+				
+				// Check to see if it is a leaf
+				if ((head >> 24) & mask_8[mask_index]) {
+
+					// If it is, then we cannot traverse further as CP's won't have been generated
+					break;
+				}
+
+				// If all went well and we found a valid non-leaf oct then we will traverse further down the hierarchy
+				scale++;
+				dimension /= 2;
+
+				// We also need to traverse to the correct child pointer
+				
+				// Count the number of non-leaf octs that come before and add it to the current parent stack position
+				int count = count_bits((uint8_t)(head >> 24) ^ count_mask_8[mask_index]);
+				int index = (parent_stack[parent_stack_position] & child_pointer_mask) + count;
+				
+				// Increment the parent stack position and put the new oct node as the parent
+				parent_stack_position++;
+				parent_stack[parent_stack_position] = block_stack.front()[index];
+			
+			} else {
+				// If the oct was not valid, then no CP's exists any further
 
 
-
-
+				// It appears that the traversal is now working but I need
+				// to focus on how to now take care of the end condition.
+				// Currently it adds the last parent on the second to lowest
+				// oct CP. Not sure if thats correct
+				break;
+			}
 		}
 
-		uint64_t child1 = block_stack.front()[index];
-        uint64_t child2 = block_stack.front()[index+1];
 
         std::bitset<64> t(index);
         auto val = t.count();

@@ -272,3 +272,25 @@ inline std::vector<float> sfml_get_float_input(sf::RenderWindow *window) {
 
 }
 
+inline int count_bits(int32_t v) {
+	
+	v = v - ((v >> 1) & 0x55555555);                       // reuse input as temporary
+	v = (v & 0x33333333) + ((v >> 2) & 0x33333333);        // temp
+	return (((v + (v >> 4)) & 0xF0F0F0F) * 0x1010101) >> 24; // count
+}
+
+inline int count_bits(int64_t v) {
+
+	int32_t left = (int32_t)(v);
+	int32_t right = (int32_t)(v >> 32);
+
+	left = left - ((left >> 1) & 0x55555555);                    // reuse input as temporary
+	left = (left & 0x33333333) + ((left >> 2) & 0x33333333);     // temp
+	left = ((left + (left >> 4) & 0xF0F0F0F) * 0x1010101) >> 24; // count
+
+	right = right - ((right >> 1) & 0x55555555);                    // reuse input as temporary
+	right = (right & 0x33333333) + ((right >> 2) & 0x33333333);     // temp
+	right = ((right + (right >> 4) & 0xF0F0F0F) * 0x1010101) >> 24; // count
+
+	return left + right;
+}
