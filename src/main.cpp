@@ -43,8 +43,8 @@ const int WINDOW_X = 1440;
 const int WINDOW_Y = 900;
 const int WORK_SIZE = WINDOW_X * WINDOW_Y;
 
-const int MAP_X = 256;
-const int MAP_Y = 256;
+const int MAP_X = 1024;
+const int MAP_Y = 1024;
 const int MAP_Z = 256;
 
 float elap_time(){
@@ -136,7 +136,7 @@ int main() {
 
 	LightController light_controller(raycaster);
 	LightPrototype prototype(
-		sf::Vector3f(100.0f, 100.0f, 30.0f),
+		sf::Vector3f(100.0f, 100.0f, 100.0f),
 		sf::Vector3f(-1.0f, -1.0f, -1.5f),
 		sf::Vector4f(1.0f, 1.0f, 1.0f, 1.0f)
 	);
@@ -238,7 +238,7 @@ int main() {
 		raycaster->compute();
 		raycaster->draw(&window);
 		
-		window.popGLStates();
+		//window.popGLStates();
 
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		//t.rotate(delta_time);
@@ -247,7 +247,7 @@ int main() {
 		
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		
-		window.pushGLStates();
+		//window.pushGLStates();
 
 		// Give the frame counter the frame time and draw the average frame time
 		fps.frame(delta_time);

@@ -90,8 +90,6 @@ void Hardware_Caster::validate()
 		set_kernel_arg("raycaster", 10, "texture_atlas");
 		set_kernel_arg("raycaster", 11, "atlas_dim");
 		set_kernel_arg("raycaster", 12, "tile_dim");
-
-		//print_kernel_arguments();
 	}
 
 	
@@ -223,7 +221,7 @@ int Hardware_Caster::debug_quick_recompile()
 	}
 	validate();
 
-	return 1;
+	return 0;
 }
 
 void Hardware_Caster::test_edit_viewport(int width, int height, float v_fov, float h_fov)
