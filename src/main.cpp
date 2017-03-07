@@ -74,7 +74,12 @@ int main() {
 
 	// Keep at this at the top of main. I think it has to do with it and
 	// sf::RenderWindow stepping on each others feet
+	#ifdef linux
 	glewInit();
+	#elif defined _WIN32
+	glewInit();
+	#elif defined TARGET_OS_MAC
+	#endif 
 
 	// The socket listener for interacting with the TCP streaming android controller
 	NetworkInput ni;
@@ -92,7 +97,7 @@ int main() {
 	_map.a.get_voxel(sf::Vector3i(5, 5, 0));
 	// =============================
 
-	return 0;
+	//return 0;
 
     sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
     window.setMouseCursorVisible(false);
@@ -147,7 +152,7 @@ int main() {
 	// Load in the spritesheet texture
 	sf::Texture spritesheet;
 	spritesheet.loadFromFile("../assets/textures/minecraft_tiles.png");
-	spritesheet.getNativeHandle();
+	//spritesheet.getNativeHandle();
 	raycaster->create_texture_atlas(&spritesheet, sf::Vector2i(16, 16));
 
 

@@ -14,7 +14,13 @@ GL_Testing::GL_Testing() {
 	matrix = new GLfloat[16];
 	memcpy(matrix, tmp, sizeof(GLfloat) * 16);
 
-	GLint err = glewInit();
+        #ifdef linux
+        GLint err = glewInit();
+        #elif _WIN32
+        GLint err = glewInit();
+        #elif TARGET_OS_MAC
+	GLint err = 0;
+        #endif
 
 	if (err) {
 		std::cout << "error initializing glew" << std::endl;
@@ -98,11 +104,26 @@ void GL_Testing::create_buffers() {
 		  // Second Triangle
 	};
 
+	#ifdef linux
 	glGenVertexArrays(1, &VAO);
+        #elif defined _WIN32
+	glGenVertexArrays(1, &VAO);
+        #elif defined TARGET_OS_MAC
+	glGenVertexArraysAPPLE(1, &VAO);
+        #endif
+	
 	glGenBuffers(1, &VBO);
 	glGenBuffers(1, &EBO);
 	// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
+
+	#ifdef linux
 	glBindVertexArray(VAO);
+        #elif defined _WIN32
+	glBindVertexArray(VAO);
+        #elif defined TARGET_OS_MAC
+	glBindVertexArrayAPPLE(VAO);
+        #endif
+	
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
@@ -115,7 +136,13 @@ void GL_Testing::create_buffers() {
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	glBindVertexArray(0);
+	#ifdef linux
+	glbindvertexarray(0);
+        #elif defined _win32
+	glbindvertexarray(0);
+        #elif defined target_os_mac
+	glbindvertexarrayapple(0);
+        #endif
 }
 
 void GL_Testing::transform()
@@ -146,9 +173,27 @@ void GL_Testing::rotate(double delta) {
 void GL_Testing::draw() {
 
 	glUseProgram(shader_program);
+	
+	#ifdef linux
 	glBindVertexArray(VAO);
+        #elif defined _WIN32
+	glBindVertexArray(VAO);
+        #elif defined TARGET_OS_MAC
+	glBindVertexArrayAPPLE(VAO);
+        #endif
+
+
+
 	//glDrawArrays(GL_TRIANGLES, 0, 6);
 	glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
-	glBindVertexArray(0);
+
+	#ifdef linux
+	glbindVertexArray(0);
+        #elif defined _win32
+	glbindVertexArray(0);
+        #elif defined target_os_mac
+	glbindVertexArrayAPPLE(0);
+        #endif
+
 }
 //

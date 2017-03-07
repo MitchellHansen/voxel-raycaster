@@ -23,9 +23,11 @@ message(STATUS "SFML found: ${SFML_FOUND}")
 find_package( OpenCL REQUIRED )
 message(STATUS "OpenCL found: ${OPENCL_FOUND}")
 
-# Find GLEW
-find_package(GLEW REQUIRED)
-message(STATUS "GLEW found: ${GLEW_FOUND}")
+if (WIN32)
+	# Find GLEW
+	find_package(GLEW REQUIRED)
+	message(STATUS "GLEW found: ${GLEW_FOUND}")
+endif()
 
 # Find Vulkan
 #find_package(VULKAN REQUIRED)
@@ -127,6 +129,7 @@ target_link_libraries (${PNAME} ${OpenCL_LIBRARY})
 target_link_libraries (${PNAME} ${OPENGL_LIBRARIES})
 target_link_libraries (${PNAME} ${GLEW_LIBRARIES})
 #target_link_libraries (${PNAME} ${Vulkan_LIBRARIES})
+#target_link_libraries(${PNAME} "/Users/cs445001_09/Desktop/voxel-raycaster/SFML/extlibs/freetype.framework/Versions/A/freetype")
 
 if (NOT WIN32)
 	target_link_libraries (${PNAME} -lpthread)

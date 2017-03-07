@@ -3,8 +3,14 @@
 #include <util.hpp>
 #include <cstring>
 
+#ifdef defined _WIN32
 #define GLEW_STATIC
 #include <GL/glew.h>
+
+#elif defined TARGET_OS_MAC
+#include <OpenGL/gl.h>
+
+#endif
 
 class GL_Testing
 {

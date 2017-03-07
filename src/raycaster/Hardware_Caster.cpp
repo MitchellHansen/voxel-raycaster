@@ -99,7 +99,7 @@ void Hardware_Caster::validate()
 
 void Hardware_Caster::create_texture_atlas(sf::Texture *t, sf::Vector2i tile_dim) {
 	
-	create_image_buffer("texture_atlas", t->getSize().x * t->getSize().x * 4 * sizeof(float), t);
+	create_image_buffer("texture_atlas", t->getSize().y * t->getSize().x * 4 * sizeof(float), t);
 	
 	// create_buffer observes arg 3's
 	
@@ -441,7 +441,9 @@ int Hardware_Caster::check_cl_khr_gl_sharing() {
 	char *ext_str = new char[ext_str_size];
 	clGetDeviceInfo(device_id, CL_DEVICE_EXTENSIONS, ext_str_size, ext_str, &ext_str_size);
 
-	if (std::string(ext_str).find("cl_khr_gl_sharing") == std::string::npos) {
+	std::cout << std::string(ext_str);
+	if (std::string(ext_str).find("cl_khr_gl_sharing") == std::string::npos &&
+      	    std::string(ext_str).find("cl_APPLE_gl_sharing") == std::string::npos) {
 		std::cout << "No support for the cl_khr_gl_sharing extension";
 		delete ext_str;
 		return RayCaster::SHARING_NOT_SUPPORTED;
@@ -522,9 +524,11 @@ int Hardware_Caster::set_kernel_arg(
 		sizeof(cl_mem),
 		(void *)&buffer_map.at(buffer_name));
 
-	if (assert(error, "clSetKernelArg"))
+	if (assert(error, "clSetKernelArg")){
+		std::cout << buffer_name << std::endl;
+		std::cout << buffer_map.at(buffer_name) << std::endl;
 		return OPENCL_ERROR;
-
+	}
 	return 0;
 
 }
@@ -629,6 +633,8 @@ int Hardware_Caster::run_kernel(std::string kernel_name, const int work_size) {
 	size_t global_work_size[1] = { static_cast<size_t>(work_size) };
 
 	cl_kernel kernel = kernel_map.at(kernel_name);
+
+	std::cout << std::endl << command_queue << std::endl;
 
 	error = clEnqueueAcquireGLObjects(getCommandQueue(), 1, &buffer_map.at("image"), 0, 0, 0);
 	if (assert(error, "clEnqueueAcquireGLObjects"))

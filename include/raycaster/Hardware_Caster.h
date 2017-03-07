@@ -22,8 +22,9 @@
 #include <GL/GL.h>
 
 #elif defined TARGET_OS_MAC
-# include <OpenGL/OpenGL.h>
-# include <OpenCL/opencl.h>
+#include <OpenGL/OpenGL.h>
+#include <OpenCL/opencl.h>
+#include <OpenGL/gl.h>
 
 #endif
 
