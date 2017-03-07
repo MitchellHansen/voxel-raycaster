@@ -68,7 +68,11 @@ sf::Texture window_texture;
 // Y: 1.57 is straight down
 
 
-
+// TODO: 
+// - Texture axis sign flipping issue
+// - Diffuse fog hard cut off
+// - Infinite light distance, no inverse square
+// - Inconsistent lighting constants. GUI manipulation
 
 int main() {
 

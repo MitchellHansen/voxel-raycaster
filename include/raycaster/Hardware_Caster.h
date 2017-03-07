@@ -81,7 +81,7 @@ private:
 
 	int check_cl_khr_gl_sharing();
 
-	int create_image_buffer(std::string buffer_name, cl_uint size, sf::Texture* texture);
+	int create_image_buffer(std::string buffer_name, cl_uint size, sf::Texture* texture, cl_int access_type);
 	int create_buffer(std::string buffer_name, cl_uint size, void* data);
 	int create_buffer(std::string buffer_name, cl_uint size, void* data, cl_mem_flags flags);
 	int store_buffer(cl_mem, std::string buffer_name);

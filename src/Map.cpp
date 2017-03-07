@@ -86,13 +86,13 @@ uint64_t Map::generate_children(sf::Vector3i pos, int dim) {
 	// The 8 subvoxel coords starting from the 1th direction, the direction of the origin of the 3d grid
 	// XY, Z++, XY
 	std::vector<sf::Vector3i> v = { 
-		sf::Vector3i(pos.x, pos.y, pos.z),
-		sf::Vector3i(pos.x + dim, pos.y, pos.z),
-		sf::Vector3i(pos.x, pos.y + dim, pos.z),
+		sf::Vector3i(pos.x      , pos.y      , pos.z),
+		sf::Vector3i(pos.x + dim, pos.y      , pos.z),
+		sf::Vector3i(pos.x      , pos.y + dim, pos.z),
 		sf::Vector3i(pos.x + dim, pos.y + dim, pos.z),
-		sf::Vector3i(pos.x, pos.y, pos.z + dim),
-		sf::Vector3i(pos.x + dim, pos.y, pos.z + dim),
-		sf::Vector3i(pos.x, pos.y + dim, pos.z + dim),
+		sf::Vector3i(pos.x      , pos.y      , pos.z + dim),
+		sf::Vector3i(pos.x + dim, pos.y      , pos.z + dim),
+		sf::Vector3i(pos.x      , pos.y + dim, pos.z + dim),
 		sf::Vector3i(pos.x + dim, pos.y + dim, pos.z + dim) 
 	};
 
