@@ -14,24 +14,31 @@
 
 const double PI = 3.141592653589793238463;
 const float  PI_F = 3.14159265358979f;
-
 struct fps_counter {
 public:
-	fps_counter(){
-		if(!f.loadFromFile("../assets/fonts/Arial.ttf")){
-				std::cout << "couldn't find the fall back Arial font in ../assets/fonts/" << std::endl;
-		} else {
-				t.setFont(f);
+	fps_counter() :
+		backdrop(sf::Vector2f(200, 100)), vertex_array(sf::LinesStrip) {
+
+		backdrop.setFillColor(sf::Color(0x0000003F));
+
+		if (!f.loadFromFile("../assets/fonts/Arial.ttf")) {
+			std::cout << "couldn't find the fall back Arial font in ../assets/fonts/" << std::endl;
+		}
+		else {
+			t.setFont(f);
+			t.setCharacterSize(18);
+			t.setColor(sf::Color::White);
 		}
 	}
 
-	void frame(double delta_time){
-		if (frame_count == 100){
+	void frame(double delta_time) {
+		// Apply 100 units of smoothing
+		if (frame_count == 100) {
 			frame_count = 0;
 			fps_average = 0;
 		}
-			frame_count++;
-			fps_average += (delta_time - fps_average) / frame_count;
+		frame_count++;
+		fps_average += (delta_time - fps_average) / frame_count;
 	}
 
 	void flip_units() {
@@ -40,9 +47,36 @@ public:
 		else
 			milliseconds = true;
 	}
-		
-	void draw(sf::RenderWindow *r){
-		
+
+	void set_position(sf::Vector2f position) {
+		backdrop.setPosition(position);
+	}
+
+	sf::Vector2f get_position() {
+		return backdrop.getPosition();
+	}
+
+	void draw(sf::RenderWindow *r) {
+
+		// FPS Line graph
+		r->draw(backdrop);
+
+		if (vertex_position == 200)
+			vertex_position = 0;
+
+		sf::Vector2f origin = backdrop.getPosition();
+		sf::Vector2f point = origin + sf::Vector2f(vertex_position, backdrop.getSize().y - (1.0 / fps_average));
+
+		if (vertex_array.getVertexCount() < 200)
+			vertex_array.append(sf::Vertex(point, sf::Color::Red));
+		else
+			vertex_array[vertex_position] = sf::Vertex(point, sf::Color::Red);
+
+		r->draw(vertex_array);
+
+		vertex_position++;
+
+		// FPS Text
 		std::string out;
 
 		if (milliseconds)
@@ -50,16 +84,24 @@ public:
 		else
 			out = std::to_string(floor(1 / fps_average));
 
+		t.setPosition(origin);
 		t.setString(out);
-			r->draw(t);
+		r->draw(t);
 	}
 
 private:
-	bool milliseconds = false;
+
+	sf::RectangleShape backdrop;
+	sf::VertexArray vertex_array;
+
 	sf::Font f;
 	sf::Text t;
+
 	int frame_count = 0;
 	double fps_average = 0;
+	bool milliseconds = false;
+
+	int vertex_position = 0;
 };
 
 struct debug_text {

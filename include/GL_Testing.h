@@ -3,7 +3,7 @@
 #include <util.hpp>
 #include <cstring>
 
-#ifdef defined _WIN32
+#ifdef _WIN32
 #define GLEW_STATIC
 #include <GL/glew.h>
 

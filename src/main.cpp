@@ -166,6 +166,7 @@ int main() {
 
 	// ========== DEBUG ==========
     fps_counter fps;
+	fps.set_position(sf::Vector2f(WINDOW_X - 200, WINDOW_Y - 100));
 
 	sf::Vector2f *dp = camera->get_direction_pointer();
 	debug_text cam_text_x(1, 30, &dp->x, "incli: ");
