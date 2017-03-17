@@ -38,6 +38,8 @@
 #include "NetworkInput.h"
 #include "LightController.h"
 #include "LightHandle.h"
+#include "imgui/imgui-SFML.h"
+#include "imgui/imgui.h"
 
 const int WINDOW_X = 1440;
 const int WINDOW_Y = 900;
@@ -86,25 +88,24 @@ int main() {
 	#endif 
 
 	// The socket listener for interacting with the TCP streaming android controller
-	NetworkInput ni;
-	ni.listen_for_clients(5000);
-
-	// Currently just close it right away for debug
-	ni.stop_listening_for_clients();
-
+	// NetworkInput ni;
+	// ni.listen_for_clients(5000);
+	// ni.stop_listening_for_clients();
 
 
 	// =============================
-	Map _map(sf::Vector3i(0, 0, 0));
-	_map.generate_octree();
-
-	_map.a.get_voxel(sf::Vector3i(5, 5, 0));
+	// Map _map(sf::Vector3i(0, 0, 0));
+	// _map.generate_octree();
+	// _map.a.get_voxel(sf::Vector3i(5, 5, 0));
+	// return 0;
 	// =============================
-
-	//return 0;
 
     sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
     window.setMouseCursorVisible(false);
+	window.setKeyRepeatEnabled(false);
+
+	ImGui::SFML::Init(window);
+	window.resetGLStates();
 
 	/*GL_Testing t;
 	t.compile_shader("../shaders/passthrough.frag", GL_Testing::Shader_Type::FRAGMENT);
@@ -176,34 +177,33 @@ int main() {
 	debug_text cam_text_pos_z(5, 30, &camera->get_position_pointer()->z, "z: ");
 	// ===========================
 
-
-	// 16.6 milliseconds (60FPS)
-	float step_size = 0.0166f;
-	double  frame_time = 0.0,
-			elapsed_time = 0.0,
-			delta_time = 0.0,
-			accumulator_time = 0.0,
-			current_time = 0.0;
-
-
 	Input input_handler;
 
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyHeld);
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyPressed);
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::MouseMoved);
-	handle->subscribe_to_publisher(&ni, vr::Event::EventType::JoystickMoved);
+	//handle->subscribe_to_publisher(&ni, vr::Event::EventType::JoystickMoved);
 
 	WindowHandler win_hand(&window);
 	win_hand.subscribe_to_publisher(&input_handler, vr::Event::EventType::Closed);
 
-	window.setKeyRepeatEnabled(false);
+	// 16.6 milliseconds (60FPS)
+	float step_size = 0.0166f;
+	double  frame_time = 0.0,
+		elapsed_time = 0.0,
+		delta_time = 0.0,
+		accumulator_time = 0.0,
+		current_time = 0.0;
+
+	// The sfml imgui wrapper I'm using requires Update be called with sf::Time
+	// Might modify it to also accept seconds
+	sf::Clock sf_delta_clock;
 
 	while (window.isOpen()) {
 
 		input_handler.consume_sf_events(&window);
 		input_handler.handle_held_keys();
 		input_handler.dispatch_events();
-		ni.dispatch_events();
 
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::F11)) {
 			while (raycaster->debug_quick_recompile() != 0);
@@ -236,7 +236,21 @@ int main() {
             // ==== DELTA TIME LOCKED ====
         }
 
-		
+
+		ImGui::SFML::Update(window, sf_delta_clock.restart());
+
+
+		ImGui::Begin("Sample window"); // begi
+		ImGui::InputText("Window title", "asdfoij", 255);
+
+		float values[] = { 0, 1, 2, 3, 4, 5 };
+		ImGui::PlotLines("graph", values, 6);
+		if (ImGui::Button("Print")) {
+			std::cout << "print" << std::endl;
+		}
+
+		ImGui::End(); // end window
+
 
         // ==== FPS LOCKED ====
 		camera->update(delta_time);
@@ -247,8 +261,10 @@ int main() {
 		// Run the raycast
 		raycaster->compute();
 		raycaster->draw(&window);
-		
-		window.popGLStates();
+
+		ImGui::Render();
+
+		//window.popGLStates();
 
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		//t.rotate(delta_time);
@@ -257,7 +273,7 @@ int main() {
 		
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		
-		window.pushGLStates();
+		//window.pushGLStates();
 
 		// Give the frame counter the frame time and draw the average frame time
 		fps.frame(delta_time);

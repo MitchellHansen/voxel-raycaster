@@ -633,8 +633,6 @@ int Hardware_Caster::run_kernel(std::string kernel_name, const int work_size) {
 
 	cl_kernel kernel = kernel_map.at(kernel_name);
 
-	std::cout << std::endl << command_queue << std::endl;
-
 	error = clEnqueueAcquireGLObjects(getCommandQueue(), 1, &buffer_map.at("image"), 0, 0, 0);
 	if (assert(error, "clEnqueueAcquireGLObjects"))
 		return OPENCL_ERROR;
