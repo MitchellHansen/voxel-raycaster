@@ -1,6 +1,6 @@
 #pragma once
 #include <string>
-#include <util.cpp>
+#include <util.hpp>
 #include <cstring>
 
 #ifdef _WIN32

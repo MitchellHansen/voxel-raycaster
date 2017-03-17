@@ -23,7 +23,7 @@
 #endif
 
 #pragma once
-#include "util.cpp"
+#include "util.hpp"
 #include <iostream>
 #include <chrono>
 #include <SFML/Graphics.hpp>
@@ -104,6 +104,7 @@ int main() {
     sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
     window.setMouseCursorVisible(false);
 	window.setKeyRepeatEnabled(false);
+	window.setFramerateLimit(60);
 
 	ImGui::SFML::Init(window);
 	window.resetGLStates();
@@ -168,14 +169,6 @@ int main() {
 
 	// ========== DEBUG ==========
     fps_counter fps;
-	fps.set_position(sf::Vector2f(WINDOW_X - 200, WINDOW_Y - 100));
-
-	sf::Vector2f *dp = camera->get_direction_pointer();
-	debug_text cam_text_x(1, 30, &dp->x, "incli: ");
-	debug_text cam_text_y(2, 30, &dp->y, "asmth: ");
-	debug_text cam_text_pos_x(3, 30, &camera->get_position_pointer()->x, "x: ");
-	debug_text cam_text_pos_y(4, 30, &camera->get_position_pointer()->y, "y: ");
-	debug_text cam_text_pos_z(5, 30, &camera->get_position_pointer()->z, "z: ");
 	// ===========================
 
 	Input input_handler;
@@ -246,23 +239,40 @@ int main() {
 		// Run the raycast
 		raycaster->compute();
 
-
 		window.clear(sf::Color::Black);
-
 		raycaster->draw(&window);
 
 		// Give the frame counter the frame time and draw the average frame time
 		fps.frame(delta_time);
 		fps.draw();
 
-		cam_text_x.draw(&window);
-		cam_text_y.draw(&window);
+		ImGui::Begin("Camera");
+		
+		ImGui::Columns(2);
+		
+		ImGui::Text("Camera Inclination");
+		ImGui::Text("Camera Azimuth");
+		ImGui::Text("Camera Pos_X");
+		ImGui::Text("Camera Poz_Y");
+		ImGui::Text("Camera Poz_Z");
 
-		cam_text_pos_x.draw(&window);
-		cam_text_pos_y.draw(&window);
-		cam_text_pos_z.draw(&window);
+		ImGui::NextColumn();
+
+		sf::Vector2f dir = camera->get_direction();
+		sf::Vector3f pos = camera->get_position();
+
+		ImGui::Text(std::to_string(dir.x).c_str());
+		ImGui::Text(std::to_string(dir.y).c_str());
+		ImGui::Text(std::to_string(pos.x).c_str());
+		ImGui::Text(std::to_string(pos.y).c_str());
+		ImGui::Text(std::to_string(pos.z).c_str());
+
+		ImGui::End();
 
 		ImGui::Render();
+
+
+		window.draw(sf::CircleShape(0));
 		window.display();
 
 	}

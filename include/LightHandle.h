@@ -1,6 +1,6 @@
 #pragma once
 #include <SFML/Graphics.hpp>
-#include <util.cpp>
+#include <util.hpp>
 #include <memory>
 #include "Pub_Sub.h"
 

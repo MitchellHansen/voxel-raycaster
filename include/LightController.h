@@ -1,7 +1,7 @@
 #pragma once
 #include <SFML/System/Vector3.hpp>
 #include <SFML/System/Vector2.hpp> 
-#include "util.cpp"
+#include "util.hpp"
 #include "Pub_Sub.h"
 #include "raycaster/RayCaster.h"
 #include <list>

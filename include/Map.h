@@ -8,7 +8,7 @@
 #include <iostream>
 #include <functional>
 #include <cmath>
-#include "util.cpp"
+#include "util.hpp"
 #include <deque>
 #include <unordered_map>
 #include <bitset>

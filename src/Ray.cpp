@@ -2,7 +2,7 @@
 #include <iostream>
 #include "Map.h"
 #include <Ray.h>
-#include "util.cpp"
+#include "util.hpp"
 
 Ray::Ray(
         Map *map,
