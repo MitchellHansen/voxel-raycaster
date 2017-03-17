@@ -2,10 +2,9 @@
 #include <raycaster/RayCaster.h>
 #include <vector>
 #include <iostream>
-#include "util.hpp"
 #include <map>
 #include <string.h>
-
+#include "LightController.h"
 
 #ifdef linux
 #include <CL/cl.h>
@@ -95,7 +94,7 @@ private:
 
 	void print_kernel_arguments();
 
-	bool assert(int error_code, std::string function_name);
+	bool vr_assert(int error_code, std::string function_name);
 
 	cl_device_id getDeviceID();
 	cl_platform_id getPlatformID();

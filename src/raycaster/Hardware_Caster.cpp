@@ -1,6 +1,4 @@
 #include "raycaster/Hardware_Caster.h"
-#include <raycaster/RayCaster.h>
-#include "LightController.h"
 
 Hardware_Caster::Hardware_Caster() {
 
@@ -15,23 +13,23 @@ int Hardware_Caster::init() {
 	// Initialize opencl up to the point where we start assigning buffers
 
 	error = acquire_platform_and_device();
-	if(assert(error, "aquire_platform_and_device"))
+	if(vr_assert(error, "aquire_platform_and_device"))
 		return error;
 
 	error = check_cl_khr_gl_sharing();
-	if(assert(error, "check_cl_khr_gl_sharing"))
+	if(vr_assert(error, "check_cl_khr_gl_sharing"))
 		return error;
 
 	error = create_shared_context();
-	if (assert(error, "create_shared_context"))
+	if (vr_assert(error, "create_shared_context"))
 		return error;
 
 	error = create_command_queue();
-	if (assert(error, "create_command_queue"))
+	if (vr_assert(error, "create_command_queue"))
 		return error;
 
 	error = compile_kernel("../kernels/ray_caster_kernel.cl", true, "raycaster");
-	if (assert(error, "compile_kernel")) {
+	if (vr_assert(error, "compile_kernel")) {
 		std::cin.get(); // hang the output window so we can read the error
 		return error;
 	}
@@ -216,7 +214,7 @@ void Hardware_Caster::draw(sf::RenderWindow* window) {
 int Hardware_Caster::debug_quick_recompile()
 {
 	int error = compile_kernel("../kernels/ray_caster_kernel.cl", true, "raycaster");
-	if (assert(error, "compile_kernel")) {
+	if (vr_assert(error, "compile_kernel")) {
 		std::cin.get(); // hang the output window so we can read the error
 		return error;
 	}
@@ -306,7 +304,7 @@ int Hardware_Caster::acquire_platform_and_device() {
 		std::vector<cl_device_id> deviceIds(deviceIdCount);
 		error = clGetDeviceIDs(plt_buf[i], CL_DEVICE_TYPE_ALL, deviceIdCount, deviceIds.data(), NULL);
 
-		if (assert(error, "clGetDeviceIDs"))
+		if (vr_assert(error, "clGetDeviceIDs"))
 			return OPENCL_ERROR;
 
 		for (unsigned int q = 0; q < deviceIdCount; q++) {
@@ -409,7 +407,7 @@ int Hardware_Caster::create_shared_context() {
 		&error
 		);
 
-	if (assert(error, "clCreateContext"))
+	if (vr_assert(error, "clCreateContext"))
 		return OPENCL_ERROR;
 
 	return 1;
@@ -422,7 +420,7 @@ int Hardware_Caster::create_command_queue() {
 		
 		command_queue = clCreateCommandQueue(context, device_id, 0, &error);
 
-		if (assert(error, "clCreateCommandQueue"))
+		if (vr_assert(error, "clCreateCommandQueue"))
 			return OPENCL_ERROR;
 
 		return 1;
@@ -477,7 +475,7 @@ int Hardware_Caster::compile_kernel(std::string kernel_source, bool is_path, std
 		);
 
 	// This is not for compilation, it only loads the source
-	if (assert(error, "clCreateProgramWithSource"))
+	if (vr_assert(error, "clCreateProgramWithSource"))
 		return OPENCL_ERROR;
 
 
@@ -485,7 +483,7 @@ int Hardware_Caster::compile_kernel(std::string kernel_source, bool is_path, std
 	error = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
 
 	// Check to see if it errored out
-	if (assert(error, "clBuildProgram")) {
+	if (vr_assert(error, "clBuildProgram")) {
 
 		// Get the size of the queued log
 		size_t log_size;
@@ -502,7 +500,7 @@ int Hardware_Caster::compile_kernel(std::string kernel_source, bool is_path, std
 	// Done initializing the kernel
 	cl_kernel kernel = clCreateKernel(program, kernel_name.c_str(), &error);
 
-	if (assert(error, "clCreateKernel"))
+	if (vr_assert(error, "clCreateKernel"))
 		return OPENCL_ERROR;
 
 	// Do I want these to overlap when repeated??
@@ -523,7 +521,7 @@ int Hardware_Caster::set_kernel_arg(
 		sizeof(cl_mem),
 		(void *)&buffer_map.at(buffer_name));
 
-	if (assert(error, "clSetKernelArg")){
+	if (vr_assert(error, "clSetKernelArg")){
 		std::cout << buffer_name << std::endl;
 		std::cout << buffer_map.at(buffer_name) << std::endl;
 		return OPENCL_ERROR;
@@ -545,7 +543,7 @@ int Hardware_Caster::create_image_buffer(std::string buffer_name, cl_uint size, 
 		getContext(), access_type, GL_TEXTURE_2D,
 		0, texture->getNativeHandle(), &error);
 
-	if (assert(error, "clCreateFromGLTexture"))
+	if (vr_assert(error, "clCreateFromGLTexture"))
 		return OPENCL_ERROR;
 
 	store_buffer(buff, buffer_name);
@@ -566,7 +564,7 @@ int Hardware_Caster::create_buffer(std::string buffer_name, cl_uint size, void* 
 		size, data, &error
 		);
 
-	if (assert(error, "clCreateBuffer"))
+	if (vr_assert(error, "clCreateBuffer"))
 		return OPENCL_ERROR;
 
 	store_buffer(buff, buffer_name);
@@ -588,7 +586,7 @@ int Hardware_Caster::create_buffer(std::string buffer_name, cl_uint size, void* 
 		size, data, &error
 		);
 
-	if (assert(error, "clCreateBuffer"))
+	if (vr_assert(error, "clCreateBuffer"))
 		return OPENCL_ERROR;
 
 	store_buffer(buff, buffer_name);
@@ -603,7 +601,7 @@ int Hardware_Caster::release_buffer(std::string buffer_name) {
 		
 		int error = clReleaseMemObject(buffer_map.at(buffer_name));
 		
-		if (assert(error, "clReleaseMemObject")) {
+		if (vr_assert(error, "clReleaseMemObject")) {
 			std::cout << "Error releasing buffer : " << buffer_name;
 			std::cout << "Buffer not removed";
 			return -1;
@@ -634,7 +632,7 @@ int Hardware_Caster::run_kernel(std::string kernel_name, const int work_size) {
 	cl_kernel kernel = kernel_map.at(kernel_name);
 
 	error = clEnqueueAcquireGLObjects(getCommandQueue(), 1, &buffer_map.at("image"), 0, 0, 0);
-	if (assert(error, "clEnqueueAcquireGLObjects"))
+	if (vr_assert(error, "clEnqueueAcquireGLObjects"))
 		return OPENCL_ERROR;
 
 	//error = clEnqueueTask(command_queue, kernel, 0, NULL, NULL);
@@ -643,14 +641,14 @@ int Hardware_Caster::run_kernel(std::string kernel_name, const int work_size) {
 		1, NULL, global_work_size,
 		NULL, 0, NULL, NULL);
 
-	if (assert(error, "clEnqueueNDRangeKernel"))
+	if (vr_assert(error, "clEnqueueNDRangeKernel"))
 		return OPENCL_ERROR;
 
 	clFinish(getCommandQueue());
 
 	// What if errors out and gl objects are never released?
 	error = clEnqueueReleaseGLObjects(getCommandQueue(), 1, &buffer_map.at("image"), 0, NULL, NULL);
-	if (assert(error, "clEnqueueReleaseGLObjects"))
+	if (vr_assert(error, "clEnqueueReleaseGLObjects"))
 		return OPENCL_ERROR;
 
 	return 1;
@@ -678,7 +676,7 @@ cl_context Hardware_Caster::getContext() { return context; };
 cl_kernel Hardware_Caster::getKernel(std::string kernel_name) { return kernel_map.at(kernel_name); };
 cl_command_queue Hardware_Caster::getCommandQueue() { return command_queue; };
 
-bool Hardware_Caster::assert(int error_code, std::string function_name) {
+bool Hardware_Caster::vr_assert(int error_code, std::string function_name) {
 
 	// Just gonna do a little jump table here, just error codes so who cares
 	std::string err_msg = "Error : ";

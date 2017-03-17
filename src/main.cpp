@@ -23,12 +23,12 @@
 #endif
 
 #pragma once
+#include "util.cpp"
 #include <iostream>
 #include <chrono>
 #include <SFML/Graphics.hpp>
 #include <SFML/Network.hpp>
 #include "Old_Map.h"
-#include "util.hpp"
 #include "raycaster/RayCaster.h"
 #include "raycaster/Hardware_Caster.h"
 #include "Vector4.hpp"
@@ -40,6 +40,7 @@
 #include "LightHandle.h"
 #include "imgui/imgui-SFML.h"
 #include "imgui/imgui.h"
+
 
 const int WINDOW_X = 1440;
 const int WINDOW_Y = 900;
@@ -236,48 +237,23 @@ int main() {
             // ==== DELTA TIME LOCKED ====
         }
 
+		// ==== FPS LOCKED ====
 
 		ImGui::SFML::Update(window, sf_delta_clock.restart());
-
-
-		ImGui::Begin("Sample window"); // begi
-		ImGui::InputText("Window title", "asdfoij", 255);
-
-		float values[] = { 0, 1, 2, 3, 4, 5 };
-		ImGui::PlotLines("graph", values, 6);
-		if (ImGui::Button("Print")) {
-			std::cout << "print" << std::endl;
-		}
-
-		ImGui::End(); // end window
-
-
-        // ==== FPS LOCKED ====
 		camera->update(delta_time);
 		handle->update(delta_time);
 
-		window.clear(sf::Color::Black);
-
 		// Run the raycast
 		raycaster->compute();
+
+
+		window.clear(sf::Color::Black);
+
 		raycaster->draw(&window);
-
-		ImGui::Render();
-
-		//window.popGLStates();
-
-		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		//t.rotate(delta_time);
-		//t.transform();
-		//t.draw();
-		
-		//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		
-		//window.pushGLStates();
 
 		// Give the frame counter the frame time and draw the average frame time
 		fps.frame(delta_time);
-		fps.draw(&window);
+		fps.draw();
 
 		cam_text_x.draw(&window);
 		cam_text_y.draw(&window);
@@ -286,6 +262,7 @@ int main() {
 		cam_text_pos_y.draw(&window);
 		cam_text_pos_z.draw(&window);
 
+		ImGui::Render();
 		window.display();
 
 	}

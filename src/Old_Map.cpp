@@ -1,7 +1,7 @@
 #include <iostream>
 #include <SFML/System/Vector3.hpp>
 #include <SFML/System/Vector2.hpp>
-#include "util.hpp"
+#include "util.cpp"
 #include <Old_Map.h>
 #include <algorithm>
 
