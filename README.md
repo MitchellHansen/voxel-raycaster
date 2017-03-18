@@ -1,7 +1,7 @@
 
 # About
 
-This project is an implementation of a "from scratch" experimental volumetric rendering engine. Using OpenCL this program is able to hardware accelerate Woo's Fast Voxel Traversal Algorithm which traverses through a Sparse Voxel Octree as described by Laine et al. Light is simulated using the Blinn-Phong shading model along with a recursive ray tracer style of shadow tracing. Individual voxels are also textured using a user provided texture atlas and voxel data.
+This project is an implementation of an experimental "from scratch" volumetric rendering engine. Using OpenCL this program is able to hardware accelerate Woo's Fast Voxel Traversal Algorithm which traverses through a Sparse Voxel Octree as described by Laine et al. Light is simulated using the Blinn-Phong shading model along with a recursive ray tracer style of shadow tracing. Individual voxels are also textured using a user provided texture atlas and voxel data.
 
 # Build
 
