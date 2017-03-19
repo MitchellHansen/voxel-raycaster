@@ -1,4 +1,12 @@
 
+float DistanceBetweenPoints(float3 a, float3 b) {
+	return sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2) + pow(a.z - b.z, 2));
+}
+
+float Distance(float3 a) {
+	return sqrt(pow(a.x, 2) + pow(a.y, 2) + pow(a.z, 2));
+}
+
 // Naive incident ray light
 float4 white_light(float4 input, float3 light, int3 mask) {
 
@@ -22,17 +30,19 @@ float4 white_light(float4 input, float3 light, int3 mask) {
 
 float4 view_light(float4 in_color, float3 light, float4 light_color, float3 view, int3 mask) {
 
+	float d = Distance(light) / 100.0f;
+	d *= d;
+
 	float diffuse = max(dot(normalize(convert_float3(mask)), normalize(light)), 0.0f);
-	in_color += diffuse * 0.2f * light_color; //(float4)(1.0f, 1.0f, 0.0f, 1.0f);
+	in_color += diffuse * light_color * 0.5f / d;
 
 	if (dot(light, normalize(convert_float3(mask))) > 0.0f)
 	{
 		float3 halfwayVector = normalize(normalize(light) + normalize(view));
 		float specTmp = max(dot(normalize(convert_float3(mask)), halfwayVector), 0.0f);
-		in_color += pow(specTmp, 1.0f) * 0.5f  * light_color;//(float4)(1.0f, 1.0f, 0.0f, 0.0f);
+		in_color += pow(specTmp, 8.0f) * light_color * 0.5f / d;
 	}
 
-	//in_color += 0.02;
 	return in_color;
 }
 
@@ -46,9 +56,7 @@ int rand(int* seed) // 1 <= *seed < m
 	return(*seed);
 }
 
-float DistanceBetweenPoints(float3 a, float3 b) {
-	return sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2) + pow(a.z - b.z, 2));
-}
+
 
 // =================================== Boolean ray intersection ============================
 // =========================================================================================
@@ -230,6 +238,8 @@ __kernel void raycaster(
         // If we hit a voxel
         int index = voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z));
         int voxel_data = map[index];
+		if (all(voxel == convert_int3((float3)(lights[4], lights[5], lights[6]-3))))
+			voxel_data = 1;
 
 		if (voxel_data != 0) {
 
@@ -307,16 +317,16 @@ __kernel void raycaster(
 			// just a plain color for the voxel color
 
 			if (voxel_data == 6) {
-				voxel_color = (float4)(0.0f, 0.239f, 0.419f, 0.3f);
+				voxel_color = (float4)(0.0f, 0.239f, 0.419f, 0.0f);
 			}
 			else if (voxel_data == 5) {
 				float2 tile_size = convert_float2(*atlas_dim / *tile_dim);
 				voxel_color = read_imagef(texture_atlas, convert_int2(tile_face_position * tile_size) + convert_int2((float2)(3, 0) * tile_size));
-				voxel_color.w = 0.3f;
+				voxel_color.w = 0.0f;
 					//voxel_color = (float4)(0.25, 0.52, 0.30, 0.1);
 			}
 			else if (voxel_data == 1) {
-				voxel_color = (float4)(0.929f, 0.957f, 0.027f, 0.3f);
+				voxel_color = (float4)(0.929f, 0.957f, 0.027f, 0.0f);
 			}
 			//else {
 			//	voxel_color = (float4)(1.0f, 0.0f, 0.0f, 0.0f);

@@ -179,6 +179,7 @@ int main() {
 	fps_counter fps;
 
 	float light_color[4] = { 0, 0, 0, 0 };
+	float light_pos[4] = { 100, 100, 30 };
 
 	while (window.isOpen()) {
 
@@ -263,6 +264,10 @@ int main() {
 			handle->set_rgbi(light);
 		}
 
+		if (ImGui::SliderFloat4("Position", light_pos, 0, MAP_X)) {
+			sf::Vector3f light(light_pos[0], light_pos[1], light_pos[2]);
+			handle->set_position(light);
+		}
 
 		ImGui::End();
 
