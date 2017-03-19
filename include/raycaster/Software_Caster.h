@@ -1,6 +1,8 @@
 #pragma once
 #include "raycaster/RayCaster.h"
 #include <thread>
+#include "Old_Map.h"
+#include "Camera.h"
 
 struct PackedData;
 

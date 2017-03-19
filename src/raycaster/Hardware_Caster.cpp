@@ -16,10 +16,6 @@ int Hardware_Caster::init() {
 	if(vr_assert(error, "aquire_platform_and_device"))
 		return error;
 
-	error = check_cl_khr_gl_sharing();
-	if(vr_assert(error, "check_cl_khr_gl_sharing"))
-		return error;
-
 	error = create_shared_context();
 	if (vr_assert(error, "create_shared_context"))
 		return error;
@@ -265,7 +261,7 @@ void Hardware_Caster::test_edit_viewport(int width, int height, float v_fov, flo
 				ray.y,
 				ray.z,
 				0
-				);
+			);
 		}
 	}
 }
@@ -294,9 +290,9 @@ int Hardware_Caster::acquire_platform_and_device() {
 		cl_uint deviceIdCount = 0;
 		error = clGetDeviceIDs(plt_buf[i], CL_DEVICE_TYPE_ALL, 0, nullptr, &deviceIdCount);
 
-		// Check to see if we even have opencl on this machine
+		// Check to see if we even have OpenCL on this machine
 		if (deviceIdCount == 0) {
-			std::cout << "There appears to be no platforms supporting opencl" << std::endl;
+			std::cout << "There appears to be no platforms supporting OpenCL" << std::endl;
 			return OPENCL_NOT_SUPPORTED;
 		}
 
@@ -318,6 +314,40 @@ int Hardware_Caster::acquire_platform_and_device() {
 			clGetDeviceInfo(d.id, CL_DEVICE_TYPE, sizeof(cl_device_type), &d.type, NULL);
 			clGetDeviceInfo(d.id, CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(cl_uint), &d.clock_frequency, NULL);
 			clGetDeviceInfo(d.id, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cl_uint), &d.comp_units, NULL);
+			clGetDeviceInfo(d.id, CL_DEVICE_EXTENSIONS, 1024, &d.extensions, NULL);
+			clGetDeviceInfo(d.id, CL_DEVICE_NAME, 256, &d.name, NULL);
+
+			std::cout << "Device: " << q << std::endl;
+			std::cout << "Device Name : " << d.name << std::endl;
+			
+			std::cout << "Platform ID    : " << d.platform << std::endl;
+			std::cout << "Device Version : " << d.version << std::endl;
+
+			std::cout << "Device Type    : ";
+			if (d.type == CL_DEVICE_TYPE_CPU)
+				std::cout << "CPU" << std::endl;
+
+			else if (d.type == CL_DEVICE_TYPE_GPU)
+				std::cout << "GPU" << std::endl;
+
+			else if (d.type == CL_DEVICE_TYPE_ACCELERATOR)
+				std::cout << "Accelerator" << std::endl;
+
+			std::cout << "Max clock frequency : " << d.clock_frequency << std::endl;
+			std::cout << "Max compute units   : " << d.comp_units << std::endl;
+
+			std::cout << "cl_khr_gl_sharing supported: ";
+			if (std::string(d.extensions).find("cl_khr_gl_sharing") == std::string::npos &&
+				std::string(d.extensions).find("cl_APPLE_gl_sharing") == std::string::npos) {
+				std::cout << "False" << std::endl;
+			}
+			std::cout << "True" << std::endl;
+			d.cl_gl_sharing = true;
+
+			std::cout << "Extensions supported: " << std::endl;
+			std::cout << std::string(d.extensions) << std::endl;
+
+			std::cout << " ===================================================================================== " << std::endl;
 
 			plt_ids.at(d.platform).push_back(d);
 		}
@@ -342,13 +372,22 @@ int Hardware_Caster::acquire_platform_and_device() {
 
 			// Upon success of a condition, set the current best device values
 
+			// If the current device is not a GPU and we are comparing it to a GPU
 			if (device.type == CL_DEVICE_TYPE_GPU && current_best_device.type != CL_DEVICE_TYPE_GPU) {
 				current_best_device = device;
 			}
-			else if (device.comp_units > current_best_device.comp_units) {
+
+			// Get the unit with the higher compute units
+			if (device.comp_units > current_best_device.comp_units) {
 				current_best_device = device;
 			}
-			else if (current_best_device.type != CL_DEVICE_TYPE_GPU && device.clock_frequency > current_best_device.clock_frequency) {
+
+			// If we are comparing CPU to CPU get the one with the best clock
+			if (current_best_device.type != CL_DEVICE_TYPE_GPU && device.clock_frequency > current_best_device.clock_frequency) {
+				current_best_device = device;
+			}
+
+			if (current_best_device.cl_gl_sharing == false && device.cl_gl_sharing == true) {
 				current_best_device = device;
 			}
 		}
@@ -357,6 +396,15 @@ int Hardware_Caster::acquire_platform_and_device() {
 	platform_id = current_best_device.platform;
 	device_id = current_best_device.id;
 
+	std::cout << std::endl;
+	std::cout << "Selected Platform : " << platform_id << std::endl;
+	std::cout << "Selected Device   : " << device_id << std::endl;
+	std::cout << "Selected Name     : " << current_best_device.name << std::endl;
+	
+	if (current_best_device.cl_gl_sharing == false) {
+		std::cout << "This device does not support the cl_khr_gl_sharing extension" << std::endl;
+		return RayCaster::SHARING_NOT_SUPPORTED;
+	}
 	return 1;
 };
 
@@ -431,24 +479,7 @@ int Hardware_Caster::create_command_queue() {
 	}
 }
 
-int Hardware_Caster::check_cl_khr_gl_sharing() {
 
-	// Test for sharing
-	size_t ext_str_size = 1024;
-	char *ext_str = new char[ext_str_size];
-	clGetDeviceInfo(device_id, CL_DEVICE_EXTENSIONS, ext_str_size, ext_str, &ext_str_size);
-
-	std::cout << std::string(ext_str);
-	if (std::string(ext_str).find("cl_khr_gl_sharing") == std::string::npos &&
-      	    std::string(ext_str).find("cl_APPLE_gl_sharing") == std::string::npos) {
-		std::cout << "No support for the cl_khr_gl_sharing extension";
-		delete ext_str;
-		return RayCaster::SHARING_NOT_SUPPORTED;
-	}
-
-	delete ext_str;
-	return 1;
-}
 
 int Hardware_Caster::compile_kernel(std::string kernel_source, bool is_path, std::string kernel_name) {
 

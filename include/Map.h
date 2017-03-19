@@ -8,12 +8,12 @@
 #include <iostream>
 #include <functional>
 #include <cmath>
-#include "util.hpp"
 #include <deque>
 #include <unordered_map>
 #include <bitset>
 #include <cstring>
 #include <queue>
+#include "util.hpp"
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -115,7 +115,7 @@ public:
 		uint8_t idx_stack[32] = {0};
 
 		// Init the idx stack
-		std::vector<std::bitset<3>> scale_stack(log2(OCT_DIM));
+		std::vector<std::bitset<3>> scale_stack(static_cast<uint64_t>(log2(OCT_DIM)));
 
 		// Set our initial dimension and the position we use to keep track what oct were in
 		int dimension = OCT_DIM;
@@ -142,7 +142,7 @@ public:
 				idx_stack[scale] |= idx_set_x_mask;
 
 				// Debug
-				scale_stack.at(log2(OCT_DIM) - log2(dimension)).set(0);
+				scale_stack.at(static_cast<uint64_t>(log2(OCT_DIM) - log2(dimension))).set(0);
 				
 			}
 			if (position.y >= (dimension / 2) + quad_position.y) {
@@ -152,7 +152,7 @@ public:
 				mask_index += 2;
 
 				idx_stack[scale] ^= idx_set_y_mask;
-				scale_stack.at(log2(OCT_DIM) - log2(dimension)).set(1);
+				scale_stack.at(static_cast<uint64_t>(log2(OCT_DIM) - log2(dimension))).set(1);
 			}
 			if (position.z >= (dimension / 2) + quad_position.z) {
 
@@ -161,7 +161,7 @@ public:
 				mask_index += 4;
 
 				idx_stack[scale] |= idx_set_z_mask;
-				scale_stack.at(log2(OCT_DIM) - log2(dimension)).set(2);
+				scale_stack.at(static_cast<uint64_t>(log2(OCT_DIM) - log2(dimension))).set(2);
 			}
 
 			// Check to see if we are on a valid oct
@@ -182,7 +182,7 @@ public:
 				
 				// Count the number of non-leaf octs that come before and add it to the current parent stack position
 				int count = count_bits((uint8_t)(head >> 24) ^ count_mask_8[mask_index]);
-				int index = (parent_stack[parent_stack_position] & child_pointer_mask) + count;
+				int index = static_cast<int>((parent_stack[parent_stack_position] & child_pointer_mask) + count);
 				
 				// Increment the parent stack position and put the new oct node as the parent
 				parent_stack_position++;

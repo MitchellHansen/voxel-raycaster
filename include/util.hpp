@@ -34,7 +34,7 @@ public:
 		if (arr_pos == 200)
 			arr_pos = 0;
 
-		fps_array[arr_pos] = (1.0 / fps_average);
+		fps_array[arr_pos] = static_cast<float>(1.0 / fps_average);
 		arr_pos++;
 
 		ImGui::Begin("Performance");

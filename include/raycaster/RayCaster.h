@@ -2,9 +2,9 @@
 #include <SFML/System/Vector3.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <Map.h>
-#include "Old_Map.h"
-#include "Camera.h"
 
+class Old_Map;
+class Camera;
 struct PackedData;
 
 class RayCaster {

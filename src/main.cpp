@@ -93,7 +93,6 @@ int main() {
 	// ni.listen_for_clients(5000);
 	// ni.stop_listening_for_clients();
 
-
 	// =============================
 	// Map _map(sf::Vector3i(0, 0, 0));
 	// _map.generate_octree();
@@ -108,12 +107,6 @@ int main() {
 
 	ImGui::SFML::Init(window);
 	window.resetGLStates();
-
-	/*GL_Testing t;
-	t.compile_shader("../shaders/passthrough.frag", GL_Testing::Shader_Type::FRAGMENT);
-	t.compile_shader("../shaders/passthrough.vert", GL_Testing::Shader_Type::VERTEX);
-	t.create_program();
-	t.create_buffers();*/
 
 	// Start up the raycaster
 	std::shared_ptr<Hardware_Caster> raycaster(new Hardware_Caster());
@@ -155,33 +148,24 @@ int main() {
 	
 	std::shared_ptr<LightHandle> handle(light_controller.create_light(prototype));
 
-
 	// Load in the spritesheet texture
 	sf::Texture spritesheet;
 	spritesheet.loadFromFile("../assets/textures/minecraft_tiles.png");
-	//spritesheet.getNativeHandle();
 	raycaster->create_texture_atlas(&spritesheet, sf::Vector2i(16, 16));
-
 
 	// Checks to see if proper data was uploaded, then sets the kernel args
 	// ALL DATA LOADING MUST BE FINISHED
 	raycaster->validate();
 
-	// ========== DEBUG ==========
-    fps_counter fps;
-	// ===========================
-
 	Input input_handler;
-
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyHeld);
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyPressed);
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::MouseMoved);
-	//handle->subscribe_to_publisher(&ni, vr::Event::EventType::JoystickMoved);
 
 	WindowHandler win_hand(&window);
 	win_hand.subscribe_to_publisher(&input_handler, vr::Event::EventType::Closed);
 
-	// 16.6 milliseconds (60FPS)
+
 	float step_size = 0.0166f;
 	double  frame_time = 0.0,
 		elapsed_time = 0.0,
@@ -192,6 +176,7 @@ int main() {
 	// The sfml imgui wrapper I'm using requires Update be called with sf::Time
 	// Might modify it to also accept seconds
 	sf::Clock sf_delta_clock;
+	fps_counter fps;
 
 	while (window.isOpen()) {
 

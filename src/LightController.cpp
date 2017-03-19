@@ -1,9 +1,4 @@
 #include "LightController.h"
-#include "LightHandle.h"
-#include <numeric>
-#include <SFML/System/Time.hpp>
-
-
 
 LightController::LightController(std::shared_ptr<Hardware_Caster> raycaster) : packed_data_array(reserved_count), open_list(reserved_count) {
 
