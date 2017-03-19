@@ -136,7 +136,7 @@ private:
 
 	// Run the kernel using a 1d work size
 	// TODO: Test 2d worksize
-	int run_kernel(std::string kernel_name, const int work_size);
+	int run_kernel(std::string kernel_name, const int work_dim_x, const int work_dim_y);
 
 	// Run a test kernel that prints out the kernel args
 	void print_kernel_arguments();

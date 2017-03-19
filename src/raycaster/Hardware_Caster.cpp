@@ -104,7 +104,7 @@ void Hardware_Caster::create_texture_atlas(sf::Texture *t, sf::Vector2i tile_dim
 
 void Hardware_Caster::compute() {
 	// correlating work size with texture size? good, bad?
-	run_kernel("raycaster", viewport_texture.getSize().x * viewport_texture.getSize().y);
+	run_kernel("raycaster", viewport_texture.getSize().x, viewport_texture.getSize().y);
 }
 
 // There is a possibility that I would want to move this over to be all inside it's own
@@ -663,9 +663,12 @@ int Hardware_Caster::store_buffer(cl_mem buffer, std::string buffer_name) {
 	return 1;
 }
 
-int Hardware_Caster::run_kernel(std::string kernel_name, const int work_size) {
+int Hardware_Caster::run_kernel(std::string kernel_name, const int work_dim_x, const int work_dim_y) {
 
-	size_t global_work_size[1] = { static_cast<size_t>(work_size) };
+	//size_t global_work_size[2] = { static_cast<size_t>(work_dim_x), static_cast<size_t>(work_dim_y)};
+	
+	size_t global_work_size[2] = { static_cast<size_t>(1440), static_cast<size_t>(900)};
+	//size_t global_work_size[1] = { static_cast<size_t>(1440*900) };
 
 	cl_kernel kernel = kernel_map.at(kernel_name);
 
@@ -676,7 +679,7 @@ int Hardware_Caster::run_kernel(std::string kernel_name, const int work_size) {
 	//error = clEnqueueTask(command_queue, kernel, 0, NULL, NULL);
 	error = clEnqueueNDRangeKernel(
 		command_queue, kernel,
-		1, NULL, global_work_size,
+		2, NULL, global_work_size,
 		NULL, 0, NULL, NULL);
 
 	if (vr_assert(error, "clEnqueueNDRangeKernel"))
@@ -705,7 +708,7 @@ void Hardware_Caster::print_kernel_arguments()
 	set_kernel_arg("printer", 7, "light_count");
 	set_kernel_arg("printer", 8, "image");
 
-	run_kernel("printer", 1);
+	run_kernel("printer", 1, 1);
 }
 
 cl_device_id Hardware_Caster::getDeviceID() { return device_id; };

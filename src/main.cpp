@@ -104,6 +104,7 @@ int main() {
     window.setMouseCursorVisible(false);
 	window.setKeyRepeatEnabled(false);
 	window.setFramerateLimit(60);
+	window.setVerticalSyncEnabled(false);
 
 	ImGui::SFML::Init(window);
 	window.resetGLStates();
@@ -264,7 +265,7 @@ int main() {
 			handle->set_rgbi(light);
 		}
 
-		if (ImGui::SliderFloat4("Position", light_pos, 0, MAP_X)) {
+		if (ImGui::SliderFloat3("Position", light_pos, 0, MAP_X)) {
 			sf::Vector3f light(light_pos[0], light_pos[1], light_pos[2]);
 			handle->set_position(light);
 		}

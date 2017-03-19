@@ -149,6 +149,9 @@ __kernel void raycaster(
 ){
 
 	int global_id = get_global_id(0);
+	
+	int x = get_global_id(0);
+	int y = get_global_id(1);
 
 	// Get and set the random seed from seed memory
 	int seed = seed_memory[global_id];
@@ -156,7 +159,9 @@ __kernel void raycaster(
 	seed_memory[global_id] = seed;
 
 	// Get the pixel on the viewport, and find the view matrix ray that matches it
-    int2 pixel = { global_id % (*resolution).x, global_id / (*resolution).x};
+	//int2 pixel = { global_id % (*resolution).x, global_id / (*resolution).x };
+	int2 pixel = (int2)(x, y);
+
     float3 ray_dir = projection_matrix[pixel.x + (*resolution).x * pixel.y];
 
 	//if (pixel.x == 960 && pixel.y == 540) {
