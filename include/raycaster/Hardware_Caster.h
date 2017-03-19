@@ -41,6 +41,11 @@ struct device {
 	bool cl_gl_sharing = false;
 };
 
+struct raycaster_settings {
+	
+};
+
+
 struct PackedData;
 
 class Hardware_Caster : public RayCaster

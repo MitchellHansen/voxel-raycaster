@@ -203,7 +203,7 @@ void Old_Map::generate_terrain() {
 		
 				int z = static_cast<int>(height_map[x + y * dimensions.x]);
 
-				while (z > 0) {
+				while (z > 0 && z < dimensions.z) {
 					voxel_data[x + dimensions.x * (y + dimensions.z * z)] = 5;
 					z--;
 				}

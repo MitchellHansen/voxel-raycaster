@@ -143,7 +143,7 @@ int main() {
 	LightPrototype prototype(
 		sf::Vector3f(100.0f, 100.0f, 30.0f),
 		sf::Vector3f(-1.0f, -1.0f, -1.5f),
-		sf::Vector4f(1.0f, 1.0f, 1.0f, 1.0f)
+		sf::Vector4f(0.2f, 0.9f, 0.0f, 1.0f)
 	);
 	
 	std::shared_ptr<LightHandle> handle(light_controller.create_light(prototype));
@@ -177,6 +177,8 @@ int main() {
 	// Might modify it to also accept seconds
 	sf::Clock sf_delta_clock;
 	fps_counter fps;
+
+	float light_color[4] = { 0, 0, 0, 0 };
 
 	while (window.isOpen()) {
 
@@ -253,6 +255,17 @@ int main() {
 		ImGui::Text(std::to_string(pos.z).c_str());
 
 		ImGui::End();
+
+		ImGui::Begin("Lights");
+
+		if (ImGui::SliderFloat4("Color", light_color, 0, 1)) {
+			sf::Vector4f light(light_color[0], light_color[1], light_color[2], light_color[3]);
+			handle->set_rgbi(light);
+		}
+
+
+		ImGui::End();
+
 
 		ImGui::Render();
 

@@ -216,7 +216,7 @@ int Hardware_Caster::debug_quick_recompile()
 	}
 	validate();
 
-	return 1;
+	return 0;
 }
 
 void Hardware_Caster::test_edit_viewport(int width, int height, float v_fov, float h_fov)
@@ -377,6 +377,11 @@ int Hardware_Caster::acquire_platform_and_device() {
 				current_best_device = device;
 			}
 
+			//if (device.type == CL_DEVICE_TYPE_CPU && 
+			//	current_best_device.type != CL_DEVICE_TYPE_CPU) {
+			//	current_best_device = device;
+			//}
+
 			// Get the unit with the higher compute units
 			if (device.comp_units > current_best_device.comp_units) {
 				current_best_device = device;
@@ -390,6 +395,7 @@ int Hardware_Caster::acquire_platform_and_device() {
 			if (current_best_device.cl_gl_sharing == false && device.cl_gl_sharing == true) {
 				current_best_device = device;
 			}
+
 		}
 	}
 
@@ -400,7 +406,8 @@ int Hardware_Caster::acquire_platform_and_device() {
 	std::cout << "Selected Platform : " << platform_id << std::endl;
 	std::cout << "Selected Device   : " << device_id << std::endl;
 	std::cout << "Selected Name     : " << current_best_device.name << std::endl;
-	
+	std::cout << "Selected Version  : " << current_best_device.version << std::endl;
+
 	if (current_best_device.cl_gl_sharing == false) {
 		std::cout << "This device does not support the cl_khr_gl_sharing extension" << std::endl;
 		return RayCaster::SHARING_NOT_SUPPORTED;
@@ -538,7 +545,7 @@ int Hardware_Caster::compile_kernel(std::string kernel_source, bool is_path, std
 	kernel_map[kernel_name] = kernel;
 	//kernel_map.emplace(std::make_pair(kernel_name, kernel));
 
-	return 1;
+	return 0;
 }
 
 int Hardware_Caster::set_kernel_arg(

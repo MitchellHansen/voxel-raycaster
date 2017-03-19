@@ -50,7 +50,7 @@ void LightHandle::add_movement(sf::Vector3f movement)
 
 void LightHandle::set_position(sf::Vector3f position)
 {
-
+	data_reference->position = position;
 }
 
 void LightHandle::set_direction(sf::Vector3f direction)
@@ -60,7 +60,7 @@ void LightHandle::set_direction(sf::Vector3f direction)
 
 void LightHandle::set_rgbi(sf::Vector4f rgbi)
 {
-
+	data_reference->rgbi = rgbi;
 }
 
 void LightHandle::recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Event> event)
