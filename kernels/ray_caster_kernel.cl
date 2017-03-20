@@ -72,6 +72,9 @@ bool cast_light_intersection_ray(
 	){
 
 	float distance_to_light = DistanceBetweenPoints(ray_pos, (float3)(lights[4], lights[5], lights[6]));
+	if (distance_to_light > 200.0f){ 
+		return false;
+	}
 
 	// Setup the voxel step based on what direction the ray is pointing
 	int3 voxel_step = { 1, 1, 1 };
@@ -148,10 +151,12 @@ __kernel void raycaster(
 	global int2 *tile_dim
 ){
 
-	int global_id = get_global_id(0);
-	
+
+
 	int x = get_global_id(0);
 	int y = get_global_id(1);
+
+	int global_id = x * y;
 
 	// Get and set the random seed from seed memory
 	int seed = seed_memory[global_id];

@@ -518,7 +518,7 @@ int Hardware_Caster::compile_kernel(std::string kernel_source, bool is_path, std
 
 
 	// Try and build the program
-	error = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
+	error = clBuildProgram(program, 1, &device_id, "-cl-finite-math-only -cl-fast-relaxed-math -cl-unsafe-math-optimizations", NULL, NULL);
 
 	// Check to see if it errored out
 	if (vr_assert(error, "clBuildProgram")) {
@@ -665,10 +665,7 @@ int Hardware_Caster::store_buffer(cl_mem buffer, std::string buffer_name) {
 
 int Hardware_Caster::run_kernel(std::string kernel_name, const int work_dim_x, const int work_dim_y) {
 
-	//size_t global_work_size[2] = { static_cast<size_t>(work_dim_x), static_cast<size_t>(work_dim_y)};
-	
-	size_t global_work_size[2] = { static_cast<size_t>(1440), static_cast<size_t>(900)};
-	//size_t global_work_size[1] = { static_cast<size_t>(1440*900) };
+	size_t global_work_size[2] = { static_cast<size_t>(work_dim_x), static_cast<size_t>(work_dim_y)};
 
 	cl_kernel kernel = kernel_map.at(kernel_name);
 

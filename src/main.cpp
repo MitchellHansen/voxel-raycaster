@@ -46,8 +46,8 @@ const int WINDOW_X = 1440;
 const int WINDOW_Y = 900;
 const int WORK_SIZE = WINDOW_X * WINDOW_Y;
 
-const int MAP_X = 256;
-const int MAP_Y = 256;
+const int MAP_X = 512;
+const int MAP_Y = 512;
 const int MAP_Z = 256;
 
 float elap_time(){
@@ -181,30 +181,13 @@ int main() {
 
 	float light_color[4] = { 0, 0, 0, 0 };
 	float light_pos[4] = { 100, 100, 30 };
+	char screenshot_buf[128]{0};
 
 	while (window.isOpen()) {
 
 		input_handler.consume_sf_events(&window);
 		input_handler.handle_held_keys();
 		input_handler.dispatch_events();
-
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::F11)) {
-			while (raycaster->debug_quick_recompile() != 0);
-		}
-
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Num0)) {
-			std::string path = "../assets/";
-			std::string filename;
-			std::getline(std::cin, filename);
-			filename += ".png";
-
-			sf::Texture window_texture;
-			window_texture.create(window.getSize().x, window.getSize().y);
-			window_texture.update(window);
-
-			sf::Image image = window_texture.copyToImage();
-			image.saveToFile(path + filename);
-		}
 
         // Time keeping
 		elapsed_time = elap_time();
@@ -256,6 +239,29 @@ int main() {
 		ImGui::Text(std::to_string(pos.y).c_str());
 		ImGui::Text(std::to_string(pos.z).c_str());
 
+		ImGui::NextColumn();
+
+		ImGui::InputText("filename", screenshot_buf, 128);
+		if (ImGui::Button("Take Screen shot")) {
+			
+			std::string path = "../assets/";
+			std::string filename(screenshot_buf);
+			filename += ".png";
+
+			sf::Texture window_texture;
+			window_texture.create(window.getSize().x, window.getSize().y);
+			window_texture.update(window);
+
+			sf::Image image = window_texture.copyToImage();
+			image.saveToFile(path + filename);
+			
+		}
+
+		ImGui::NextColumn();
+
+		if (ImGui::Button("Recompile kernel")) {
+			while (raycaster->debug_quick_recompile() != 0);
+		}
 		ImGui::End();
 
 		ImGui::Begin("Lights");
