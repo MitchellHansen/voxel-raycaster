@@ -292,7 +292,7 @@ int Hardware_Caster::acquire_platform_and_device() {
 
 		// Check to see if we even have OpenCL on this machine
 		if (deviceIdCount == 0) {
-			std::cout << "There appears to be no platforms supporting OpenCL" << std::endl;
+			std::cout << "There appears to be no devices, or none at least supporting OpenCL" << std::endl;
 			return OPENCL_NOT_SUPPORTED;
 		}
 
@@ -372,6 +372,10 @@ int Hardware_Caster::acquire_platform_and_device() {
 
 			// Upon success of a condition, set the current best device values
 
+			//if (strcmp(device.version, "OpenCL 1.2 ") == 0 && strcmp(device.version, current_best_device.version) != 0) {
+			//	current_best_device = device;
+			//}
+
 			// If the current device is not a GPU and we are comparing it to a GPU
 			if (device.type == CL_DEVICE_TYPE_GPU && current_best_device.type != CL_DEVICE_TYPE_GPU) {
 				current_best_device = device;
@@ -399,7 +403,7 @@ int Hardware_Caster::acquire_platform_and_device() {
 		}
 	}
 
-	platform_id = current_best_device.platform;
+ 	platform_id = current_best_device.platform;
 	device_id = current_best_device.id;
 
 	std::cout << std::endl;
@@ -452,6 +456,8 @@ int Hardware_Caster::create_shared_context() {
 	};
 
 #endif
+
+	
 
 	// Create our shared context
 	context = clCreateContext(
@@ -518,7 +524,8 @@ int Hardware_Caster::compile_kernel(std::string kernel_source, bool is_path, std
 
 
 	// Try and build the program
-	error = clBuildProgram(program, 1, &device_id, "-cl-finite-math-only -cl-fast-relaxed-math -cl-unsafe-math-optimizations", NULL, NULL);
+	// "-cl-finite-math-only -cl-fast-relaxed-math -cl-unsafe-math-optimizations"
+	error = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
 
 	// Check to see if it errored out
 	if (vr_assert(error, "clBuildProgram")) {
@@ -900,6 +907,12 @@ bool Hardware_Caster::vr_assert(int error_code, std::string function_name) {
 		break;
 	case CL_INVALID_DEVICE_PARTITION_COUNT:
 		err_msg = "CL_INVALID_DEVICE_PARTITION_COUNT";
+		break;
+	case CL_INVALID_GL_SHAREGROUP_REFERENCE_KHR :
+		err_msg = "CL_INVALID_GL_SHAREGROUP_REFERENCE_KHR";
+		break;
+	case CL_PLATFORM_NOT_FOUND_KHR :
+		err_msg = "CL_PLATFORM_NOT_FOUND_KHR";
 		break;
 	case RayCaster::SHARING_NOT_SUPPORTED:
 		err_msg = "SHARING_NOT_SUPPORTED";

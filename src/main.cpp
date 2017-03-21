@@ -35,7 +35,6 @@
 #include "Camera.h"
 #include "Input.h"
 #include "Pub_Sub.h"
-#include "NetworkInput.h"
 #include "LightController.h"
 #include "LightHandle.h"
 #include "imgui/imgui-SFML.h"
@@ -105,7 +104,7 @@ int main() {
 	window.setKeyRepeatEnabled(false);
 	window.setFramerateLimit(60);
 	window.setVerticalSyncEnabled(false);
-
+	
 	ImGui::SFML::Init(window);
 	window.resetGLStates();
 
@@ -142,7 +141,7 @@ int main() {
 
 	LightController light_controller(raycaster);
 	LightPrototype prototype(
-		sf::Vector3f(100.0f, 100.0f, 30.0f),
+		sf::Vector3f(100.0f, 100.0f, 75.0f),
 		sf::Vector3f(-1.0f, -1.0f, -1.5f),
 		sf::Vector4f(0.2f, 0.9f, 0.0f, 1.0f)
 	);
@@ -275,6 +274,13 @@ int main() {
 			sf::Vector3f light(light_pos[0], light_pos[1], light_pos[2]);
 			handle->set_position(light);
 		}
+
+		light_pos[0] = sin(elapsed_time) * 100.0f + 300.0f;
+		light_pos[1] = sin(elapsed_time) * 100.0f + 300.0f;
+
+		sf::Vector3f light(light_pos[0], light_pos[1], light_pos[2]);
+		handle->set_position(light);
+
 
 		ImGui::End();
 

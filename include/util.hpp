@@ -38,7 +38,7 @@ public:
 		arr_pos++;
 
 		ImGui::Begin("Performance");
-		ImGui::PlotLines("FPS", fps_array, 200, 0, std::to_string(1.0 / fps_average).c_str(), 0.0f, 150.0f, ImVec2(0, 80));
+		ImGui::PlotLines("FPS", fps_array, 200, 0, std::to_string(1.0 / fps_average).c_str(), 0.0f, 150.0f, ImVec2(200, 80));
 		ImGui::End();
 	}
 

@@ -15,7 +15,7 @@ float4 white_light(float4 input, float3 light, int3 mask) {
 			normalize(light),
 			normalize(convert_float3(mask * (-mask)))
 			)
-		) / 8;
+		) / 32;
 
 	return input;
 
@@ -72,9 +72,9 @@ bool cast_light_intersection_ray(
 	){
 
 	float distance_to_light = DistanceBetweenPoints(ray_pos, (float3)(lights[4], lights[5], lights[6]));
-	if (distance_to_light > 200.0f){ 
-		return false;
-	}
+	//if (distance_to_light > 200.0f){
+	//	return false;
+	//}
 
 	// Setup the voxel step based on what direction the ray is pointing
 	int3 voxel_step = { 1, 1, 1 };
@@ -219,7 +219,7 @@ __kernel void raycaster(
 
 	int3 face_mask = { 0, 0, 0 };
 	float4 fog_color = { 0.73f, 0.81f, 0.89f, 0.8f };
-	float4 voxel_color = (float4)(0.50f, 0.0f, 0.50f, 0.1f);
+	float4 voxel_color = (float4)(0.0f, 0.0f, 0.0f, 0.001f);
 	float4 overshoot_color = { 0.25f, 0.48f, 0.52f, 0.8f };
 	float4 overshoot_color_2 = { 0.25f, 0.1f, 0.52f, 0.8f };
 
@@ -353,7 +353,7 @@ __kernel void raycaster(
 			)) {
 
 				// If the light ray intersected an object on the way to the light point
-				float4 ambient_color = white_light(voxel_color, (float3)(lights[4], lights[5], lights[6]), face_mask);
+				float4 ambient_color = white_light(voxel_color, (float3)(256.0f, 256.0f, 256.0f), face_mask);
 				write_imagef(image, pixel, ambient_color);
 				return;
 			}
