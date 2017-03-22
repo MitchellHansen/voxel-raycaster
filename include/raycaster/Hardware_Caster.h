@@ -38,6 +38,7 @@ struct device {
 	cl_uint comp_units;
 	char extensions[1024];
 	char name[256];
+	cl_bool is_little_endian = false;
 	bool cl_gl_sharing = false;
 };
 

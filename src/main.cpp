@@ -93,10 +93,13 @@ int main() {
 	// ni.stop_listening_for_clients();
 
 	// =============================
-	// Map _map(sf::Vector3i(0, 0, 0));
-	// _map.generate_octree();
-	// _map.a.get_voxel(sf::Vector3i(5, 5, 0));
-	// return 0;
+	Map _map(sf::Vector3i(0, 0, 0));
+	_map.generate_octree();
+	std::cout << _map.a.get_voxel(sf::Vector3i(5, 5, 0));
+	std::cout << _map.getVoxel(sf::Vector3i(5, 5, 0));
+	_map.test_map();
+	std::cin.get();
+	return 0;
 	// =============================
 
     sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");

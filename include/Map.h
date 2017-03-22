@@ -84,9 +84,10 @@ public:
 	uint8_t idx_set_y_mask = 0x2;
 	uint8_t idx_set_z_mask = 0x4;
 
+	// Mask for 
 	uint8_t mask_8[8] = {
-		0x0, 0x1, 0x2, 0x3,
-		0x4, 0x5, 0x6, 0x7
+		0x1,  0x2,  0x4,  0x8,
+		0x10, 0x20, 0x40, 0x80
 	};
 
 	uint8_t count_mask_8[8]{
@@ -98,29 +99,38 @@ public:
 	// the IDX and stack position of the highest resolution (maybe set resolution?) oct
 	bool get_voxel(sf::Vector3i position) {
 
-		// Init the parent stack and push the head node
-		//std::queue<uint64_t> parent_stack;
-
+		// Init the parent stack 
 		int parent_stack_position = 0;
 		uint64_t parent_stack[32] = {0};
 		
+		// and push the head node
 		uint64_t head = block_stack.front()[stack_pos];
 		parent_stack[parent_stack_position] = head;
 		
-
 		// Get the index of the first child of the head node
 		uint64_t index = head & child_pointer_mask;
 
+		// Init the idx stack
 		uint8_t scale = 0;
 		uint8_t idx_stack[32] = {0};
 
-		// Init the idx stack
+		// Init the idx stack (DEBUG)
 		std::vector<std::bitset<3>> scale_stack(static_cast<uint64_t>(log2(OCT_DIM)));
 
-		// Set our initial dimension and the position we use to keep track what oct were in
+		// Set our initial dimension and the position at the corner of the oct to keep track of our position
 		int dimension = OCT_DIM;
 		sf::Vector3i quad_position(0, 0, 0);
 
+		// While we are not at the required resolution
+		//		Traverse down by setting the valid/leaf mask to the subvoxel
+		//		Check to see if it is valid
+		//			Yes? 
+		//				Check to see if it is a leaf
+        //				No? Break
+		//				Yes? Scale down to the next hierarchy, push the parent to the stack
+		//		
+		//			No?
+		//				Break
 		while (dimension > 1) {
 			
 			// So we can be a little bit tricky here and increment our
@@ -159,10 +169,13 @@ public:
 				quad_position.z += (dimension / 2);
 
 				mask_index += 4;
-
+				
 				idx_stack[scale] |= idx_set_z_mask;
 				scale_stack.at(static_cast<uint64_t>(log2(OCT_DIM) - log2(dimension))).set(2);
 			}
+
+			uint64_t out1 = (head >> 16) & mask_8[mask_index];
+			uint64_t out2 = (head >> 24) & mask_8[mask_index];
 
 			// Check to see if we are on a valid oct
 			if ((head >> 16) & mask_8[mask_index]) {
@@ -171,6 +184,7 @@ public:
 				if ((head >> 24) & mask_8[mask_index]) {
 
 					// If it is, then we cannot traverse further as CP's won't have been generated
+					return true;
 					break;
 				}
 
@@ -180,10 +194,14 @@ public:
 
 				// We also need to traverse to the correct child pointer
 				
-				// Count the number of non-leaf octs that come before and add it to the current parent stack position
+				// Count the number of non-leaf octs that come before and add it to the index to get the position
 				int count = count_bits((uint8_t)(head >> 24) ^ count_mask_8[mask_index]);
-				int index = static_cast<int>((parent_stack[parent_stack_position] & child_pointer_mask) + count);
-				
+
+				// Because we are getting the position at the first child we need to back up one
+				// Or maybe it's because my count bits function is wrong...
+				index = (head & child_pointer_mask) + count - 1;
+				head = block_stack.front()[index];
+
 				// Increment the parent stack position and put the new oct node as the parent
 				parent_stack_position++;
 				parent_stack[parent_stack_position] = block_stack.front()[index];
@@ -196,6 +214,7 @@ public:
 				// to focus on how to now take care of the end condition.
 				// Currently it adds the last parent on the second to lowest
 				// oct CP. Not sure if thats correct
+				return false;
 				break;
 			}
 		}
@@ -226,17 +245,14 @@ private:
 	const uint64_t contour_pointer_mask = 0xFFFFFF00000000;
 	const uint64_t contour_mask = 0xFF00000000000000;
 
-	
-	
-
 };
 
 
 class Map {
 public: 
 
-
-	Map(sf::Vector3i dim);
+	
+	Map(sf::Vector3i position);
 	void generate_octree();
 
 	void load_unload(sf::Vector3i world_position);
@@ -250,10 +266,12 @@ public:
 
 	char getVoxelFromOctree(sf::Vector3i position);
 
-	void moveLight(sf::Vector2f in);
+	bool getVoxel(sf::Vector3i pos);
+	Octree a;
+
 	sf::Vector3f global_light;
 
-	Octree a;
+	void test_map();
 
 protected:
 
@@ -261,7 +279,7 @@ private:
 
 	// DEBUG
 	int counter = 0;
-	std::stringstream ss;
+	std::stringstream output_stream;
 
 	// !DEBUG
 
@@ -269,7 +287,6 @@ private:
 	uint64_t generate_children(sf::Vector3i pos, int dim);
 
 
-	char getVoxel(sf::Vector3i pos);
 	char* voxel_data = new char[OCT_DIM * OCT_DIM * OCT_DIM];
 
 	//std::unordered_map<sf::Vector3i, Chunk, XYZHasher> chunk_map;

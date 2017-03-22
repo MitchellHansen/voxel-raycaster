@@ -11,7 +11,6 @@ Hardware_Caster::~Hardware_Caster() {
 int Hardware_Caster::init() {
 
 	// Initialize opencl up to the point where we start assigning buffers
-
 	error = acquire_platform_and_device();
 	if(vr_assert(error, "aquire_platform_and_device"))
 		return error;
@@ -316,6 +315,7 @@ int Hardware_Caster::acquire_platform_and_device() {
 			clGetDeviceInfo(d.id, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cl_uint), &d.comp_units, NULL);
 			clGetDeviceInfo(d.id, CL_DEVICE_EXTENSIONS, 1024, &d.extensions, NULL);
 			clGetDeviceInfo(d.id, CL_DEVICE_NAME, 256, &d.name, NULL);
+			clGetDeviceInfo(d.id, CL_DEVICE_ENDIAN_LITTLE, sizeof(cl_bool), &d.is_little_endian, NULL);
 
 			std::cout << "Device: " << q << std::endl;
 			std::cout << "Device Name : " << d.name << std::endl;
@@ -335,6 +335,7 @@ int Hardware_Caster::acquire_platform_and_device() {
 
 			std::cout << "Max clock frequency : " << d.clock_frequency << std::endl;
 			std::cout << "Max compute units   : " << d.comp_units << std::endl;
+			std::cout << "Is little endian    : " << std::boolalpha << static_cast<bool>(d.is_little_endian) << std::endl;
 
 			std::cout << "cl_khr_gl_sharing supported: ";
 			if (std::string(d.extensions).find("cl_khr_gl_sharing") == std::string::npos &&

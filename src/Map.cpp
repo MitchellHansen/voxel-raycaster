@@ -1,7 +1,5 @@
 #include "Map.h"
 
-
-
 void SetBit(int position, char* c) {
 	*c |= (uint64_t)1 << position;
 }
@@ -70,33 +68,38 @@ bool IsLeaf(const uint64_t descriptor) {
 
 Map::Map(sf::Vector3i position) {
 
+	srand(time(NULL));
+
 	load_unload(position);
 
 	for (int i = 0; i < OCT_DIM * OCT_DIM * OCT_DIM; i++) {
-		if (rand() % 8 > 2)
+		if (rand() % 2 == 1)
 			voxel_data[i] = 0;
 		else
 			voxel_data[i] = 1;
 	}
+
+	voxel_data[0 + OCT_DIM * (0 + OCT_DIM * 0)] = 1;
+
 }
 
-uint64_t Map::generate_children(sf::Vector3i pos, int dim) {
+uint64_t Map::generate_children(sf::Vector3i pos, int voxel_scale) {
 
 
 	// The 8 subvoxel coords starting from the 1th direction, the direction of the origin of the 3d grid
 	// XY, Z++, XY
 	std::vector<sf::Vector3i> v = { 
 		sf::Vector3i(pos.x      , pos.y      , pos.z),
-		sf::Vector3i(pos.x + dim, pos.y      , pos.z),
-		sf::Vector3i(pos.x      , pos.y + dim, pos.z),
-		sf::Vector3i(pos.x + dim, pos.y + dim, pos.z),
-		sf::Vector3i(pos.x      , pos.y      , pos.z + dim),
-		sf::Vector3i(pos.x + dim, pos.y      , pos.z + dim),
-		sf::Vector3i(pos.x      , pos.y + dim, pos.z + dim),
-		sf::Vector3i(pos.x + dim, pos.y + dim, pos.z + dim) 
+		sf::Vector3i(pos.x + voxel_scale, pos.y      , pos.z),
+		sf::Vector3i(pos.x      , pos.y + voxel_scale, pos.z),
+		sf::Vector3i(pos.x + voxel_scale, pos.y + voxel_scale, pos.z),
+		sf::Vector3i(pos.x      , pos.y      , pos.z + voxel_scale),
+		sf::Vector3i(pos.x + voxel_scale, pos.y      , pos.z + voxel_scale),
+		sf::Vector3i(pos.x      , pos.y + voxel_scale, pos.z + voxel_scale),
+		sf::Vector3i(pos.x + voxel_scale, pos.y + voxel_scale, pos.z + voxel_scale) 
 	};
 
-	if (dim == 1) {
+	if (voxel_scale == 1) {
 
 		// Return the base 2x2 leaf node
 		uint64_t tmp = 0;
@@ -126,10 +129,11 @@ uint64_t Map::generate_children(sf::Vector3i pos, int dim) {
 		for (int i = 0; i < v.size(); i++) {
 
 			// Get the child descriptor from the i'th to 8th subvoxel
-			child = generate_children(v.at(i), dim / 2);
+			child = generate_children(v.at(i), voxel_scale / 2);
 
-			PrettyPrintUINT64(child, &ss);
-			ss << "    " << dim << "    " << counter++ << std::endl;
+			// 
+			PrettyPrintUINT64(child, &output_stream);
+			output_stream << "    " << voxel_scale << "    " << counter++ << std::endl;
 
 			if (IsLeaf(child)) {
 				if (CheckLeafSign(child))
@@ -168,8 +172,8 @@ void Map::generate_octree() {
 	uint64_t root_node = generate_children(sf::Vector3i(0, 0, 0), OCT_DIM/2);
 	uint64_t tmp = 0;
 
-	PrettyPrintUINT64(root_node, &ss);
-	ss << "    " << OCT_DIM << "    " << counter++ << std::endl;
+	PrettyPrintUINT64(root_node, &output_stream);
+	output_stream << "    " << OCT_DIM << "    " << counter++ << std::endl;
 
 	if (IsLeaf(root_node)) {
 		if (CheckLeafSign(root_node))
@@ -185,7 +189,7 @@ void Map::generate_octree() {
 
 	tmp |= a.copy_to_stack(std::vector<uint64_t>{root_node});
 
-	DumpLog(&ss, "raw_output.txt");
+	DumpLog(&output_stream, "raw_output.txt");
 
 	a.print_block(0);
 
@@ -246,7 +250,35 @@ char Map::getVoxelFromOctree(sf::Vector3i position)
 	return a.get_voxel(position);
 }
 
-char Map::getVoxel(sf::Vector3i pos){
+bool Map::getVoxel(sf::Vector3i pos){
 
-	return voxel_data[pos.x + OCT_DIM * (pos.y + OCT_DIM * pos.z)];
+	if (voxel_data[pos.x + OCT_DIM * (pos.y + OCT_DIM * pos.z)]) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+void Map::test_map() {
+
+	for (int x = 0; x < OCT_DIM; x++) {
+		for (int y = 0; y < OCT_DIM; y++) {
+			for (int z = 0; z < OCT_DIM; z++) {
+
+				sf::Vector3i pos(x, y, z);
+
+				bool arr1 = getVoxel(pos);
+				bool arr2 = getVoxelFromOctree(pos);
+
+				if (arr1 != arr2) {
+					std::cout << "MISMATCH" << std::endl;
+				}
+
+			}
+		}
+	}
+
+
+	std::cout << "\nGOOD" << std::endl;
+
 }
