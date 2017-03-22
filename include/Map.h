@@ -95,6 +95,12 @@ public:
 		0x1F, 0x3F, 0x7F, 0xFF
 	};
 
+	//uint8_t count_mask_8[8]{
+	//	0xFF, 0x7F, 0x3F, 0x1F,
+	//	0xF,  0x7,  0x3,  0x1
+	//};
+
+
 	// With a position and the head of the stack. Traverse down the voxel hierarchy to find
 	// the IDX and stack position of the highest resolution (maybe set resolution?) oct
 	bool get_voxel(sf::Vector3i position) {
@@ -195,7 +201,16 @@ public:
 				// We also need to traverse to the correct child pointer
 				
 				// Count the number of non-leaf octs that come before and add it to the index to get the position
-				int count = count_bits((uint8_t)(head >> 24) ^ count_mask_8[mask_index]);
+				int i1 = count_bits((uint8_t)(head >> 16) & count_mask_8[0]);
+				int i2 = count_bits((uint8_t)(head >> 16) & count_mask_8[1]);
+				int i3 = count_bits((uint8_t)(head >> 16) & count_mask_8[2]);
+				int i4 = count_bits((uint8_t)(head >> 16) & count_mask_8[3]);
+				int i5 = count_bits((uint8_t)(head >> 16) & count_mask_8[4]);
+				int i6 = count_bits((uint8_t)(head >> 16) & count_mask_8[5]);
+				int i7 = count_bits((uint8_t)(head >> 16) & count_mask_8[6]);
+				int i8 = count_bits((uint8_t)(head >> 16) & count_mask_8[7]);
+
+				int count = count_bits((uint8_t)(head >> 16) & count_mask_8[mask_index]);
 
 				// Because we are getting the position at the first child we need to back up one
 				// Or maybe it's because my count bits function is wrong...
@@ -208,7 +223,7 @@ public:
 			
 			} else {
 				// If the oct was not valid, then no CP's exists any further
-
+				// This implicitly says that if it's non-valid then it must be a leaf!!
 
 				// It appears that the traversal is now working but I need
 				// to focus on how to now take care of the end condition.

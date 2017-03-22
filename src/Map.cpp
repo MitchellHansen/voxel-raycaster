@@ -68,18 +68,27 @@ bool IsLeaf(const uint64_t descriptor) {
 
 Map::Map(sf::Vector3i position) {
 
-	srand(time(NULL));
+	//srand(time(NULL));
 
-	load_unload(position);
+	//load_unload(position);
 
 	for (int i = 0; i < OCT_DIM * OCT_DIM * OCT_DIM; i++) {
-		if (rand() % 2 == 1)
-			voxel_data[i] = 0;
+		if (rand() % 25 > 1)
+			voxel_data[i] = 1;
 		else
 			voxel_data[i] = 1;
 	}
 
-	voxel_data[0 + OCT_DIM * (0 + OCT_DIM * 0)] = 1;
+
+	//voxel_data[1 + OCT_DIM * (0 + OCT_DIM * 0)] = 0;
+	//voxel_data[1 + OCT_DIM * (1 + OCT_DIM * 0)] = 0;
+	//voxel_data[1 + OCT_DIM * (0 + OCT_DIM * 1)] = 0;
+	//voxel_data[1 + OCT_DIM * (1 + OCT_DIM * 1)] = 0;
+
+	//voxel_data[0 + OCT_DIM * (0 + OCT_DIM * 0)] = 0;
+	//voxel_data[0 + OCT_DIM * (1 + OCT_DIM * 0)] = 0;
+	//voxel_data[0 + OCT_DIM * (0 + OCT_DIM * 1)] = 0;
+	//voxel_data[0 + OCT_DIM * (1 + OCT_DIM * 1)] = 0;
 
 }
 
@@ -136,10 +145,12 @@ uint64_t Map::generate_children(sf::Vector3i pos, int voxel_scale) {
 			output_stream << "    " << voxel_scale << "    " << counter++ << std::endl;
 
 			if (IsLeaf(child)) {
-				if (CheckLeafSign(child))
+				if (CheckLeafSign(child)) {
 					SetBit(i + 16, &tmp);
-
-				SetBit(i + 16 + 8, &tmp);
+					children.push_back(child);
+				} else {
+					SetBit(i + 16 + 8, &tmp);
+				}
 			}
 
 			else {
