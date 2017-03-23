@@ -85,6 +85,7 @@ int main() {
 	#elif defined _WIN32
 	glewInit();
 	#elif defined TARGET_OS_MAC
+	// Do nothing, extension wrangling handled by macOS
 	#endif 
 
 	// The socket listener for interacting with the TCP streaming android controller
@@ -95,8 +96,7 @@ int main() {
 	// =============================
 	Map _map(sf::Vector3i(0, 0, 0));
 	_map.generate_octree();
-	std::cout << _map.a.get_voxel(sf::Vector3i(1, 1, 0));
-	std::cout << _map.getVoxel(sf::Vector3i(1, 1, 0));
+	_map.a.print_block(0);
 	_map.test_map();
 	std::cin.get();
 	return 0;

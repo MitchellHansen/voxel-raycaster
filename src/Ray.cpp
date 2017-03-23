@@ -15,7 +15,9 @@ Ray::Ray(
     this->map = map;
     origin = camera_position;
     direction = ray_direction;
-    dimensions = map->getDimensions();
+
+	// TODO: Had to break this while refactoring map
+	dimensions = sf::Vector3i(0, 0, 0); // map->getDimensions();
 }
 
 sf::Color Ray::Cast() {
@@ -105,23 +107,25 @@ sf::Color Ray::Cast() {
 
         // If we hit a voxel
         int index = voxel.x + dimensions.x * (voxel.y + dimensions.z * voxel.z);
-        int voxel_data = map->list[index];
+        
+    	// TODO: Had to break this while refactoring map
+		int voxel_data = 0; // map->list[index];
 
         float alpha = 0;
         if (face == 0) {
 
-            alpha = AngleBetweenVectors(sf::Vector3f(1, 0, 0), map->global_light);
+            //alpha = AngleBetweenVectors(sf::Vector3f(1, 0, 0), map->global_light);
             alpha = static_cast<float>(fmod(alpha, 0.785) * 2);
 
         } else if (face == 1) {
 
-            alpha = AngleBetweenVectors(sf::Vector3f(0, 1, 0), map->global_light);
+            //alpha = AngleBetweenVectors(sf::Vector3f(0, 1, 0), map->global_light);
             alpha = static_cast<float>(fmod(alpha, 0.785) * 2);
 
         } else if (face == 2){
 
             //alpha = 1.57 / 2;
-            alpha = AngleBetweenVectors(sf::Vector3f(0, 0, 1), map->global_light);
+            //alpha = AngleBetweenVectors(sf::Vector3f(0, 0, 1), map->global_light);
             alpha = static_cast<float>(fmod(alpha, 0.785) * 2);
         }
 

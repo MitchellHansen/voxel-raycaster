@@ -19,7 +19,7 @@
 #include <math.h>
 
 #define CHUNK_DIM 32
-#define OCT_DIM 8
+#define OCT_DIM 32
 
 struct XYZHasher {
 	std::size_t operator()(const sf::Vector3i& k) const {
@@ -31,227 +31,39 @@ struct XYZHasher {
 
 class Octree {
 public:
-	Octree() {
-
-		// initialize the first stack block
-		block_stack.push_back(new uint64_t[0x8000]);
-		for (int i = 0; i < 0x8000; i++) {
-			block_stack.back()[i] = 0;
-		}
-
-
-	};
-
+	Octree();
 	~Octree() {};
 
-	std::list<uint64_t*> block_stack;
+	uint64_t *blob = new uint64_t[100000];
+
 	uint64_t stack_pos = 0x8000;
 	uint64_t global_pos = 0;
 	
-	uint64_t copy_to_stack(std::vector<uint64_t> children) {
-		
-		// Check for the 15 bit boundry		
-		if (stack_pos - children.size() > stack_pos) {
-			global_pos = stack_pos;
-			stack_pos = 0x8000;
-		}
-		else {
-			stack_pos -= children.size();
-		}
+	uint64_t copy_to_stack(std::vector<uint64_t> children);
 
-		// Check for the far bit
+	// With a position and the head of the stack. Traverse down the voxel hierarchy to find
+	// the IDX and stack position of the highest resolution (maybe set resolution?) oct
+	bool get_voxel(sf::Vector3i position);
 
-		memcpy(&block_stack.front()[stack_pos + global_pos], children.data(), children.size() * sizeof(uint64_t));
-		
-		// Return the bitmask encoding the index of that value
-		// If we tripped the far bit, allocate a far index to the stack and place
-		// it one above preferably.
-		// And then shift the far bit to 1
+	void print_block(int block_pos);
 
-		// If not, shift the index to its correct place
-		return stack_pos;
-	};
-
-
-	int get_idx(sf::Vector3i voxel_pos) {
-	
-		return 1;
-		
-	}
+private:
 
 	// (X, Y, Z) mask for the idx
-	uint8_t idx_set_x_mask = 0x1;
-	uint8_t idx_set_y_mask = 0x2;
-	uint8_t idx_set_z_mask = 0x4;
+	const uint8_t idx_set_x_mask = 0x1;
+	const uint8_t idx_set_y_mask = 0x2;
+	const uint8_t idx_set_z_mask = 0x4;
 
 	// Mask for 
-	uint8_t mask_8[8] = {
+	const uint8_t mask_8[8] = {
 		0x1,  0x2,  0x4,  0x8,
 		0x10, 0x20, 0x40, 0x80
 	};
 
-	uint8_t count_mask_8[8]{
+	const uint8_t count_mask_8[8]{
 		0x1,  0x3,  0x7,  0xF,
 		0x1F, 0x3F, 0x7F, 0xFF
 	};
-
-	//uint8_t count_mask_8[8]{
-	//	0xFF, 0x7F, 0x3F, 0x1F,
-	//	0xF,  0x7,  0x3,  0x1
-	//};
-
-
-	// With a position and the head of the stack. Traverse down the voxel hierarchy to find
-	// the IDX and stack position of the highest resolution (maybe set resolution?) oct
-	bool get_voxel(sf::Vector3i position) {
-
-		// Init the parent stack 
-		int parent_stack_position = 0;
-		uint64_t parent_stack[32] = {0};
-		
-		// and push the head node
-		uint64_t head = block_stack.front()[stack_pos];
-		parent_stack[parent_stack_position] = head;
-		
-		// Get the index of the first child of the head node
-		uint64_t index = head & child_pointer_mask;
-
-		// Init the idx stack
-		uint8_t scale = 0;
-		uint8_t idx_stack[32] = {0};
-
-		// Init the idx stack (DEBUG)
-		std::vector<std::bitset<3>> scale_stack(static_cast<uint64_t>(log2(OCT_DIM)));
-
-		// Set our initial dimension and the position at the corner of the oct to keep track of our position
-		int dimension = OCT_DIM;
-		sf::Vector3i quad_position(0, 0, 0);
-
-		// While we are not at the required resolution
-		//		Traverse down by setting the valid/leaf mask to the subvoxel
-		//		Check to see if it is valid
-		//			Yes? 
-		//				Check to see if it is a leaf
-        //				No? Break
-		//				Yes? Scale down to the next hierarchy, push the parent to the stack
-		//		
-		//			No?
-		//				Break
-		while (dimension > 1) {
-			
-			// So we can be a little bit tricky here and increment our
-			// array index that holds our masks as we build the idx. 
-			// Adding 1 for X, 2 for Y, and 4 for Z
-			int mask_index = 0;
-
-
-			// Do the logic steps to find which sub oct we step down into
-			if (position.x >= (dimension / 2) + quad_position.x) {
-
-				// Set our voxel position to the (0,0) of the correct oct
-				quad_position.x += (dimension / 2);
-
-				// increment the mask index and mentioned above
-				mask_index += 1;
-
-				// Set the idx to represent the move
-				idx_stack[scale] |= idx_set_x_mask;
-
-				// Debug
-				scale_stack.at(static_cast<uint64_t>(log2(OCT_DIM) - log2(dimension))).set(0);
-				
-			}
-			if (position.y >= (dimension / 2) + quad_position.y) {
-
-				quad_position.y |= (dimension / 2);
-
-				mask_index += 2;
-
-				idx_stack[scale] ^= idx_set_y_mask;
-				scale_stack.at(static_cast<uint64_t>(log2(OCT_DIM) - log2(dimension))).set(1);
-			}
-			if (position.z >= (dimension / 2) + quad_position.z) {
-
-				quad_position.z += (dimension / 2);
-
-				mask_index += 4;
-				
-				idx_stack[scale] |= idx_set_z_mask;
-				scale_stack.at(static_cast<uint64_t>(log2(OCT_DIM) - log2(dimension))).set(2);
-			}
-
-			uint64_t out1 = (head >> 16) & mask_8[mask_index];
-			uint64_t out2 = (head >> 24) & mask_8[mask_index];
-
-			// Check to see if we are on a valid oct
-			if ((head >> 16) & mask_8[mask_index]) {
-				
-				// Check to see if it is a leaf
-				if ((head >> 24) & mask_8[mask_index]) {
-
-					// If it is, then we cannot traverse further as CP's won't have been generated
-					return true;
-					break;
-				}
-
-				// If all went well and we found a valid non-leaf oct then we will traverse further down the hierarchy
-				scale++;
-				dimension /= 2;
-
-				// We also need to traverse to the correct child pointer
-				
-				// Count the number of non-leaf octs that come before and add it to the index to get the position
-				int i1 = count_bits((uint8_t)(head >> 16) & count_mask_8[0]);
-				int i2 = count_bits((uint8_t)(head >> 16) & count_mask_8[1]);
-				int i3 = count_bits((uint8_t)(head >> 16) & count_mask_8[2]);
-				int i4 = count_bits((uint8_t)(head >> 16) & count_mask_8[3]);
-				int i5 = count_bits((uint8_t)(head >> 16) & count_mask_8[4]);
-				int i6 = count_bits((uint8_t)(head >> 16) & count_mask_8[5]);
-				int i7 = count_bits((uint8_t)(head >> 16) & count_mask_8[6]);
-				int i8 = count_bits((uint8_t)(head >> 16) & count_mask_8[7]);
-
-				int count = count_bits((uint8_t)(head >> 16) & count_mask_8[mask_index]);
-
-				// Because we are getting the position at the first child we need to back up one
-				// Or maybe it's because my count bits function is wrong...
-				index = (head & child_pointer_mask) + count - 1;
-				head = block_stack.front()[index];
-
-				// Increment the parent stack position and put the new oct node as the parent
-				parent_stack_position++;
-				parent_stack[parent_stack_position] = block_stack.front()[index];
-			
-			} else {
-				// If the oct was not valid, then no CP's exists any further
-				// This implicitly says that if it's non-valid then it must be a leaf!!
-
-				// It appears that the traversal is now working but I need
-				// to focus on how to now take care of the end condition.
-				// Currently it adds the last parent on the second to lowest
-				// oct CP. Not sure if thats correct
-				return false;
-				break;
-			}
-		}
-
-
-        std::bitset<64> t(index);
-        auto val = t.count();
-
-		return true;
-	}
-
-
-	void print_block(int block_pos) {
-		std::stringstream sss;
-		for (int i = 0; i < (int)pow(2, 15); i++) {
-			PrettyPrintUINT64(block_stack.front()[i], &sss);
-			sss << "\n";
-		}
-		DumpLog(&sss, "raw_data.txt");
-	}
-
-private:
 
 	const uint64_t child_pointer_mask = 0x0000000000007fff;
 	const uint64_t far_bit_mask = 0x8000;
@@ -266,16 +78,9 @@ private:
 class Map {
 public: 
 
-	
 	Map(sf::Vector3i position);
+
 	void generate_octree();
-
-	void load_unload(sf::Vector3i world_position);
-	void load_single(sf::Vector3i world_position);
-
-	sf::Vector3i getDimensions();
-	char *list;
-	//sf::Vector3i dimensions;
 
 	void setVoxel(sf::Vector3i position, int val);
 
@@ -284,27 +89,19 @@ public:
 	bool getVoxel(sf::Vector3i pos);
 	Octree a;
 
-	sf::Vector3f global_light;
-
 	void test_map();
-
-protected:
 
 private:
 
-	// DEBUG
+	// ======= DEBUG ===========
 	int counter = 0;
 	std::stringstream output_stream;
-
-	// !DEBUG
+	// =========================
 
 
 	uint64_t generate_children(sf::Vector3i pos, int dim);
 
-
 	char* voxel_data = new char[OCT_DIM * OCT_DIM * OCT_DIM];
-
-	//std::unordered_map<sf::Vector3i, Chunk, XYZHasher> chunk_map;
 
 	double* height_map;
 
@@ -316,7 +113,7 @@ private:
 			world_coords.x / CHUNK_DIM + 1,
 			world_coords.y / CHUNK_DIM + 1,
 			world_coords.z / CHUNK_DIM + 1
-			);
+		);
 	}
 };
 
