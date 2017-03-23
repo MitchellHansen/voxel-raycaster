@@ -125,7 +125,6 @@ inline sf::Vector3f FixOrigin(sf::Vector3f base, sf::Vector3f head) {
 	return head - base;
 }
 
-
 inline sf::Vector3f Normalize(sf::Vector3f in) {
 	
 	float multiplier = sqrt(in.x * in.x + in.y * in.y + in.z * in.z);
@@ -137,7 +136,6 @@ inline sf::Vector3f Normalize(sf::Vector3f in) {
 	return r;
 
 }
-
 
 inline float DotProduct(sf::Vector3f a, sf::Vector3f b){
 	return a.x * b.x + a.y * b.y + a.z * b.z;
@@ -205,61 +203,6 @@ inline void DumpLog(std::stringstream* ss, std::string file_name) {
 	log_file << ss->str();
 
 	log_file.close();
-
-}
-
-inline std::string sfml_get_input(sf::RenderWindow *window) {
-	
-	std::stringstream ss;
-
-	sf::Event event;
-	while (window->pollEvent(event)) {
-		if (event.type == sf::Event::TextEntered) {
-			ss << event.text.unicode;
-		} 
-		
-		else if (event.type == sf::Event::KeyPressed) {
-			if (event.key.code == sf::Keyboard::Return) {
-				return ss.str();
-			}
-		}
-	}
-}
-
-inline std::vector<float> sfml_get_float_input(sf::RenderWindow *window) {
-
-	std::stringstream ss;
-
-	sf::Event event;
-	while (true) {
-
-		if (window->pollEvent(event)) {
-
-			if (event.type == sf::Event::TextEntered) {
-				if (event.text.unicode > 47 && event.text.unicode < 58 || event.text.unicode == 32)
-					ss << static_cast<char>(event.text.unicode);
-			}
-
-			else if (event.type == sf::Event::KeyPressed) {
-
-				if (event.key.code == sf::Keyboard::Return) {
-					break;
-				}
-			}
-		}
-	}
-
-	std::istream_iterator<std::string> begin(ss);
-	std::istream_iterator<std::string> end;
-	std::vector<std::string> vstrings(begin, end);
-
-	std::vector<float> ret;
-
-	for (auto i: vstrings) {
-		ret.push_back(std::stof(i));
-	}
-
-	return ret;
 
 }
 

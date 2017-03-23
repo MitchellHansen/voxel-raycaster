@@ -29,6 +29,18 @@ struct XYZHasher {
 	}
 };
 
+struct oct_state {
+	
+	int parent_stack_position = 0;
+	uint64_t parent_stack[32] = { 0 };
+
+	uint8_t scale = 0;
+	uint8_t idx_stack[32] = { 0 };
+
+	uint64_t current_descriptor;
+
+};
+
 class Octree {
 public:
 	Octree();
@@ -36,6 +48,7 @@ public:
 
 	uint64_t *blob = new uint64_t[100000];
 
+	uint64_t root_index = 0;
 	uint64_t stack_pos = 0x8000;
 	uint64_t global_pos = 0;
 	
@@ -98,23 +111,10 @@ private:
 	std::stringstream output_stream;
 	// =========================
 
-
 	uint64_t generate_children(sf::Vector3i pos, int dim);
 
 	char* voxel_data = new char[OCT_DIM * OCT_DIM * OCT_DIM];
 
-	double* height_map;
-
-	// 2^k
-	int chunk_radius = 6;
-
-	sf::Vector3i world_to_chunk(sf::Vector3i world_coords) {
-		return sf::Vector3i(
-			world_coords.x / CHUNK_DIM + 1,
-			world_coords.y / CHUNK_DIM + 1,
-			world_coords.z / CHUNK_DIM + 1
-		);
-	}
 };
 
 

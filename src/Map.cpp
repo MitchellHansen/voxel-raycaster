@@ -74,7 +74,7 @@ Map::Map(sf::Vector3i position) {
 		if (rand() % 25 < 2)
 			voxel_data[i] = 1;
 		else
-			voxel_data[i] = 0;
+			voxel_data[i] = 1;
 	}
 
 }
@@ -172,14 +172,14 @@ void Map::generate_octree() {
 	uint64_t tmp = 0;
 
 	// ========= DEBUG ==============
-	// PrettyPrintUINT64(root_node, &output_stream);
-	// output_stream << "    " << OCT_DIM << "    " << counter++ << std::endl;
+	PrettyPrintUINT64(root_node, &output_stream);
+	output_stream << "    " << OCT_DIM << "    " << counter++ << std::endl;
 	// ==============================
 
-	int position = a.copy_to_stack(std::vector<uint64_t>{root_node});
+	a.root_index = a.copy_to_stack(std::vector<uint64_t>{root_node});
 
 	// Dump the debug log
-	// DumpLog(&output_stream, "raw_output.txt");
+	DumpLog(&output_stream, "raw_output.txt");
 
 }
 
@@ -227,20 +227,6 @@ void Map::test_map() {
 	sf::Clock timer;
 	
 	timer.restart();
-	
-	for (int x = 0; x < OCT_DIM; x++) {
-		for (int y = 0; y < OCT_DIM; y++) {
-			for (int z = 0; z < OCT_DIM; z++) {
-
-				sf::Vector3i pos(x, y, z);
-
-				bool arr2 = getVoxelFromOctree(pos);
-			}
-		}
-	}
-
-	std::cout << "Octree linear xyz access : ";
-	std::cout << timer.restart().asMicroseconds() << " microseconds" << std::endl;
 
 	for (int x = 0; x < OCT_DIM; x++) {
 		for (int y = 0; y < OCT_DIM; y++) {
@@ -255,6 +241,22 @@ void Map::test_map() {
 
 	std::cout << "Array linear xyz access : ";
 	std::cout << timer.restart().asMicroseconds() << " microseconds" << std::endl;
+
+	for (int x = 0; x < OCT_DIM; x++) {
+		for (int y = 0; y < OCT_DIM; y++) {
+			for (int z = 0; z < OCT_DIM; z++) {
+
+				sf::Vector3i pos(x, y, z);
+
+				bool arr2 = getVoxelFromOctree(pos);
+			}
+		}
+	}
+
+	std::cout << "Octree linear xyz access : ";
+	std::cout << timer.restart().asMicroseconds() << " microseconds" << std::endl;
+
+
 
 }
 
@@ -293,23 +295,12 @@ uint64_t Octree::copy_to_stack(std::vector<uint64_t> children) {
 
 bool Octree::get_voxel(sf::Vector3i position) {
 
-	// Init the parent stack 
-	int parent_stack_position = 0;
-	uint64_t parent_stack[32] = { 0 };
+	// Struct that holds the state necessary to continue the traversal from the found voxel
+	oct_state state;
 
-	// and push the head node
-	uint64_t head = blob[stack_pos];
-	parent_stack[parent_stack_position] = head;
-
-	// Get the index of the first child of the head node
-	uint64_t index = head & child_pointer_mask;
-
-	// Init the idx stack
-	uint8_t scale = 0;
-	uint8_t idx_stack[32] = { 0 };
-
-	// Init the idx stack (DEBUG)
-	//std::vector<std::bitset<3>> scale_stack(static_cast<uint64_t>(log2(OCT_DIM)));
+	// push the root node to the parent stack
+	uint64_t head = blob[root_index];
+	state.parent_stack[state.parent_stack_position] = head;
 
 	// Set our initial dimension and the position at the corner of the oct to keep track of our position
 	int dimension = OCT_DIM;
@@ -343,10 +334,7 @@ bool Octree::get_voxel(sf::Vector3i position) {
 			mask_index += 1;
 
 			// Set the idx to represent the move
-			idx_stack[scale] |= idx_set_x_mask;
-
-			// Debug
-			//scale_stack.at(static_cast<uint64_t>(log2(OCT_DIM) - log2(dimension))).set(0);
+			state.idx_stack[state.scale] |= idx_set_x_mask;
 
 		}
 		if (position.y >= (dimension / 2) + quad_position.y) {
@@ -355,8 +343,8 @@ bool Octree::get_voxel(sf::Vector3i position) {
 
 			mask_index += 2;
 
-			idx_stack[scale] ^= idx_set_y_mask;
-			//scale_stack.at(static_cast<uint64_t>(log2(OCT_DIM) - log2(dimension))).set(1);
+			state.idx_stack[state.scale] ^= idx_set_y_mask;
+
 		}
 		if (position.z >= (dimension / 2) + quad_position.z) {
 
@@ -364,12 +352,9 @@ bool Octree::get_voxel(sf::Vector3i position) {
 
 			mask_index += 4;
 
-			idx_stack[scale] |= idx_set_z_mask;
-			//scale_stack.at(static_cast<uint64_t>(log2(OCT_DIM) - log2(dimension))).set(2);
-		}
+			state.idx_stack[state.scale] |= idx_set_z_mask;
 
-		uint64_t out1 = (head >> 16) & mask_8[mask_index];
-		uint64_t out2 = (head >> 24) & mask_8[mask_index];
+		}
 
 		// Check to see if we are on a valid oct
 		if ((head >> 16) & mask_8[mask_index]) {
@@ -382,20 +367,20 @@ bool Octree::get_voxel(sf::Vector3i position) {
 			}
 
 			// If all went well and we found a valid non-leaf oct then we will traverse further down the hierarchy
-			scale++;
+			state.scale++;
 			dimension /= 2;
 
 			// Count the number of valid octs that come before and add it to the index to get the position
-			int count = count_bits((uint8_t)(head >> 16) & count_mask_8[mask_index]);
+			// Negate it by one as it counts itself
+			int count = count_bits((uint8_t)(head >> 16) & count_mask_8[mask_index]) - 1;
 
-			// Because we are getting the position at the first child we need to back up one
-			// Or maybe it's because my count bits function is wrong...
-			index = (head & child_pointer_mask) + count - 1;
-			head = blob[index];
+			// access the element at which head points to and then add the specified number of indices
+			// to get to the correct child descriptor
+			head = blob[(head & child_pointer_mask) + count];
 
 			// Increment the parent stack position and put the new oct node as the parent
-			parent_stack_position++;
-			parent_stack[parent_stack_position] = head;
+			state.parent_stack_position++;
+			state.parent_stack[state.parent_stack_position] = head;
 
 		}
 		else {
