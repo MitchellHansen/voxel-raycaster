@@ -1,26 +1,23 @@
 #pragma once
-#include <SFML/Graphics.hpp>
-#include "Vector4.hpp"
-#include <math.h>
-#include <string.h>
+#include <SFML/System/Vector3.hpp>
+#include <SFML/System/Vector2.hpp>
 #include <bitset>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <iterator>
-#include <list>
-#include <algorithm>
 #include <imgui/imgui.h>
 
 
 const double PI = 3.141592653589793238463;
 const float  PI_F = 3.14159265358979f;
+
 struct fps_counter {
 public:
 	fps_counter() {};
 
 	void frame(double delta_time) {
+
 		// Apply 100 units of smoothing
 		if (frame_count == 100) {
 			frame_count = 0;
@@ -53,33 +50,6 @@ private:
 
 };
 
-struct debug_text {
-public:
-	debug_text(int slot, int pixel_spacing, void* data_, std::string prefix_) : data(data_), prefix(prefix_) {
-		if (!f.loadFromFile("../assets/fonts/Arial.ttf")) {
-			std::cout << "couldn't find the fall back Arial font in ../assets/fonts/" << std::endl;
-		}
-		else {
-			t.setFont(f);
-			t.setCharacterSize(20);
-			t.setPosition(static_cast<float>(20), static_cast<float>(slot * pixel_spacing));
-		}
-
-	}
-
-	void draw(sf::RenderWindow *r) {
-		t.setString(prefix + std::to_string(*(float*)data));
-		r->draw(t);
-	}
-
-private:
-	void* data;
-	std::string prefix;
-	sf::Font f;
-	sf::Text t;
-
-};
-
 struct oct_state {
 
 	int parent_stack_position = 0;
@@ -98,7 +68,7 @@ inline sf::Vector3f SphereToCart(sf::Vector2f i) {
 		(1 * sin(i.y) * cos(i.x)),
 		(1 * sin(i.y) * sin(i.x)),
 		(1 * cos(i.y))
-		);
+	);
 	return r;
 };
 
@@ -108,7 +78,7 @@ inline sf::Vector3f SphereToCart(sf::Vector3f i) {
 		(i.x * sin(i.z) * cos(i.y)),
 		(i.x * sin(i.z) * sin(i.y)),
 		(i.x * cos(i.z))
-		);
+	);
 	return r;
 };
 
@@ -119,7 +89,7 @@ inline sf::Vector3f CartToSphere(sf::Vector3f in) {
 		sqrt(in.x * in.x + in.y * in.y + in.z * in.z),
 		atan(in.y / in.x),
 		atan(sqrt(in.x * in.x + in.y * in.y) / in.z)
-		);
+	);
 	return r;
 };
 
@@ -128,8 +98,7 @@ inline sf::Vector2f CartToNormalizedSphere(sf::Vector3f in) {
 	auto r = sf::Vector2f(
 		atan2(sqrt(in.x * in.x + in.y * in.y), in.z), 
 		atan2(in.y, in.x)
-		);
-	
+	);
 	return r;
 }
 
@@ -138,7 +107,7 @@ inline sf::Vector3f FixOrigin(sf::Vector3f base, sf::Vector3f head) {
 }
 
 inline sf::Vector3f Normalize(sf::Vector3f in) {
-	
+
 	float multiplier = sqrt(in.x * in.x + in.y * in.y + in.z * in.z);
 	auto r = sf::Vector3f(
 		in.x / multiplier,
@@ -146,8 +115,8 @@ inline sf::Vector3f Normalize(sf::Vector3f in) {
 		in.z / multiplier
 	);
 	return r;
-
 }
+
 
 inline float DotProduct(sf::Vector3f a, sf::Vector3f b){
 	return a.x * b.x + a.y * b.y + a.z * b.z;
@@ -174,6 +143,7 @@ inline float RadiansToDegrees(float in) {
 }
 
 inline std::string read_file(std::string file_name){
+
 	std::ifstream input_file(file_name);
 
 	if (!input_file.is_open()){
@@ -194,7 +164,6 @@ inline void PrettyPrintUINT64(uint64_t i, std::stringstream* ss) {
 	*ss << "[" << std::bitset<8>(i >> 16) << "]";
 	*ss << "[" << std::bitset<8>(i >> 24) << "]";
 	*ss << "[" << std::bitset<32>(i >> 32) << "]";
-
 }
 
 inline void PrettyPrintUINT64(uint64_t i) {
@@ -204,7 +173,6 @@ inline void PrettyPrintUINT64(uint64_t i) {
 	std::cout << "[" << std::bitset<8>(i >> 16) << "]";
 	std::cout << "[" << std::bitset<8>(i >> 24) << "]";
 	std::cout << "[" << std::bitset<32>(i >> 32) << "]" << std::endl;
-
 }
 
 inline void DumpLog(std::stringstream* ss, std::string file_name) {
@@ -213,9 +181,7 @@ inline void DumpLog(std::stringstream* ss, std::string file_name) {
 	log_file.open(file_name);
 
 	log_file << ss->str();
-
 	log_file.close();
-
 }
 
 #ifdef _MSC_VER
@@ -310,9 +276,8 @@ inline bool IsLeaf(const uint64_t descriptor) {
 		// Only if valid and leaf are contiguous, then it's a leaf
 		if ((descriptor & leaf_mask) == leaf_mask)
 			return true;
-		else
-			return false;
+
 	}
-	else
-		return false;
+
+	return false;
 }

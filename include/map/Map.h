@@ -1,10 +1,12 @@
 #pragma once
 #include <SFML/System/Vector3.hpp>
+#include <SFML/System/Clock.hpp>
 #include <functional>
 #include <bitset>
 #include <queue>
 #include "util.hpp"
 #include "map/Octree.h"
+#include <time.h>
 
 #define _USE_MATH_DEFINES
 #include <math.h>

@@ -13,7 +13,6 @@ Map::Map(uint32_t dimensions) {
 		else
 			voxel_data[i] = 1;
 	}
-
 }
 
 uint64_t Map::generate_children(sf::Vector3i pos, int voxel_scale) {

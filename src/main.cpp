@@ -277,11 +277,11 @@ int main() {
 			handle->set_position(light);
 		}
 
-		light_pos[0] = static_cast<float>(sin(elapsed_time) * 100.0f + 300.0f);
-		light_pos[1] = static_cast<float>(sin(elapsed_time) * 100.0f + 300.0f);
+		//light_pos[0] = static_cast<float>(sin(elapsed_time) * 100.0f + 300.0f);
+		//light_pos[1] = static_cast<float>(sin(elapsed_time) * 100.0f + 300.0f);
 
-		sf::Vector3f light(light_pos[0], light_pos[1], light_pos[2]);
-		handle->set_position(light);
+		//sf::Vector3f light(light_pos[0], light_pos[1], light_pos[2]);
+		//handle->set_position(light);
 
 
 		ImGui::End();
