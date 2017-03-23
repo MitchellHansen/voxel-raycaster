@@ -2,7 +2,7 @@
 #include <SFML/System/Vector3.hpp>
 #include <SFML/System/Vector2.hpp>
 #include "util.hpp"
-#include <Old_Map.h>
+#include <map/Old_Map.h>
 #include <algorithm>
 
 Old_Map::Old_Map(sf::Vector3i dim) {

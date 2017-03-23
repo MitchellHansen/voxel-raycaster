@@ -5,7 +5,7 @@
 #include <map>
 #include <string.h>
 #include "LightController.h"
-#include "Old_Map.h"
+#include "map/Old_Map.h"
 #include "Camera.h"
 
 #ifdef linux

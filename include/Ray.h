@@ -1,7 +1,7 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 #include <iostream>
-#include "Map.h"
+#include "map/Map.h"
 
 class Ray {
 

@@ -28,7 +28,7 @@
 #include <chrono>
 #include <SFML/Graphics.hpp>
 #include <SFML/Network.hpp>
-#include "Old_Map.h"
+#include "map/Old_Map.h"
 #include "raycaster/RayCaster.h"
 #include "raycaster/Hardware_Caster.h"
 #include "Vector4.hpp"
@@ -39,7 +39,6 @@
 #include "LightHandle.h"
 #include "imgui/imgui-SFML.h"
 #include "imgui/imgui.h"
-
 
 const int WINDOW_X = 1440;
 const int WINDOW_Y = 900;
@@ -94,7 +93,7 @@ int main() {
 	// ni.stop_listening_for_clients();
 
 	// =============================
-	Map _map(sf::Vector3i(0, 0, 0));
+	Map _map(32);
 	_map.generate_octree();
 	_map.a.print_block(0);
 	_map.test_map();
@@ -278,8 +277,8 @@ int main() {
 			handle->set_position(light);
 		}
 
-		light_pos[0] = sin(elapsed_time) * 100.0f + 300.0f;
-		light_pos[1] = sin(elapsed_time) * 100.0f + 300.0f;
+		light_pos[0] = static_cast<float>(sin(elapsed_time) * 100.0f + 300.0f);
+		light_pos[1] = static_cast<float>(sin(elapsed_time) * 100.0f + 300.0f);
 
 		sf::Vector3f light(light_pos[0], light_pos[1], light_pos[2]);
 		handle->set_position(light);

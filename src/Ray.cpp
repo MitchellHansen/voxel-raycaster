@@ -1,6 +1,6 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
-#include "Map.h"
+#include "map/Map.h"
 #include <Ray.h>
 #include "util.hpp"
 

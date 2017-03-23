@@ -80,6 +80,18 @@ private:
 
 };
 
+struct oct_state {
+
+	int parent_stack_position = 0;
+	uint64_t parent_stack[32] = { 0 };
+
+	uint8_t scale = 0;
+	uint8_t idx_stack[32] = { 0 };
+
+	uint64_t current_descriptor;
+
+};
+
 inline sf::Vector3f SphereToCart(sf::Vector2f i) {
 
 	auto r = sf::Vector3f(
@@ -237,4 +249,70 @@ inline int count_bits(int64_t v) {
 	//right = ((right + (right >> 4) & 0xF0F0F0F) * 0x1010101) >> 24; // count
 
 	//return left + right;
+}
+
+inline void SetBit(int position, char* c) {
+	*c |= (uint64_t)1 << position;
+}
+
+inline void FlipBit(int position, char* c) {
+	*c ^= (uint64_t)1 << position;
+}
+
+inline int GetBit(int position, char* c) {
+	return (*c >> position) & (uint64_t)1;
+}
+
+inline void SetBit(int position, uint64_t* c) {
+	*c |= (uint64_t)1 << position;
+}
+
+inline void FlipBit(int position, uint64_t* c) {
+	*c ^= (uint64_t)1 << position;
+}
+
+inline int GetBit(int position, uint64_t* c) {
+	return (*c >> position) & (uint64_t)1;
+}
+
+inline bool CheckLeafSign(const uint64_t descriptor) {
+
+	uint64_t valid_mask = 0xFF0000;
+
+	// Return true if all 1's, false if contiguous 0's
+	if ((descriptor & valid_mask) == valid_mask) {
+		return true;
+	}
+	if ((descriptor & valid_mask) == 0) {
+		return false;
+	}
+
+	// Error out, something funky
+	abort();
+}
+
+inline bool CheckContiguousValid(const uint64_t c) {
+	uint64_t bitmask = 0xFF0000;
+	return (c & bitmask) == bitmask;
+}
+
+
+
+inline bool IsLeaf(const uint64_t descriptor) {
+
+	uint64_t leaf_mask = 0xFF000000;
+	uint64_t valid_mask = 0xFF0000;
+
+	// Check for contiguous valid values of either 0's or 1's
+	if (((descriptor & valid_mask) == valid_mask) || ((descriptor & valid_mask) == 0)) {
+
+		// Check for a full leaf mask
+		// Only if valid and leaf are contiguous, then it's a leaf
+		if ((descriptor & leaf_mask) == leaf_mask)
+			return true;
+		else
+			return false;
+	}
+	else
+		return false;
 }
