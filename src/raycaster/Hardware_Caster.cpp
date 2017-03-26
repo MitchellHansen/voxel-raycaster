@@ -10,6 +10,8 @@ Hardware_Caster::~Hardware_Caster() {
 
 int Hardware_Caster::init() {
 
+	query_hardware();
+
 	// Initialize opencl up to the point where we start assigning buffers
 	error = acquire_platform_and_device();
 	if(vr_assert(error, "aquire_platform_and_device"))
@@ -265,6 +267,11 @@ void Hardware_Caster::test_edit_viewport(int width, int height, float v_fov, flo
 	}
 }
 
+
+void Hardware_Caster::gui() {
+
+}
+
 int Hardware_Caster::acquire_platform_and_device() {
 
 	// Get the number of platforms
@@ -420,6 +427,103 @@ int Hardware_Caster::acquire_platform_and_device() {
 	return 1;
 };
 
+
+int Hardware_Caster::query_hardware() {
+
+	// Get the number of platforms
+	cl_uint plt_cnt = 0;
+	clGetPlatformIDs(0, nullptr, &plt_cnt);
+
+	// Fetch the platforms
+	std::map<cl_platform_id, std::vector<device_info>> plt_ids;
+
+	// buffer before map init
+	std::vector<cl_platform_id> plt_buf(plt_cnt);
+	clGetPlatformIDs(plt_cnt, plt_buf.data(), nullptr);
+
+	// Map init
+	for (auto id : plt_buf) {
+		plt_ids.emplace(std::make_pair(id, std::vector<device_info>()));
+	}
+
+	// For each platform, populate its devices
+	for (unsigned int i = 0; i < plt_cnt; i++) {
+
+		cl_uint deviceIdCount = 0;
+		error = clGetDeviceIDs(plt_buf[i], CL_DEVICE_TYPE_ALL, 0, nullptr, &deviceIdCount);
+
+		// Check to see if we even have OpenCL on this machine
+		if (deviceIdCount == 0) {
+			std::cout << "There appears to be no devices, or none at least supporting OpenCL" << std::endl;
+			return OPENCL_NOT_SUPPORTED;
+		}
+
+		// Get the device ids
+		std::vector<cl_device_id> deviceIds(deviceIdCount);
+		error = clGetDeviceIDs(plt_buf[i], CL_DEVICE_TYPE_ALL, deviceIdCount, deviceIds.data(), NULL);
+
+		if (vr_assert(error, "clGetDeviceIDs"))
+			return OPENCL_ERROR;
+
+		for (unsigned int q = 0; q < deviceIdCount; q++) {
+
+			device_info d;
+
+			cl_device_id id = deviceIds[q];
+			
+			clGetDeviceInfo(id, CL_DEVICE_ADDRESS_BITS, sizeof(cl_uint), &d.cl_device_address_bits, NULL);			
+			clGetDeviceInfo(id, CL_DEVICE_AVAILABLE, sizeof(cl_bool), &d.cl_device_available, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_COMPILER_AVAILABLE, sizeof(cl_bool), &d.cl_device_compiler_available, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_ENDIAN_LITTLE, sizeof(cl_bool), &d.cl_device_endian_little, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_ERROR_CORRECTION_SUPPORT, sizeof(cl_bool), &d.cl_device_error_correction_support, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_EXTENSIONS, sizeof(char)*1024, &d.cl_device_extensions, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_GLOBAL_MEM_CACHE_SIZE, sizeof(cl_ulong), &d.cl_device_global_mem_cache_size, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE, sizeof(cl_uint), &d.cl_device_global_mem_cacheline_size, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &d.cl_device_global_mem_size, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_IMAGE_SUPPORT, sizeof(cl_bool), &d.cl_device_image_support, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_IMAGE2D_MAX_HEIGHT, sizeof(size_t), &d.cl_device_image2d_max_height, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_IMAGE2D_MAX_WIDTH, sizeof(size_t), &d.cl_device_image2d_max_width, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_IMAGE3D_MAX_DEPTH, sizeof(size_t), &d.cl_device_image3d_max_depth, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_IMAGE3D_MAX_HEIGHT, sizeof(size_t), &d.cl_device_image3d_max_height, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_IMAGE3D_MAX_WIDTH, sizeof(size_t), &d.cl_device_image3d_max_width, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_LOCAL_MEM_SIZE, sizeof(cl_ulong), &d.cl_device_local_mem_size, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(size_t), &d.cl_device_max_clock_frequency, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(size_t), &d.cl_device_max_compute_units, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_MAX_CONSTANT_ARGS, sizeof(size_t), &d.cl_device_max_constant_args, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE, sizeof(cl_ulong), &d.cl_device_max_constant_buffer_size, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(cl_ulong), &d.cl_device_max_mem_alloc_size, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_MAX_PARAMETER_SIZE, sizeof(size_t), &d.cl_device_max_parameter_size, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_MAX_READ_IMAGE_ARGS, sizeof(cl_uint), &d.cl_device_max_read_image_args, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_MAX_SAMPLERS, sizeof(cl_uint), &d.cl_device_max_samplers, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(cl_ulong), &d.cl_device_max_work_group_size, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, sizeof(cl_ulong), &d.cl_device_max_work_item_dimensions, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof(size_t)*3, &d.cl_device_max_work_item_sizes, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_MAX_WRITE_IMAGE_ARGS, sizeof(cl_uint), &d.cl_device_max_write_image_args, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_MEM_BASE_ADDR_ALIGN, sizeof(cl_uint), &d.cl_device_mem_base_addr_align, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_MIN_DATA_TYPE_ALIGN_SIZE, sizeof(cl_uint), &d.cl_device_min_data_type_align_size, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_NAME, sizeof(char)*128, &d.cl_device_name, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_PLATFORM, sizeof(cl_platform_id), &d.cl_device_platform, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_PREFERRED_GLOBAL_ATOMIC_ALIGNMENT, sizeof(cl_uint), &d.cl_device_preferred_vector_width_char, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_PREFERRED_VECTOR_WIDTH_SHORT, sizeof(cl_uint), &d.cl_device_preferred_vector_width_short, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_PREFERRED_VECTOR_WIDTH_INT, sizeof(cl_uint), &d.cl_device_preferred_vector_width_int, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_PREFERRED_VECTOR_WIDTH_LONG, sizeof(cl_uint), &d.cl_device_preferred_vector_width_long, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_PREFERRED_VECTOR_WIDTH_FLOAT, sizeof(cl_uint), &d.cl_device_preferred_vector_width_float, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_PREFERRED_VECTOR_WIDTH_DOUBLE, sizeof(cl_uint), &d.cl_device_preferred_vector_width_double, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_PROFILE, sizeof(char) * 256, &d.cl_device_profile, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_PROFILING_TIMER_RESOLUTION, sizeof(size_t), &d.cl_device_profiling_timer_resolution, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_TYPE, sizeof(cl_device_type), &d.cl_device_type, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_VENDOR, sizeof(char)*128, &d.cl_device_vendor, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_VENDOR_ID, sizeof(cl_uint), &d.cl_device_vendor_id, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_VERSION, sizeof(char)*128, &d.cl_device_version, NULL);
+			clGetDeviceInfo(id, CL_DRIVER_VERSION, sizeof(char)*128, &d.cl_driver_version, NULL);
+
+			plt_ids.at(d.cl_device_platform).push_back(d);
+		}
+	}
+
+	return 1;
+}
+
 int Hardware_Caster::create_shared_context() {
 
 	// Hurray for standards!
@@ -526,7 +630,7 @@ int Hardware_Caster::compile_kernel(std::string kernel_source, bool is_path, std
 
 	// Try and build the program
 	// "-cl-finite-math-only -cl-fast-relaxed-math -cl-unsafe-math-optimizations"
-	error = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
+	error = clBuildProgram(program, 1, &device_id, "-cl-finite-math-only -cl-fast-relaxed-math -cl-unsafe-math-optimizations", NULL, NULL);
 
 	// Check to see if it errored out
 	if (vr_assert(error, "clBuildProgram")) {

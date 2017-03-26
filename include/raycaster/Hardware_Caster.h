@@ -43,6 +43,54 @@ struct device {
 	bool cl_gl_sharing = false;
 };
 
+struct device_info {
+	cl_uint cl_device_address_bits;
+	cl_bool cl_device_available;
+	cl_bool cl_device_compiler_available;
+	cl_bool cl_device_endian_little;
+	cl_bool cl_device_error_correction_support;
+	char cl_device_extensions[1024];
+	cl_ulong cl_device_global_mem_cache_size;
+	cl_uint cl_device_global_mem_cacheline_size;
+	cl_ulong cl_device_global_mem_size;
+	cl_bool cl_device_image_support;
+	size_t cl_device_image2d_max_height;
+	size_t cl_device_image2d_max_width;
+	size_t cl_device_image3d_max_depth;
+	size_t cl_device_image3d_max_height;
+	size_t cl_device_image3d_max_width;
+	cl_ulong cl_device_local_mem_size;
+	cl_uint cl_device_max_clock_frequency;
+	cl_uint cl_device_max_compute_units;
+	cl_uint cl_device_max_constant_args;
+	cl_ulong cl_device_max_constant_buffer_size;
+	cl_ulong cl_device_max_mem_alloc_size;
+	size_t cl_device_max_parameter_size;
+	cl_uint cl_device_max_read_image_args;
+	cl_uint cl_device_max_samplers;
+	size_t cl_device_max_work_group_size;
+	cl_uint cl_device_max_work_item_dimensions;
+	size_t cl_device_max_work_item_sizes[3];
+	cl_uint cl_device_max_write_image_args;
+	cl_uint cl_device_mem_base_addr_align;
+	cl_uint cl_device_min_data_type_align_size;
+	char cl_device_name[128];
+	cl_platform_id cl_device_platform;
+	cl_uint cl_device_preferred_vector_width_char;
+	cl_uint cl_device_preferred_vector_width_short;
+	cl_uint cl_device_preferred_vector_width_int;
+	cl_uint cl_device_preferred_vector_width_long;
+	cl_uint cl_device_preferred_vector_width_float;
+	cl_uint cl_device_preferred_vector_width_double;
+	char cl_device_profile[256];
+	size_t cl_device_profiling_timer_resolution;
+	cl_device_type cl_device_type;
+	char cl_device_vendor[128];
+	cl_uint cl_device_vendor_id;
+	char cl_device_version[128];
+	char cl_driver_version[128];
+};
+
 struct raycaster_settings {
 	
 };
@@ -98,12 +146,15 @@ public:
 	// Modify the viewport matrix
 	void test_edit_viewport(int width, int height, float v_fov, float h_fov);
 
+	void gui();
 
 private:
 
 	// Iterate the devices available and choose the best one
 	// Also checks for the sharing extension
 	int acquire_platform_and_device();
+
+	int query_hardware();
 
 	// With respect to the individual platforms implementation of sharing
 	// create a shared cl_gl context

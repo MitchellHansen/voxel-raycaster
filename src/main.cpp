@@ -40,12 +40,12 @@
 #include "imgui/imgui-SFML.h"
 #include "imgui/imgui.h"
 
-const int WINDOW_X = 1440;
-const int WINDOW_Y = 900;
+const int WINDOW_X = 1536;
+const int WINDOW_Y = 1024;
 const int WORK_SIZE = WINDOW_X * WINDOW_Y;
 
-const int MAP_X = 512;
-const int MAP_Y = 512;
+const int MAP_X = 256;
+const int MAP_Y = 256;
 const int MAP_Z = 256;
 
 float elap_time(){
@@ -97,14 +97,14 @@ int main() {
 	_map.generate_octree();
 	_map.a.print_block(0);
 	_map.test_map();
-	std::cin.get();
-	return 0;
+	//std::cin.get();
+	//return 0;
 	// =============================
 
     sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
     window.setMouseCursorVisible(false);
 	window.setKeyRepeatEnabled(false);
-	window.setFramerateLimit(60);
+	window.setFramerateLimit(120);
 	window.setVerticalSyncEnabled(false);
 	
 	ImGui::SFML::Init(window);
@@ -219,7 +219,18 @@ int main() {
 		fps.frame(delta_time);
 		fps.draw();
 
-		ImGui::Begin("Camera");
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar;
+		bool window_show = true;
+		ImGui::Begin("Camera", &window_show, window_flags);
+
+		if (ImGui::BeginMenuBar())
+		{
+			if (ImGui::BeginMenu("Menu"))
+			{
+				ImGui::EndMenu();
+			}
+			ImGui::EndMenuBar();
+		}
 		
 		ImGui::Columns(2);
 		
@@ -277,15 +288,26 @@ int main() {
 			handle->set_position(light);
 		}
 
+		// Menu
+
+		
+
+
+		if (ImGui::CollapsingHeader("Window options"))
+		{
+			if (ImGui::TreeNode("Style"))
+			{
+				ImGui::ShowStyleEditor();
+				ImGui::TreePop();
+			}
+		}
 		//light_pos[0] = static_cast<float>(sin(elapsed_time) * 100.0f + 300.0f);
 		//light_pos[1] = static_cast<float>(sin(elapsed_time) * 100.0f + 300.0f);
 
 		//sf::Vector3f light(light_pos[0], light_pos[1], light_pos[2]);
 		//handle->set_position(light);
 
-
 		ImGui::End();
-
 
 		ImGui::Render();
 
