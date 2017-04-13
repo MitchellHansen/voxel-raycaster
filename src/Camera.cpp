@@ -201,3 +201,11 @@ sf::Vector3f Camera::get_position() {
 sf::Vector2f Camera::get_direction() {
 	return direction;
 }
+
+void Camera::setSpeed(float speed) {
+	default_impulse = speed;;
+}
+
+float Camera::getSpeed() {
+	return default_impulse;
+}

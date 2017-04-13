@@ -1,10 +1,12 @@
 
 float DistanceBetweenPoints(float3 a, float3 b) {
-	return sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2) + pow(a.z - b.z, 2));
+	return fast_distance(a, b);
+	//return sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2) + pow(a.z - b.z, 2));
 }
 
 float Distance(float3 a) {
-	return sqrt(pow(a.x, 2) + pow(a.y, 2) + pow(a.z, 2));
+	return fast_length(a);
+	//return sqrt(pow(a.x, 2) + pow(a.y, 2) + pow(a.z, 2));
 }
 
 // Naive incident ray light
@@ -16,6 +18,8 @@ float4 white_light(float4 input, float3 light, int3 mask) {
 			normalize(convert_float3(mask * (-mask)))
 			)
 		) / 32;
+
+	input.w += 0.25f;
 
 	return input;
 
@@ -41,6 +45,10 @@ float4 view_light(float4 in_color, float3 light, float4 light_color, float3 view
 		float3 halfwayVector = normalize(normalize(light) + normalize(view));
 		float specTmp = max(dot(normalize(convert_float3(mask)), halfwayVector), 0.0f);
 		in_color += pow(specTmp, 8.0f) * light_color * 0.5f / d;
+	}
+
+	if (in_color.w > 1.0){
+		in_color.xyz *= in_color.w;
 	}
 
 	return in_color;
@@ -99,6 +107,8 @@ bool cast_light_intersection_ray(
 
 	int3 face_mask = { 0, 0, 0 };
 
+	int length_cutoff = 0;
+
 	// Andrew Woo's raycasting algo
 	do {
 
@@ -122,6 +132,9 @@ bool cast_light_intersection_ray(
 
 		if (voxel_data != 0)
 			return true;
+
+		if (length_cutoff > 300)
+			return false;
 
 	//} while (any(isless(intersection_t, (float3)(distance_to_light - 1))));
 	} while (intersection_t.x < distance_to_light - 1 ||
@@ -248,6 +261,8 @@ __kernel void raycaster(
         // If we hit a voxel
         int index = voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z));
         int voxel_data = map[index];
+
+		// Debug, add the light position
 		if (all(voxel == convert_int3((float3)(lights[4], lights[5], lights[6]-3))))
 			voxel_data = 1;
 
@@ -257,72 +272,114 @@ __kernel void raycaster(
 
 			float3 face_position = (float)(0);
 			float2 tile_face_position = (float)(0);
-
+			float3 sign = (float3)(1.0f, 1.0f, 1.0f);
 
 			// First determine the percent of the way the ray is towards the next intersection_t
 			// in relation to the xyz position on the plane
 			if (face_mask.x == -1) {
 
+				sign.x *= -1.0;
 				float z_percent = (intersection_t.z - (intersection_t.x - delta_t.x)) / delta_t.z;
 				float y_percent = (intersection_t.y - (intersection_t.x - delta_t.x)) / delta_t.y;
 
 				// Since we intersected face x, we know that we are at the face (1.0)
-				// Not entirely sure what is causing the 1.0 vs 1.001 rendering bug
-				face_position = (float3)(1.001f, y_percent, z_percent);
+				// I think the 1.001f rendering bug is the ray thinking it's within the voxel
+				// even though it's sitting on the very edge
+				face_position = (float3)(1.0001f, y_percent, z_percent);
 				tile_face_position = (float2)(y_percent, z_percent);
 			}
 			else if (face_mask.y == -1) {
 
+				sign.y *= -1.0;
 				float x_percent = (intersection_t.x - (intersection_t.y - delta_t.y)) / delta_t.x;
 				float z_percent = (intersection_t.z - (intersection_t.y - delta_t.y)) / delta_t.z;
 
-				face_position = (float3)(x_percent, 1.001f, z_percent);
+				face_position = (float3)(x_percent, 1.0001f, z_percent);
 				tile_face_position = (float2)(x_percent, z_percent);
 			}
 
 			else if (face_mask.z == -1) {
 
+				//sign.z *= -1.0;
 				float x_percent = (intersection_t.x - (intersection_t.z - delta_t.z)) / delta_t.x;
 				float y_percent = (intersection_t.y - (intersection_t.z - delta_t.z)) / delta_t.y;
 
-				face_position = (float3)(x_percent, y_percent, 1.001f);
+				face_position = (float3)(x_percent, y_percent, 1.0001f);
 				tile_face_position = (float2)(x_percent, y_percent);
 
 			}
 
-			// We now need to account for the ray wanting to skip the axis in which
-			// it flips its sign
 
-			// TODO: improve this
+
+			// Because the raycasting process is agnostic to the quadrant
+			// it's working in, we need to transpose the sign over to the face positions.
+			// If we don't it will think that it is always working in the (1, 1, 1) quadrant
+			// and will just "copy" the quadrant. This includes shadows as they use the face_position
+			// in order to cast the intersection ray!!
+
+
 
 			if (ray_dir.x > 0) {
-				face_position.x = -face_position.x + 1;
+				face_position.x = -face_position.x + 1.0;
+				//face_position.x = -face_position.x + 1;
 				//tile_face_position.x = -tile_face_position.x + 1.0;
 			}
 			if (ray_dir.x < 0) {
 				//face_position.x = face_position.x + 0;
-				//tile_face_position.x = tile_face_position.x;
+
+
+				// This cures the Z semmetry on the X axis
+				tile_face_position.x = -tile_face_position.x + 1.0;
 			}
 
 			if (ray_dir.y > 0){
+
 				face_position.y =  - face_position.y + 1;
 				//tile_face_position.y = -tile_face_position.y + 1.0;
 			}
 			if (ray_dir.y < 0) {
+
 				//face_position.y = face_position.y + 0;
-				//tile_face_position.y = -tile_face_position.y + 1.0;
+
+				// This cures the Y semmetry on the Z tile faces
+				tile_face_position.x = 1.0 - tile_face_position.x;
+
+				// We run into the Hairy ball problem, so we need to define
+				// a special case for the zmask
+				if (face_mask.z == -1) {
+					tile_face_position.x = 1.0 - tile_face_position.x;
+					tile_face_position.y = 1.0 - tile_face_position.y;
+				}
 			}
 
 			if (ray_dir.z > 0) {
-				face_position.z =  - face_position.z + 1;
+
+				face_position.z = - face_position.z + 1;
 				//tile_face_position.y = tile_face_position.y + 0.0;
 			}
 
 			if (ray_dir.z < 0) {
+				//sign.z *= -1.0;
+			//	face_position.z = - face_position.z + 1;
 				//face_position.z = face_position.z + 0;
+				tile_face_position.y = -tile_face_position.y + 1.0;
 			}
 
+			if (voxel_data == 6){
+			//	intersection_t = (1, 1, 1) - intersection_t;
+				//intersection_t += delta_t * -convert_float3(isless(intersection_t, 0));
+				float3 ray_pos = (convert_float3(voxel) + face_position);
+				ray_dir *= sign;
+				delta_t = fabs(1.0f / ray_dir);
+				float3 offset = ((ray_pos)-floor(ray_pos)) * convert_float3(voxel_step);
+				intersection_t = delta_t * offset;
 
+				// for negative values, wrap around the delta_t
+				intersection_t += delta_t * -convert_float3(isless(intersection_t, 0));
+				voxel_step = (1, 1, 1);//convert_int3(sign);
+				voxel_step *= (ray_dir > 0) - (ray_dir < 0);
+				continue;
+			}
 			// Now either use the face position to retrieve a texture sample, or
 			// just a plain color for the voxel color
 
@@ -331,17 +388,23 @@ __kernel void raycaster(
 			}
 			else if (voxel_data == 5) {
 				float2 tile_size = convert_float2(*atlas_dim / *tile_dim);
-				voxel_color = read_imagef(texture_atlas, convert_int2(tile_face_position * tile_size) + convert_int2((float2)(3, 0) * tile_size));
+				voxel_color = read_imagef(
+					texture_atlas,
+					convert_int2(tile_face_position * tile_size) +
+					convert_int2((float2)(3, 0) * tile_size)
+				);
+
 				voxel_color.w = 0.0f;
 					//voxel_color = (float4)(0.25, 0.52, 0.30, 0.1);
 			}
 			else if (voxel_data == 1) {
 				voxel_color = (float4)(0.929f, 0.957f, 0.027f, 0.0f);
 			}
-			//else {
-			//	voxel_color = (float4)(1.0f, 0.0f, 0.0f, 0.0f);
-			//}
-			//
+			else {
+				voxel_color = (float4)(1.0f, 0.0f, 0.0f, 0.0f);
+			}
+
+
 
 			if (cast_light_intersection_ray(
 				map,
@@ -353,7 +416,7 @@ __kernel void raycaster(
 			)) {
 
 				// If the light ray intersected an object on the way to the light point
-				float4 ambient_color = white_light(voxel_color, (float3)(256.0f, 256.0f, 256.0f), face_mask);
+				float4 ambient_color = white_light(voxel_color, (float3)(1.0f, 1.0f, 1.0f), face_mask);
 				write_imagef(image, pixel, ambient_color);
 				return;
 			}
@@ -380,7 +443,7 @@ __kernel void raycaster(
 
         dist++;
 
-    } while (dist / 700.0f < 1);
+    } while (dist < 700.0f);
 
 
 	write_imagef(image, pixel, white_light(mix(fog_color, (float4)(0.40, 0.00, 0.40, 0.2), 1.0 - max(dist / 700.0f, (float)0)), (float3)(lights[7], lights[8], lights[9]), face_mask));

@@ -34,6 +34,8 @@ public:
 	sf::Vector3f get_position();
 	sf::Vector2f get_direction();
 
+	void setSpeed(float speed);
+	float getSpeed();
 
 	void recieve_event(VrEventPublisher* p, std::unique_ptr<vr::Event> event) override;
 

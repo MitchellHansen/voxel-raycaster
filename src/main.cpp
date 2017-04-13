@@ -74,6 +74,8 @@ sf::Texture window_texture;
 // - Diffuse fog hard cut off
 // - Infinite light distance, no inverse square
 // - Inconsistent lighting constants. GUI manipulation
+// - Far pointers, attachment lookup and aux buffer, contour lookup & masking
+
 
 int main() {
 
@@ -87,10 +89,6 @@ int main() {
 	// Do nothing, extension wrangling handled by macOS
 	#endif 
 
-	// The socket listener for interacting with the TCP streaming android controller
-	// NetworkInput ni;
-	// ni.listen_for_clients(5000);
-	// ni.stop_listening_for_clients();
 
 	// =============================
 	Map _map(32);
@@ -184,13 +182,16 @@ int main() {
 	float light_pos[4] = { 100, 100, 30 };
 	char screenshot_buf[128]{0};
 
+	bool paused = false;
+	float camera_speed = 1.0;
+
 	while (window.isOpen()) {
 
 		input_handler.consume_sf_events(&window);
 		input_handler.handle_held_keys();
 		input_handler.dispatch_events();
 
-        // Time keeping
+		// Time keeping
 		elapsed_time = elap_time();
 		delta_time = elapsed_time - current_time;
 		current_time = elapsed_time;
@@ -198,21 +199,26 @@ int main() {
 			delta_time = 0.2f;
 		accumulator_time += delta_time;
 		while ((accumulator_time - step_size) >= step_size) {
-            accumulator_time -= step_size;
+			accumulator_time -= step_size;
 
-            // ==== DELTA TIME LOCKED ====
-        }
+			// ==== DELTA TIME LOCKED ====
+		}
 
 		// ==== FPS LOCKED ====
+		
+		window.clear(sf::Color::Black);
 
 		ImGui::SFML::Update(window, sf_delta_clock.restart());
-		camera->update(delta_time);
-		handle->update(delta_time);
 
-		// Run the raycast
-		raycaster->compute();
+		if (!paused) {
+			camera->update(delta_time);
+			handle->update(delta_time);
 
-		window.clear(sf::Color::Black);
+			// Run the raycast
+			raycaster->compute();
+			
+		}
+
 		raycaster->draw(&window);
 
 		// Give the frame counter the frame time and draw the average frame time
@@ -274,6 +280,10 @@ int main() {
 		if (ImGui::Button("Recompile kernel")) {
 			while (raycaster->debug_quick_recompile() != 0);
 		}
+		if (ImGui::Button("Pause")) {
+			paused = !paused;
+		}
+
 		ImGui::End();
 
 		ImGui::Begin("Lights");
@@ -283,15 +293,14 @@ int main() {
 			handle->set_rgbi(light);
 		}
 
+		if (ImGui::SliderFloat("Camera Speed", &camera_speed, 0, 4)) {
+			camera->setSpeed(camera_speed);
+		}
+
 		if (ImGui::SliderFloat3("Position", light_pos, 0, MAP_X)) {
 			sf::Vector3f light(light_pos[0], light_pos[1], light_pos[2]);
 			handle->set_position(light);
 		}
-
-		// Menu
-
-		
-
 
 		if (ImGui::CollapsingHeader("Window options"))
 		{
@@ -301,11 +310,6 @@ int main() {
 				ImGui::TreePop();
 			}
 		}
-		//light_pos[0] = static_cast<float>(sin(elapsed_time) * 100.0f + 300.0f);
-		//light_pos[1] = static_cast<float>(sin(elapsed_time) * 100.0f + 300.0f);
-
-		//sf::Vector3f light(light_pos[0], light_pos[1], light_pos[2]);
-		//handle->set_position(light);
 
 		ImGui::End();
 

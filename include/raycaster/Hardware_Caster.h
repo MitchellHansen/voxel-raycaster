@@ -8,6 +8,7 @@
 #include "LightController.h"
 #include "map/Old_Map.h"
 #include "Camera.h"
+#include <GL/glew.h>
 
 #ifdef linux
 #include <CL/cl.h>

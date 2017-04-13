@@ -8,6 +8,11 @@
 #include "raycaster/Hardware_Caster.h"
 #include "LightHandle.h"
 
+
+// Lighting is a bit tricky as we need to 
+
+
+
 struct LightPrototype {
 	
 	LightPrototype(
