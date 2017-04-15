@@ -4,7 +4,7 @@
 #include <SFML/Window/Mouse.hpp>
 #include <SFML/Window/Joystick.hpp>
 #include <SFML/Window/Sensor.hpp>
-
+#include <memory>
 
 
 namespace vr {
@@ -14,11 +14,11 @@ namespace vr {
 	// the ability to easily extend the class to contain
 	// even more event types.
 
-	// A result of getting rid of the union and extracting
+	// An annoying result of getting rid of the union and extracting
 	// event types into individual classes is the fact that
 	// there is going to be a lot of repeat code i.e 
 	// KeyPressed, KeyHeld, and KeyReleased all hold the same
-	// data, it's just their names that are different
+	// data, it's just their names that are different. 
 
 	class Event {
 	public:
@@ -63,20 +63,33 @@ namespace vr {
 		Event(EventType type) : type(type) {
 			
 		};
+		virtual ~Event() {};
+
+		virtual std::unique_ptr<Event> clone() = 0;
 
 		EventType type;
-
+	private:
+		
 	};
+
+	
 
 	class Closed : public Event {
 	public:
 		Closed() : Event(vr::Event::EventType::Closed) {};
+		~Closed() override {};
+		std::unique_ptr<Event> clone() override { 
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::Closed>(vr::Closed())); 
+		};
 	};
 
 	class Resized : public Event {
 	public:
 		Resized(unsigned int width, unsigned int height) : 
-			width(width), height(height), Event(vr::Event::EventType::Resized) {};
+			Event(vr::Event::EventType::Resized), width(width), height(height) {};
+		std::unique_ptr<Event> clone() override { 
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::Resized>(vr::Resized(width, height))); 
+		};
 		unsigned int		width;
 		unsigned int		height;
 	};
@@ -84,16 +97,25 @@ namespace vr {
 	class LostFocus : public Event {
 	public:
 		LostFocus() : Event(vr::Event::EventType::LostFocus) { };
+		std::unique_ptr<Event> clone() override { 
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::LostFocus>(vr::LostFocus())); 
+		};
 	};
 	class GainedFocus : public Event {
 	public:
 		GainedFocus() : Event(vr::Event::EventType::GainedFocus) {};
+		std::unique_ptr<Event> clone() override { 
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::GainedFocus>(vr::GainedFocus())); 
+		};
 	};
 	
 	class TextEntered : public Event {
 	public:
 		TextEntered(sf::Uint32 unicode) : 
-			unicode(unicode), Event(vr::Event::EventType::TextEntered) {};
+			Event(vr::Event::EventType::TextEntered), unicode(unicode) {};
+		std::unique_ptr<Event> clone() override { 
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::TextEntered>(vr::TextEntered(unicode))); 
+		};
 
 		sf::Uint32 unicode;
 	};
@@ -101,7 +123,10 @@ namespace vr {
 	class KeyPressed : public Event {
 	public:
 		KeyPressed(sf::Keyboard::Key code, bool alt, bool control, bool shift, bool system ) :
-			code(code), alt(alt), control(control), shift(shift), system(system), Event(vr::Event::EventType::KeyPressed) {};
+			Event(vr::Event::EventType::KeyPressed), code(code), alt(alt), control(control), shift(shift), system(system) {};
+		std::unique_ptr<Event> clone() override { 
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::KeyPressed>(vr::KeyPressed(code, alt, control, shift, system)));
+		};
 
 		sf::Keyboard::Key	code;
 		bool				alt;
@@ -113,7 +138,10 @@ namespace vr {
 	class KeyHeld : public Event {
 	public:
 		KeyHeld(sf::Keyboard::Key code, bool alt, bool control, bool shift, bool system) :
-			code(code), alt(alt), control(control), shift(shift), system(system), Event(vr::Event::EventType::KeyHeld) {};
+			Event(vr::Event::EventType::KeyHeld), code(code), alt(alt), control(control), shift(shift), system(system) {};
+		std::unique_ptr<Event> clone() override { 
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::KeyHeld>(vr::KeyHeld(code, alt, control, shift, system)));
+		};
 
 		sf::Keyboard::Key	code;
 		bool				alt;
@@ -125,7 +153,10 @@ namespace vr {
 	class KeyReleased : public Event {
 	public:
 		KeyReleased(sf::Keyboard::Key code, bool alt, bool control, bool shift, bool system) :
-			code(code), alt(alt), control(control), shift(shift), system(system), Event(vr::Event::EventType::KeyReleased) {};
+			Event(vr::Event::EventType::KeyReleased), code(code), alt(alt), control(control), shift(shift), system(system) {};
+		std::unique_ptr<Event> clone() override { 
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::KeyReleased>(vr::KeyReleased(code, alt, control, shift, system)));
+		};
 
 		sf::Keyboard::Key	code;
 		bool				alt;
@@ -138,12 +169,18 @@ namespace vr {
 	class MouseWheelMoved : public Event {
 	public:
 		MouseWheelMoved() : Event(vr::Event::EventType::MouseWheelMoved) {};
+		std::unique_ptr<Event> clone() override { 
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::MouseWheelMoved>(vr::MouseWheelMoved()));
+		};
 	};
 
 	class MouseWheelScrolled : public Event {
 	public:
 		MouseWheelScrolled(sf::Mouse::Wheel wheel, float delta, int x, int y) :
-			wheel(wheel), delta(delta), x(x), y(y), Event(vr::Event::EventType::MouseWheelScrolled) {};
+			Event(vr::Event::EventType::MouseWheelScrolled), wheel(wheel), delta(delta), x(x), y(y) {};
+		std::unique_ptr<Event> clone() override { 
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::MouseWheelScrolled>(vr::MouseWheelScrolled(wheel, delta, x, y)));
+		};
 
 		sf::Mouse::Wheel	wheel;
 		float				delta;
@@ -154,7 +191,10 @@ namespace vr {
 	class MouseButtonPressed : public Event {
 	public:
 		MouseButtonPressed(sf::Mouse::Button button, int x, int y) :
-			button(button), x(x), y(y), Event(vr::Event::EventType::MouseButtonPressed) {};
+			Event(vr::Event::EventType::MouseButtonPressed), button(button), x(x), y(y) {};
+		std::unique_ptr<Event> clone() override { 
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::MouseButtonPressed>(vr::MouseButtonPressed(button, x ,y)));
+		};
 
 		sf::Mouse::Button	button;
 		int					x;
@@ -164,7 +204,10 @@ namespace vr {
 	class MouseButtonHeld : public Event {
 	public:
 		MouseButtonHeld(sf::Mouse::Button button, int x, int y) :
-			button(button), x(x), y(y), Event(vr::Event::EventType::MouseButtonHeld) {};
+			Event(vr::Event::EventType::MouseButtonHeld), button(button), x(x), y(y) {};
+		std::unique_ptr<Event> clone() override { 
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::MouseButtonHeld>(vr::MouseButtonHeld(button, x, y)));
+		};
 
 		sf::Mouse::Button	button;
 		int					x;
@@ -174,7 +217,10 @@ namespace vr {
 	class MouseButtonReleased : public Event {
 	public:
 		MouseButtonReleased(sf::Mouse::Button button, int x, int y) :
-			button(button), x(x), y(y), Event(vr::Event::EventType::MouseButtonReleased) {};
+			Event(vr::Event::EventType::MouseButtonReleased), button(button), x(x), y(y) {};
+		std::unique_ptr<Event> clone() override {
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::MouseButtonReleased>(vr::MouseButtonReleased(button, x, y)));
+		};
 
 		sf::Mouse::Button	button;
 		int					x;
@@ -184,7 +230,10 @@ namespace vr {
 	class MouseMoved : public Event {
 	public:
 		MouseMoved(int x, int y) :
-			x(x), y(y), Event(vr::Event::EventType::MouseMoved) {};
+			Event(vr::Event::EventType::MouseMoved), x(x), y(y) {};
+		std::unique_ptr<Event> clone() override { 
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::MouseMoved>(vr::MouseMoved(x, y))); 
+		};
 
 		int					x;
 		int					y;
@@ -193,7 +242,10 @@ namespace vr {
 	class MouseEntered : public Event {
 	public:
 		MouseEntered(int x, int y) :
-			x(x), y(y), Event(vr::Event::EventType::MouseEntered) {};
+			Event(vr::Event::EventType::MouseEntered), x(x), y(y) {};
+		std::unique_ptr<Event> clone() override { 
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::MouseEntered>(vr::MouseEntered(x, y))); 
+		};
 
 		int					x;
 		int					y;
@@ -202,7 +254,10 @@ namespace vr {
 	class MouseLeft : public Event {
 	public:
 		MouseLeft(int x, int y) :
-			x(x), y(y), Event(vr::Event::EventType::MouseLeft) {};
+			Event(vr::Event::EventType::MouseLeft), x(x), y(y) {};
+		std::unique_ptr<Event> clone() override { 
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::MouseLeft>(vr::MouseLeft(x, y))); 
+		};
 
 		int					x;
 		int					y;
@@ -211,7 +266,10 @@ namespace vr {
 	class JoystickButtonPressed : public Event {
 	public:
 		JoystickButtonPressed(unsigned int joystickId, unsigned int button) :
-			joystickId(joystickId), button(button), Event(vr::Event::EventType::JoystickButtonPressed) {};
+			Event(vr::Event::EventType::JoystickButtonPressed), joystickId(joystickId), button(button) {};
+		std::unique_ptr<Event> clone() override { 
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::JoystickButtonPressed>(vr::JoystickButtonPressed(joystickId, button))); 
+		};
 
 		unsigned int		joystickId;
 		unsigned int		button;
@@ -220,7 +278,10 @@ namespace vr {
 	class JoystickButtonHeld : public Event {
 	public:
 		JoystickButtonHeld(unsigned int joystickId, unsigned int button) :
-			joystickId(joystickId), button(button), Event(vr::Event::EventType::JoystickButtonHeld) {};
+			Event(vr::Event::EventType::JoystickButtonHeld), joystickId(joystickId), button(button) {};
+		std::unique_ptr<Event> clone() override { 
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::JoystickButtonHeld>(vr::JoystickButtonHeld(joystickId, button)));
+		};
 
 		unsigned int		joystickId;
 		unsigned int		button;
@@ -230,6 +291,9 @@ namespace vr {
 	public:
 		JoystickButtonReleased(unsigned int joystickId, unsigned int button) :
 			joystickId(joystickId), button(button), Event(vr::Event::EventType::JoystickButtonReleased) {};
+		std::unique_ptr<Event> clone() override { 
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::JoystickButtonReleased>(vr::JoystickButtonReleased(joystickId, button)));
+		};
 
 		unsigned int		joystickId;
 		unsigned int		button;
@@ -239,6 +303,9 @@ namespace vr {
 	public:
 		JoystickMoved(sf::Joystick::Axis axis, unsigned int joystickId, float position) :
 			axis(axis), joystickId(joystickId), position(position), Event(vr::Event::EventType::JoystickMoved) {};
+		std::unique_ptr<Event> clone() override { 
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::JoystickMoved>(vr::JoystickMoved(axis, joystickId, position))); 
+		};
 
 		sf::Joystick::Axis	axis;
 		unsigned int		joystickId;
@@ -248,7 +315,10 @@ namespace vr {
 	class JoystickConnected : public Event {
 	public:
 		JoystickConnected(unsigned int joystickId) :
-			joystickId(joystickId), Event(vr::Event::EventType::JoystickConnected) {};
+			Event(vr::Event::EventType::JoystickConnected), joystickId(joystickId) {};
+		std::unique_ptr<Event> clone() override { 
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::JoystickConnected>(vr::JoystickConnected(joystickId))); 
+		};
 
 		unsigned int		joystickId;
 	};
@@ -256,7 +326,10 @@ namespace vr {
 	class JoystickDisconnected : public Event {
 	public:
 		JoystickDisconnected(unsigned int joystickId) :
-			joystickId(joystickId), Event(vr::Event::EventType::JoystickDisconnected) {};
+			Event(vr::Event::EventType::JoystickDisconnected), joystickId(joystickId) {};
+		std::unique_ptr<Event> clone() override {
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::JoystickDisconnected>(vr::JoystickDisconnected(joystickId))); 
+		};
 
 		unsigned int		joystickId;
 	};
@@ -264,8 +337,11 @@ namespace vr {
 	class TouchBegan : public Event {
 	public:
 		TouchBegan(unsigned int finger, int x, int y) :
-			finger(finger), x(x), y(y), Event(vr::Event::EventType::TouchBegan) {};
-				
+			Event(vr::Event::EventType::TouchBegan), finger(finger), x(x), y(y) {};
+		std::unique_ptr<Event> clone() override { 
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::TouchBegan>(vr::TouchBegan(finger, x, y)));
+		};
+
 		unsigned int		finger;
 		int					x;
 		int					y;
@@ -274,7 +350,10 @@ namespace vr {
 	class TouchMoved : public Event {
 	public:
 		TouchMoved(unsigned int finger, int x, int y) :
-			finger(finger), x(x), y(y), Event(vr::Event::EventType::TouchMoved) {};
+			Event(vr::Event::EventType::TouchMoved), finger(finger), x(x), y(y) {};
+		std::unique_ptr<Event> clone() override {
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::TouchMoved>(vr::TouchMoved(finger, x, y))); 
+		};
 
 		unsigned int		finger;
 		int					x;
@@ -284,7 +363,10 @@ namespace vr {
 	class TouchEnded : public Event {
 	public:
 		TouchEnded(unsigned int finger, int x, int y) :
-			finger(finger), x(x), y(y), Event(vr::Event::EventType::TouchEnded) {};
+			Event(vr::Event::EventType::TouchEnded), finger(finger), x(x), y(y) {};
+		std::unique_ptr<Event> clone() override { 
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::TouchEnded>(vr::TouchEnded(finger, x, y))); 
+		};
 
 		unsigned int		finger;
 		int					x;
@@ -294,7 +376,10 @@ namespace vr {
 	class SensorChanged : public Event {
 	public:
 		SensorChanged(sf::Sensor::Type type, float x, float y, float z) :
-			type(type), x(x), y(y), z(z), Event(vr::Event::EventType::SensorChanged) {};
+			Event(vr::Event::EventType::SensorChanged), type(type), x(x), y(y), z(z){};
+		std::unique_ptr<Event> clone() override {
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::SensorChanged>(vr::SensorChanged(type, x, y, z))); 
+		};
 
 		sf::Sensor::Type	type;
 		float				x;
@@ -310,7 +395,10 @@ namespace vr {
 	class NetworkJoystickButtonPressed : public Event {
 	public:
 		NetworkJoystickButtonPressed(unsigned int joystickId, unsigned int button) :
-			joystickId(joystickId), button(button), Event(vr::Event::EventType::NetworkJoystickButtonPressed) {};
+			Event(vr::Event::EventType::NetworkJoystickButtonPressed), joystickId(joystickId), button(button) {};
+		std::unique_ptr<Event> clone() override { 
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::NetworkJoystickButtonPressed>(vr::NetworkJoystickButtonPressed(joystickId, button))); 
+		};
 
 		unsigned int		joystickId;
 		unsigned int		button;
@@ -319,7 +407,10 @@ namespace vr {
 	class NetworkJoystickButtonHeld : public Event {
 	public:
 		NetworkJoystickButtonHeld(unsigned int joystickId, unsigned int button) :
-			joystickId(joystickId), button(button), Event(vr::Event::EventType::NetworkJoystickButtonHeld) {};
+			Event(vr::Event::EventType::NetworkJoystickButtonHeld), joystickId(joystickId), button(button) {};
+		std::unique_ptr<Event> clone() override { 
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::NetworkJoystickButtonHeld>(vr::NetworkJoystickButtonHeld(joystickId, button)));
+		};
 
 		unsigned int		joystickId;
 		unsigned int		button;
@@ -328,7 +419,10 @@ namespace vr {
 	class NetworkJoystickButtonReleased : public Event {
 	public:
 		NetworkJoystickButtonReleased(unsigned int joystickId, unsigned int button) :
-			joystickId(joystickId), button(button), Event(vr::Event::EventType::NetworkJoystickButtonReleased) {};
+			Event(vr::Event::EventType::NetworkJoystickButtonReleased), joystickId(joystickId), button(button) {};
+		std::unique_ptr<Event> clone() override { 
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::NetworkJoystickButtonReleased>(vr::NetworkJoystickButtonReleased(joystickId, button)));
+		};
 
 		unsigned int		joystickId;
 		unsigned int		button;
@@ -337,7 +431,10 @@ namespace vr {
 	class NetworkJoystickMoved : public Event {
 	public:
 		NetworkJoystickMoved(sf::Joystick::Axis axis, unsigned int joystickId, float position) :
-			axis(axis), joystickId(joystickId), position(position), Event(vr::Event::EventType::NetworkJoystickMoved) {};
+			Event(vr::Event::EventType::NetworkJoystickMoved), axis(axis), joystickId(joystickId), position(position){};
+		std::unique_ptr<Event> clone() override { 
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::NetworkJoystickMoved>(vr::NetworkJoystickMoved(axis, joystickId, position))); 
+		};
 
 		sf::Joystick::Axis	axis;
 		unsigned int		joystickId;
@@ -347,7 +444,10 @@ namespace vr {
 	class NetworkJoystickConnected : public Event {
 	public:
 		NetworkJoystickConnected(unsigned int joystickId) :
-			joystickId(joystickId), Event(vr::Event::EventType::NetworkJoystickConnected) {};
+			Event(vr::Event::EventType::NetworkJoystickConnected), joystickId(joystickId){};
+		std::unique_ptr<Event> clone() override { 
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::NetworkJoystickConnected>(vr::NetworkJoystickConnected(joystickId))); 
+		};
 
 		unsigned int		joystickId;
 	};
@@ -355,7 +455,10 @@ namespace vr {
 	class NetworkJoystickDisconnected : public Event {
 	public:
 		NetworkJoystickDisconnected(unsigned int joystickId) :
-			joystickId(joystickId), Event(vr::Event::EventType::NetworkJoystickDisconnected) {};
+			Event(vr::Event::EventType::NetworkJoystickDisconnected), joystickId(joystickId) {};
+		std::unique_ptr<Event> clone() override { 
+			return std::unique_ptr<vr::Event>(std::make_unique<vr::NetworkJoystickDisconnected>(vr::NetworkJoystickDisconnected(joystickId))); 
+		};
 
 		unsigned int		joystickId;
 	};

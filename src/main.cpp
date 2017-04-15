@@ -84,7 +84,7 @@ int main() {
 	#ifdef linux
 	glewInit();
 	#elif defined _WIN32
-	glewInit();
+	//glewInit();
 	#elif defined TARGET_OS_MAC
 	// Do nothing, extension wrangling handled by macOS
 	#endif 
@@ -99,12 +99,12 @@ int main() {
 	//return 0;
 	// =============================
 
-    sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
-    window.setMouseCursorVisible(false);
+	sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
+	window.setMouseCursorVisible(false);
 	window.setKeyRepeatEnabled(false);
 	window.setFramerateLimit(120);
 	window.setVerticalSyncEnabled(false);
-	
+
 	ImGui::SFML::Init(window);
 	window.resetGLStates();
 
@@ -114,6 +114,7 @@ int main() {
 	if (raycaster->init() != 1) {
 		abort();
 	}
+
 
 	// Create and generate the old 3d array style map
 	Old_Map* map = new Old_Map(sf::Vector3i(MAP_X, MAP_Y, MAP_Z));
@@ -161,6 +162,7 @@ int main() {
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyHeld);
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyPressed);
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::MouseMoved);
+	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::MouseButtonPressed);
 
 	WindowHandler win_hand(&window);
 	win_hand.subscribe_to_publisher(&input_handler, vr::Event::EventType::Closed);

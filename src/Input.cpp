@@ -61,7 +61,7 @@ void Input::handle_held_keys() {
 		}
 		else if (event->type == vr::Event::MouseButtonReleased) {
 			vr::MouseButtonReleased *e = static_cast<vr::MouseButtonReleased*>(event.get());
-			held_keys.erase(std::remove(held_keys.begin(), held_keys.end(), e->button), held_keys.end());
+			held_mouse_buttons.erase(std::remove(held_mouse_buttons.begin(), held_mouse_buttons.end(), e->button), held_mouse_buttons.end());
 		}
 	}
 
@@ -92,7 +92,7 @@ void Input::handle_held_keys() {
 			system = true;
 		}
 		
-		event_queue.push_back(std::make_unique<vr::KeyHeld>(vr::KeyHeld(key, alt, control, shift, system)));
+		event_queue.emplace_back(std::make_unique<vr::KeyHeld>(vr::KeyHeld(key, alt, control, shift, system)));
 	}
 
 
@@ -105,13 +105,14 @@ void Input::handle_held_keys() {
 
 		sf::Vector2i mouse_pos = sf::Mouse::getPosition();
 
-		event_queue.push_back(std::make_unique<vr::MouseButtonHeld>(vr::MouseButtonHeld(mouse_button, mouse_pos.x, mouse_pos.y)));
+		event_queue.emplace_back(std::make_unique<vr::MouseButtonHeld>(vr::MouseButtonHeld(mouse_button, mouse_pos.x, mouse_pos.y)));
 	}
 
 }
 
 void Input::dispatch_events() {
 
+	std::cout << event_queue.size() << std::endl;
 	while (event_queue.size() != 0) {
 		notify_subscribers(std::move(event_queue.front()));
 		event_queue.pop_front();
@@ -126,97 +127,97 @@ void Input::transpose_sf_events(std::list<sf::Event> sf_event_queue) {
 		switch(sf_event.type) {
 		
 			case sf::Event::Closed : {
-				event_queue.push_back(std::make_unique<vr::Closed>(vr::Closed()));
+				event_queue.emplace_back(std::make_unique<vr::Closed>(vr::Closed()));
 				break;
 			};
 			case sf::Event::Resized: {
-				event_queue.push_back(std::make_unique<vr::Resized>(vr::Resized(sf_event.size.width, sf_event.size.height)));
+				event_queue.emplace_back(std::make_unique<vr::Resized>(vr::Resized(sf_event.size.width, sf_event.size.height)));
 				break;
 			};
 			case sf::Event::LostFocus: {
-				event_queue.push_back(std::make_unique<vr::LostFocus>(vr::LostFocus()));
+				event_queue.emplace_back(std::make_unique<vr::LostFocus>(vr::LostFocus()));
 				break;
 			};
 			case sf::Event::GainedFocus: {
-				event_queue.push_back(std::make_unique<vr::GainedFocus>(vr::GainedFocus()));
+				event_queue.emplace_back(std::make_unique<vr::GainedFocus>(vr::GainedFocus()));
 				break;
 			};
 			case sf::Event::TextEntered: {
-				event_queue.push_back(std::make_unique<vr::TextEntered>(vr::TextEntered(sf_event.text.unicode)));
+				event_queue.emplace_back(std::make_unique<vr::TextEntered>(vr::TextEntered(sf_event.text.unicode)));
 				break;
 			};
 			case sf::Event::KeyPressed: {
-				event_queue.push_back(std::make_unique<vr::KeyPressed>(vr::KeyPressed(sf_event.key.code, sf_event.key.alt, sf_event.key.control, sf_event.key.shift, sf_event.key.system)));
+				event_queue.emplace_back(std::make_unique<vr::KeyPressed>(vr::KeyPressed(sf_event.key.code, sf_event.key.alt, sf_event.key.control, sf_event.key.shift, sf_event.key.system)));
 				break;
 			};
 			case sf::Event::KeyReleased: {
-				event_queue.push_back(std::make_unique<vr::KeyReleased>(vr::KeyReleased(sf_event.key.code, sf_event.key.alt, sf_event.key.control, sf_event.key.shift, sf_event.key.system)));
+				event_queue.emplace_back(std::make_unique<vr::KeyReleased>(vr::KeyReleased(sf_event.key.code, sf_event.key.alt, sf_event.key.control, sf_event.key.shift, sf_event.key.system)));
 				break;
 			};
 
 			// Mouse wheel moved will generate a MouseWheelScrolled event with the defaul vertical wheel
 			case sf::Event::MouseWheelMoved: {
-				event_queue.push_back(std::make_unique<vr::MouseWheelScrolled>(vr::MouseWheelScrolled(sf::Mouse::VerticalWheel, sf_event.mouseWheelScroll.delta, sf_event.mouseWheelScroll.x, sf_event.mouseWheelScroll.y)));
+				event_queue.emplace_back(std::make_unique<vr::MouseWheelScrolled>(vr::MouseWheelScrolled(sf::Mouse::VerticalWheel, sf_event.mouseWheelScroll.delta, sf_event.mouseWheelScroll.x, sf_event.mouseWheelScroll.y)));
 				break;
 			};
 			case sf::Event::MouseWheelScrolled: {
-				event_queue.push_back(std::make_unique<vr::MouseWheelScrolled>(vr::MouseWheelScrolled(sf_event.mouseWheelScroll.wheel, sf_event.mouseWheelScroll.delta, sf_event.mouseWheelScroll.x, sf_event.mouseWheelScroll.y)));
+				event_queue.emplace_back(std::make_unique<vr::MouseWheelScrolled>(vr::MouseWheelScrolled(sf_event.mouseWheelScroll.wheel, sf_event.mouseWheelScroll.delta, sf_event.mouseWheelScroll.x, sf_event.mouseWheelScroll.y)));
 				break;
 			};
 			case sf::Event::MouseButtonPressed: {
-				event_queue.push_back(std::make_unique<vr::MouseButtonPressed>(vr::MouseButtonPressed(sf_event.mouseButton.button, sf_event.mouseButton.x, sf_event.mouseButton.y)));
+				event_queue.emplace_back(std::make_unique<vr::MouseButtonPressed>(vr::MouseButtonPressed(sf_event.mouseButton.button, sf_event.mouseButton.x, sf_event.mouseButton.y)));
 				break;
 			};
 			case sf::Event::MouseButtonReleased: {
-				event_queue.push_back(std::make_unique<vr::MouseButtonReleased>(vr::MouseButtonReleased(sf_event.mouseButton.button, sf_event.mouseButton.x, sf_event.mouseButton.y)));
+				event_queue.emplace_back(std::make_unique<vr::MouseButtonReleased>(vr::MouseButtonReleased(sf_event.mouseButton.button, sf_event.mouseButton.x, sf_event.mouseButton.y)));
 				break;
 			};
 			case sf::Event::MouseMoved: {
-				event_queue.push_back(std::make_unique<vr::MouseMoved>(vr::MouseMoved(sf_event.mouseMove.x, sf_event.mouseMove.y)));
+				event_queue.emplace_back(std::make_unique<vr::MouseMoved>(vr::MouseMoved(sf_event.mouseMove.x, sf_event.mouseMove.y)));
 				break;
 			};
 			case sf::Event::MouseEntered: {
-				event_queue.push_back(std::make_unique<vr::MouseEntered>(vr::MouseEntered(sf_event.mouseMove.x, sf_event.mouseMove.y)));
+				event_queue.emplace_back(std::make_unique<vr::MouseEntered>(vr::MouseEntered(sf_event.mouseMove.x, sf_event.mouseMove.y)));
 				break;
 			};
 			case sf::Event::MouseLeft: {
-				event_queue.push_back(std::make_unique<vr::MouseLeft>(vr::MouseLeft(sf_event.mouseMove.x, sf_event.mouseMove.x)));
+				event_queue.emplace_back(std::make_unique<vr::MouseLeft>(vr::MouseLeft(sf_event.mouseMove.x, sf_event.mouseMove.x)));
 				break;
 			};
 			case sf::Event::JoystickButtonPressed: {
-				event_queue.push_back(std::make_unique<vr::JoystickButtonPressed>(vr::JoystickButtonPressed(sf_event.joystickButton.joystickId, sf_event.joystickButton.button)));
+				event_queue.emplace_back(std::make_unique<vr::JoystickButtonPressed>(vr::JoystickButtonPressed(sf_event.joystickButton.joystickId, sf_event.joystickButton.button)));
 				break;
 			};
 			case sf::Event::JoystickButtonReleased: {
-				event_queue.push_back(std::make_unique<vr::JoystickButtonReleased>(vr::JoystickButtonReleased(sf_event.joystickButton.joystickId, sf_event.joystickButton.button)));
+				event_queue.emplace_back(std::make_unique<vr::JoystickButtonReleased>(vr::JoystickButtonReleased(sf_event.joystickButton.joystickId, sf_event.joystickButton.button)));
 				break;
 			};
 			case sf::Event::JoystickMoved: {
-				event_queue.push_back(std::make_unique<vr::JoystickMoved>(vr::JoystickMoved(sf_event.joystickMove.axis, sf_event.joystickMove.joystickId, sf_event.joystickMove.position)));
+				event_queue.emplace_back(std::make_unique<vr::JoystickMoved>(vr::JoystickMoved(sf_event.joystickMove.axis, sf_event.joystickMove.joystickId, sf_event.joystickMove.position)));
 				break;
 			};
 			case sf::Event::JoystickConnected: {
-				event_queue.push_back(std::make_unique<vr::JoystickConnected>(vr::JoystickConnected(sf_event.joystickConnect.joystickId)));
+				event_queue.emplace_back(std::make_unique<vr::JoystickConnected>(vr::JoystickConnected(sf_event.joystickConnect.joystickId)));
 				break;
 			};
 			case sf::Event::JoystickDisconnected: {
-				event_queue.push_back(std::make_unique<vr::JoystickDisconnected>(vr::JoystickDisconnected(sf_event.joystickConnect.joystickId)));
+				event_queue.emplace_back(std::make_unique<vr::JoystickDisconnected>(vr::JoystickDisconnected(sf_event.joystickConnect.joystickId)));
 				break;
 			};
 			case sf::Event::TouchBegan: {
-				event_queue.push_back(std::make_unique<vr::TouchBegan>(vr::TouchBegan(sf_event.touch.finger, sf_event.touch.x, sf_event.touch.y)));
+				event_queue.emplace_back(std::make_unique<vr::TouchBegan>(vr::TouchBegan(sf_event.touch.finger, sf_event.touch.x, sf_event.touch.y)));
 				break;
 			};
 			case sf::Event::TouchMoved: {
-				event_queue.push_back(std::make_unique<vr::TouchMoved>(vr::TouchMoved(sf_event.touch.finger, sf_event.touch.x, sf_event.touch.y)));
+				event_queue.emplace_back(std::make_unique<vr::TouchMoved>(vr::TouchMoved(sf_event.touch.finger, sf_event.touch.x, sf_event.touch.y)));
 				break;
 			};
 			case sf::Event::TouchEnded: {
-				event_queue.push_back(std::make_unique<vr::TouchEnded>(vr::TouchEnded(sf_event.touch.finger, sf_event.touch.x, sf_event.touch.y)));
+				event_queue.emplace_back(std::make_unique<vr::TouchEnded>(vr::TouchEnded(sf_event.touch.finger, sf_event.touch.x, sf_event.touch.y)));
 				break;
 			};
 			case sf::Event::SensorChanged: {
-				event_queue.push_back(std::make_unique<vr::SensorChanged>(vr::SensorChanged(sf_event.sensor.type, sf_event.sensor.x, sf_event.sensor.y, sf_event.sensor.z)));
+				event_queue.emplace_back(std::make_unique<vr::SensorChanged>(vr::SensorChanged(sf_event.sensor.type, sf_event.sensor.x, sf_event.sensor.y, sf_event.sensor.z)));
 				break;
 			};
 			default: {

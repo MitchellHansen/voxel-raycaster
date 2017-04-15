@@ -369,7 +369,7 @@ __kernel void raycaster(
 			//	intersection_t = (1, 1, 1) - intersection_t;
 				//intersection_t += delta_t * -convert_float3(isless(intersection_t, 0));
 				float3 ray_pos = (convert_float3(voxel) + face_position);
-				ray_dir *= sign;
+				//ray_dir *= sign;
 				delta_t = fabs(1.0f / ray_dir);
 				float3 offset = ((ray_pos)-floor(ray_pos)) * convert_float3(voxel_step);
 				intersection_t = delta_t * offset;

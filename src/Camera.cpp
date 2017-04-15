@@ -54,8 +54,8 @@ int Camera::add_relative_impulse(DIRECTION impulse_direction, float speed) {
 
 	}
 
-	movement += SphereToCart(dir);
-	movement *= speed;
+	std::cout << movement.x << " : " << movement.y << " : " << movement.z << std::endl;
+	movement += SphereToCart(dir) * speed;
 
 	return 1;
 }
@@ -88,9 +88,9 @@ int Camera::update(double delta_time) {
 
 void Camera::recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Event> event) {
 
-	if (event.get()->type == vr::Event::KeyHeld) {
+	if (event->type == vr::Event::KeyHeld) {
 
-		vr::KeyHeld *held_event = static_cast<vr::KeyHeld*>(event.get());
+		auto held_event = static_cast<vr::KeyHeld*>(event.get());
 
 		if (held_event->code == sf::Keyboard::LShift) {
 			default_impulse = 0.01f;
@@ -153,6 +153,16 @@ void Camera::recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Even
 				));
 			}
 		}
+	}
+	else if (event->type == vr::Event::MouseButtonPressed) {
+
+		vr::MouseButtonPressed *mouse_event = static_cast<vr::MouseButtonPressed*>(event.get());
+
+		if (mouse_event->button == sf::Mouse::Middle) {
+			mouse_enabled = !mouse_enabled;
+			sf::Mouse::setPosition(fixed, *window);
+		}
+		
 	}
 	else if (event->type == vr::Event::JoystickMoved) {
 

@@ -10,12 +10,42 @@ Hardware_Caster::~Hardware_Caster() {
 
 int Hardware_Caster::init() {
 
-	query_hardware();
+//	query_hardware();
 
-	// Initialize opencl up to the point where we start assigning buffers
-	error = acquire_platform_and_device();
-	if(vr_assert(error, "aquire_platform_and_device"))
-		return error;
+	//// Initialize opencl up to the point where we start assigning buffers
+	//error = acquire_platform_and_device();
+	//if(vr_assert(error, "aquire_platform_and_device"))
+	//	return error;
+
+	if (!aquire_hardware())
+		return false;
+
+	if (!load_config()) {
+
+		std::cout << "Select a device number which you wish to use" << std::endl;
+
+		for (int i = 0; i < device_list.size(); i++) {
+
+			std::cout << "\n-----------------------------------------------------------------" << std::endl;
+			std::cout << "\tDevice Number : " << i << std::endl;
+			std::cout << "-----------------------------------------------------------------" << std::endl;
+
+			device_list.at(i).print(std::cout);
+		}
+
+		int selection = -1;
+
+		while (selection < 0 && selection >= device_list.size()) {
+
+			std::cout << "Device which you wish to use : ";
+			std::cin >> selection;
+		}
+
+		device_id = device_list.at(selection).getDeviceId();
+		platform_id = device_list.at(selection).getPlatformId();
+
+		save_config();
+	}
 
 	error = create_shared_context();
 	if (vr_assert(error, "create_shared_context"))
@@ -268,165 +298,102 @@ void Hardware_Caster::test_edit_viewport(int width, int height, float v_fov, flo
 }
 
 
-void Hardware_Caster::gui() {
-
-}
-
-int Hardware_Caster::acquire_platform_and_device() {
+bool Hardware_Caster::aquire_hardware()
+{
 
 	// Get the number of platforms
-	cl_uint plt_cnt = 0;
-	clGetPlatformIDs(0, nullptr, &plt_cnt);
+	cl_uint platform_count = 0;
+	clGetPlatformIDs(0, nullptr, &platform_count);
 
-	// Fetch the platforms
-	std::map<cl_platform_id, std::vector<device>> plt_ids;
-
-	// buffer before map init
-	std::vector<cl_platform_id> plt_buf(plt_cnt);
-	clGetPlatformIDs(plt_cnt, plt_buf.data(), nullptr);
-
-	// Map init
-	for (auto id : plt_buf) {
-		plt_ids.emplace(std::make_pair(id, std::vector<device>()));
+	if (platform_count == 0) {
+		std::cout << "There appears to be no OpenCL platforms on this machine" << std::endl;
+		return false;
 	}
 
-	// For each platform, populate its devices
-	for (unsigned int i = 0; i < plt_cnt; i++) {
+	// Get the ID's for those platforms
+	std::vector<cl_platform_id> plt_buf(platform_count);
 
+	clGetPlatformIDs(platform_count, plt_buf.data(), nullptr);
+	if (vr_assert(error, "clGetPlatformIDs"))
+		return false;
+
+	// Cycle through the platform ID's
+	for (unsigned int i = 0; i < platform_count; i++) {
+
+		// And get their device count
 		cl_uint deviceIdCount = 0;
 		error = clGetDeviceIDs(plt_buf[i], CL_DEVICE_TYPE_ALL, 0, nullptr, &deviceIdCount);
-
-		// Check to see if we even have OpenCL on this machine
-		if (deviceIdCount == 0) {
-			std::cout << "There appears to be no devices, or none at least supporting OpenCL" << std::endl;
-			return OPENCL_NOT_SUPPORTED;
-		}
-
-		// Get the device ids
-		std::vector<cl_device_id> deviceIds(deviceIdCount);
-		error = clGetDeviceIDs(plt_buf[i], CL_DEVICE_TYPE_ALL, deviceIdCount, deviceIds.data(), NULL);
-
 		if (vr_assert(error, "clGetDeviceIDs"))
-			return OPENCL_ERROR;
+			return false;
 
-		for (unsigned int q = 0; q < deviceIdCount; q++) {
+		if (deviceIdCount == 0) {
+			std::cout << "There appears to be no devices associated with this platform" << std::endl;
 
-			device d;
+		}
+		else {
 
-			d.id = deviceIds[q];
+			// Get the device ids and place them in the device list
+			std::vector<cl_device_id> deviceIds(deviceIdCount);
 
-			clGetDeviceInfo(d.id, CL_DEVICE_PLATFORM, sizeof(cl_platform_id), &d.platform, NULL);
-			clGetDeviceInfo(d.id, CL_DEVICE_VERSION, sizeof(char) * 128, &d.version, NULL);
-			clGetDeviceInfo(d.id, CL_DEVICE_TYPE, sizeof(cl_device_type), &d.type, NULL);
-			clGetDeviceInfo(d.id, CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(cl_uint), &d.clock_frequency, NULL);
-			clGetDeviceInfo(d.id, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cl_uint), &d.comp_units, NULL);
-			clGetDeviceInfo(d.id, CL_DEVICE_EXTENSIONS, 1024, &d.extensions, NULL);
-			clGetDeviceInfo(d.id, CL_DEVICE_NAME, 256, &d.name, NULL);
-			clGetDeviceInfo(d.id, CL_DEVICE_ENDIAN_LITTLE, sizeof(cl_bool), &d.is_little_endian, NULL);
+			error = clGetDeviceIDs(plt_buf[i], CL_DEVICE_TYPE_ALL, deviceIdCount, deviceIds.data(), NULL);
+			if (vr_assert(error, "clGetDeviceIDs"))
+				return false;
 
-			std::cout << "Device: " << q << std::endl;
-			std::cout << "Device Name : " << d.name << std::endl;
-			
-			std::cout << "Platform ID    : " << d.platform << std::endl;
-			std::cout << "Device Version : " << d.version << std::endl;
-
-			std::cout << "Device Type    : ";
-			if (d.type == CL_DEVICE_TYPE_CPU)
-				std::cout << "CPU" << std::endl;
-
-			else if (d.type == CL_DEVICE_TYPE_GPU)
-				std::cout << "GPU" << std::endl;
-
-			else if (d.type == CL_DEVICE_TYPE_ACCELERATOR)
-				std::cout << "Accelerator" << std::endl;
-
-			std::cout << "Max clock frequency : " << d.clock_frequency << std::endl;
-			std::cout << "Max compute units   : " << d.comp_units << std::endl;
-			std::cout << "Is little endian    : " << std::boolalpha << static_cast<bool>(d.is_little_endian) << std::endl;
-
-			std::cout << "cl_khr_gl_sharing supported: ";
-			if (std::string(d.extensions).find("cl_khr_gl_sharing") == std::string::npos &&
-				std::string(d.extensions).find("cl_APPLE_gl_sharing") == std::string::npos) {
-				std::cout << "False" << std::endl;
+			for (int d = 0; d < deviceIds.size(); d++) {
+				device_list.emplace_back(device(deviceIds[d], plt_buf.at(i)));
 			}
-			std::cout << "True" << std::endl;
-			d.cl_gl_sharing = true;
-
-			std::cout << "Extensions supported: " << std::endl;
-			std::cout << std::string(d.extensions) << std::endl;
-
-			std::cout << " ===================================================================================== " << std::endl;
-
-			plt_ids.at(d.platform).push_back(d);
 		}
 	}
 
+	return true;
+}
 
-	// The devices how now been queried we want to shoot for a gpu with the fastest clock,
-	// falling back to the cpu with the fastest clock if we weren't able to find one
+void Hardware_Caster::save_config() {
 
-	device current_best_device;
-	current_best_device.type = 0; // Set this to 0 so the first run always selects a new device
-	current_best_device.clock_frequency = 0;
-	current_best_device.comp_units = 0;
+	std::ofstream output_file;
+	output_file.open("device_config.bin", std::ofstream::binary | std::ofstream::out | std::ofstream::trunc);
 
+	device d(device_id, platform_id);
+	d.print_packed_data(output_file);
 
-	for (auto kvp : plt_ids) {
+	output_file.close();
+}
 
-		for (auto device : kvp.second) {
+bool Hardware_Caster::load_config() {
 
-			// Gonna just split this up into cases. There are so many devices I cant test with
-			// that opencl supports. I'm not going to waste my time making a generic implimentation
+	std::cout << "Loading hardware config...";
 
-			// Upon success of a condition, set the current best device values
+	std::ifstream input_file("device_config.bin", std::ios::binary | std::ios::in);
 
-			//if (strcmp(device.version, "OpenCL 1.2 ") == 0 && strcmp(device.version, current_best_device.version) != 0) {
-			//	current_best_device = device;
-			//}
+	if (!input_file.is_open()) {
+		std::cout << "No config file found" << std::endl;
+		return false;
+	}
 
-			// If the current device is not a GPU and we are comparing it to a GPU
-			if (device.type == CL_DEVICE_TYPE_GPU && current_best_device.type != CL_DEVICE_TYPE_GPU) {
-				current_best_device = device;
-			}
+	device::packed_data data;
+	input_file.read(reinterpret_cast<char*>(&data), sizeof(data));
+	input_file.close();
 
-			//if (device.type == CL_DEVICE_TYPE_CPU && 
-			//	current_best_device.type != CL_DEVICE_TYPE_CPU) {
-			//	current_best_device = device;
-			//}
+	bool found = false;
 
-			// Get the unit with the higher compute units
-			if (device.comp_units > current_best_device.comp_units) {
-				current_best_device = device;
-			}
+	for (auto d : device_list) {
 
-			// If we are comparing CPU to CPU get the one with the best clock
-			if (current_best_device.type != CL_DEVICE_TYPE_GPU && device.clock_frequency > current_best_device.clock_frequency) {
-				current_best_device = device;
-			}
-
-			if (current_best_device.cl_gl_sharing == false && device.cl_gl_sharing == true) {
-				current_best_device = device;
-			}
-
+		if (memcmp(&d, &data, sizeof(device::packed_data)) == 0) {
+			std::cout << "Found saved config" << std::endl;
+			found = true;
+			device_id = d.getDeviceId();
+			platform_id = d.getPlatformId();
+			break;
 		}
 	}
 
- 	platform_id = current_best_device.platform;
-	device_id = current_best_device.id;
-
-	std::cout << std::endl;
-	std::cout << "Selected Platform : " << platform_id << std::endl;
-	std::cout << "Selected Device   : " << device_id << std::endl;
-	std::cout << "Selected Name     : " << current_best_device.name << std::endl;
-	std::cout << "Selected Version  : " << current_best_device.version << std::endl;
-
-	if (current_best_device.cl_gl_sharing == false) {
-		std::cout << "This device does not support the cl_khr_gl_sharing extension" << std::endl;
-		return RayCaster::SHARING_NOT_SUPPORTED;
+	if (!found) {
+		std::cout << "No hardware matching config found" << std::endl;
+		return false;
 	}
-	return 1;
-};
 
+	return true;
+}
 
 int Hardware_Caster::query_hardware() {
 
@@ -526,6 +493,22 @@ int Hardware_Caster::query_hardware() {
 
 int Hardware_Caster::create_shared_context() {
 
+	//std::vector<DISPLAY_DEVICEA> display_devices;
+	//DISPLAY_DEVICEA dev;
+	//int k = 0;
+	//dev.cb = sizeof(dev);
+	//HDC hDC;
+	//while(EnumDisplayDevicesA(NULL, k, &dev, 0)) {
+	//	
+	//	display_devices.push_back(dev);
+	//	hDC = CreateDC(dev.DeviceName, dev.DeviceName, 0, 0);
+	//	k++;
+	//}
+	//	
+	//hDC = CreateDC(display_devices.at(1).DeviceName, display_devices.at(1).DeviceName, 0, 0);
+	//std::cout << GetLastError();
+	//HGLRC hGLRC = wglCreateContext(hDC);
+
 	// Hurray for standards!
 	// Setup the context properties to grab the current GL context
 
@@ -540,8 +523,8 @@ int Hardware_Caster::create_shared_context() {
 
 #elif defined _WIN32
 
-	HGLRC hGLRC = wglGetCurrentContext();
 	HDC hDC = wglGetCurrentDC();
+	HGLRC hGLRC = wglGetCurrentContext();
 	cl_context_properties context_properties[] = {
 		CL_CONTEXT_PLATFORM, (cl_context_properties)platform_id,
 		CL_GL_CONTEXT_KHR, (cl_context_properties)hGLRC,
@@ -1035,4 +1018,80 @@ bool Hardware_Caster::vr_assert(int error_code, std::string function_name) {
 
 	std::cout << err_msg << "  =at=  " << function_name << std::endl;
 	return true;
+}
+
+
+Hardware_Caster::device::device(cl_device_id device_id, cl_platform_id platform_id) {
+
+	this->device_id = device_id;
+	this->platform_id = platform_id;
+
+	int error = 0;
+	error = clGetPlatformInfo(platform_id, CL_PLATFORM_NAME, 128, (void*)&data.platform_name, nullptr);
+	if (vr_assert(error, "clGetPlatformInfo"))
+		return;
+
+	error = clGetDeviceInfo(device_id, CL_DEVICE_VERSION, sizeof(char) * 128, &data.opencl_version, NULL);
+	error = clGetDeviceInfo(device_id, CL_DEVICE_TYPE, sizeof(cl_device_type), &data.device_type, NULL);
+	error = clGetDeviceInfo(device_id, CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(cl_uint), &data.clock_frequency, NULL);
+	error = clGetDeviceInfo(device_id, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cl_uint), &data.compute_units, NULL);
+	error = clGetDeviceInfo(device_id, CL_DEVICE_EXTENSIONS, 1024, &data.device_extensions, NULL);
+	error = clGetDeviceInfo(device_id, CL_DEVICE_NAME, 256, &data.device_name, NULL);
+	error = clGetDeviceInfo(device_id, CL_DEVICE_ENDIAN_LITTLE, sizeof(cl_bool), &is_little_endian, NULL);
+
+	// Check for the sharing extension
+	if (std::string(data.device_extensions).find("cl_khr_gl_sharing") != std::string::npos ||
+		std::string(data.device_extensions).find("cl_APPLE_gl_sharing") != std::string::npos) {
+		cl_gl_sharing = true;
+	}
+}
+
+
+Hardware_Caster::device::device(const device& d) {
+
+	// member values, copy individually
+	device_id = d.device_id;
+	platform_id = d.platform_id;
+	is_little_endian = d.is_little_endian;
+	cl_gl_sharing = d.cl_gl_sharing;
+
+	// struct so it copies by value
+	data = d.data;
+
+}
+
+void Hardware_Caster::device::print(std::ostream& stream) const {
+
+	stream << "\n\tDevice ID        : " << device_id << std::endl;
+	stream << "\tDevice Name      : " << data.device_name << std::endl;
+
+	stream << "\tPlatform ID      : " << platform_id << std::endl;
+	stream << "\tPlatform Name    : " << data.platform_name << std::endl;
+
+	stream << "\tOpenCL Version   : " << data.opencl_version << std::endl;
+	stream << "\tSupports sharing : " << std::boolalpha << cl_gl_sharing << std::endl;
+	stream << "\tDevice Type      : ";
+
+	if (data.device_type == CL_DEVICE_TYPE_CPU)
+		stream << "CPU" << std::endl;
+
+	else if (data.device_type == CL_DEVICE_TYPE_GPU)
+		stream << "GPU" << std::endl;
+
+	else if (data.device_type == CL_DEVICE_TYPE_ACCELERATOR)
+		stream << "Accelerator" << std::endl;
+
+	stream << "\tIs Little Endian : " << std::boolalpha << is_little_endian << std::endl;
+
+	stream << "\tClock Frequency  : " << data.clock_frequency << std::endl;
+	stream << "\tCompute Units    : " << data.compute_units << std::endl;
+
+	stream << "\n*Extensions*" << std::endl;
+	stream << data.device_extensions << std::endl;
+	stream << "\n";
+
+}
+
+void Hardware_Caster::device::print_packed_data(std::ostream& stream) {
+	stream.write(reinterpret_cast<char*>(&data), sizeof(data));
 }

@@ -60,7 +60,7 @@ public:
 	std::shared_ptr<LightHandle> create_light(LightPrototype light_prototype);
 	void remove_light(unsigned int light_index);
 
-	void recieve_event(VrEventPublisher* p, std::unique_ptr<vr::Event> event) override;
+	void recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Event> event) override;
 
 private:
 

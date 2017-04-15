@@ -41,7 +41,7 @@ class WindowHandler : public VrEventSubscriber {
 public:
 	WindowHandler(sf::RenderWindow *window) : window_ref(window) { };
 
-	virtual void recieve_event(VrEventPublisher* p, std::unique_ptr<vr::Event> event) override {
+	virtual void recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Event>(event)) override {
 		if (event.get()->type == vr::Event::Closed) {
 			window_ref->close();
 		}

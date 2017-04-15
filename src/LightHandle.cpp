@@ -66,7 +66,7 @@ void LightHandle::set_rgbi(sf::Vector4f rgbi)
 void LightHandle::recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Event> event)
 {
 		if (event->type == vr::Event::JoystickMoved) {
-
+			
 			vr::JoystickMoved *joystick_event = static_cast<vr::JoystickMoved*>(event.get());
 
 			if (joystick_event->axis == sf::Joystick::Axis::X) {

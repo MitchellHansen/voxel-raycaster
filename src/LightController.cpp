@@ -36,22 +36,23 @@ void LightController::remove_light(unsigned int light_index) {
 
 void LightController::recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Event> event) {
 
-	if (event.get()->type == vr::Event::KeyHeld) {}
+	if (event->type == vr::Event::KeyHeld) {}
 	else if (event->type == vr::Event::KeyPressed) {}
 	else if (event->type == vr::Event::MouseMoved) {}
 
 	else if (event->type == vr::Event::JoystickMoved) {
 
-		vr::JoystickMoved *joystick_event = static_cast<vr::JoystickMoved*>(event.get());
 
-		if (joystick_event->axis == sf::Joystick::Axis::X) {
-			//movement.x -= joystick_event->position / 5;
-			//add_relative_impulse(Camera::DIRECTION::FORWARD, joystick_event->position);
-		}
-		else if (joystick_event->axis == sf::Joystick::Axis::Y) {
-			//movement.y += joystick_event->position / 5;
-			//add_relative_impulse(Camera::DIRECTION::RIGHT, joystick_event->position);
-		}
+		//vr::JoystickMoved *joystick_event = static_cast<vr::JoystickMoved*>(event.get());
+
+		//if (joystick_event->axis == sf::Joystick::Axis::X) {
+		//	//movement.x -= joystick_event->position / 5;
+		//	//add_relative_impulse(Camera::DIRECTION::FORWARD, joystick_event->position);
+		//}
+		//else if (joystick_event->axis == sf::Joystick::Axis::Y) {
+		//	//movement.y += joystick_event->position / 5;
+		//	//add_relative_impulse(Camera::DIRECTION::RIGHT, joystick_event->position);
+		//}
 		//else if (joystick_event->axis == sf::Joystick::Axis::Z) {
 		//	add_relative_impulse(Camera::DIRECTION::DOWN, joystick_event->position);
 		//}

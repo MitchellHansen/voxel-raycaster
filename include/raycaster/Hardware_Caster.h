@@ -9,6 +9,7 @@
 #include "map/Old_Map.h"
 #include "Camera.h"
 #include <GL/glew.h>
+#include <unordered_map>
 
 #ifdef linux
 #include <CL/cl.h>
@@ -31,18 +32,18 @@
 
 #endif
 
-struct device {
-	cl_device_id id;
-	cl_device_type type;
-	cl_uint clock_frequency;
-	char version[128];
-	cl_platform_id platform;
-	cl_uint comp_units;
-	char extensions[1024];
-	char name[256];
-	cl_bool is_little_endian = false;
-	bool cl_gl_sharing = false;
-};
+//struct device {
+//	cl_device_id id;
+//	cl_device_type type;
+//	cl_uint clock_frequency;
+//	char version[128];
+//	cl_platform_id platform;
+//	cl_uint comp_units;
+//	char extensions[1024];
+//	char name[256];
+//	cl_bool is_little_endian = false;
+//	bool cl_gl_sharing = false;
+//};
 
 struct device_info {
 	cl_uint cl_device_address_bits;
@@ -99,30 +100,77 @@ struct raycaster_settings {
 
 struct PackedData;
 
-class Hardware_Caster : public RayCaster
+class Hardware_Caster
 {
-public:
-	Hardware_Caster();
 
+
+public:
+
+	enum ERROR_CODES {
+		SHARING_NOT_SUPPORTED = 800,
+		OPENCL_NOT_SUPPORTED = 801,
+		OPENCL_ERROR = 802,
+		ERR = 803
+	};
+
+	class device {
+
+	public:
+
+#pragma pack(push, 1)
+		struct packed_data {
+
+			cl_device_type device_type;
+			cl_uint clock_frequency;
+			char opencl_version[64];
+			cl_uint compute_units;
+			char device_extensions[1024];
+			char device_name[256];
+			char platform_name[128];
+		};
+#pragma pack(pop)
+
+		device(cl_device_id device_id, cl_platform_id platform_id);
+		device(const device& d);
+		void print(std::ostream& stream) const;
+		void print_packed_data(std::ostream& stream);
+
+		cl_device_id getDeviceId() const { return device_id; };
+		cl_platform_id getPlatformId() const { return platform_id; };
+
+	private:
+
+		packed_data data;
+
+		cl_device_id device_id;
+		cl_platform_id platform_id;
+
+		cl_bool is_little_endian = false;
+		bool cl_gl_sharing = false;
+
+	};
+
+
+	Hardware_Caster();
 	virtual ~Hardware_Caster();
 
 	
 	// Queries hardware, creates the command queue and context, and compiles kernel
-	int init() override;
+	int init();
 
 	// Creates a texture to send to the GPU via height and width
 	// Creates a viewport vector array via vertical and horizontal fov
-	void create_viewport(int width, int height, float v_fov, float h_fov) override;
+	void create_viewport(int width, int height, float v_fov, float h_fov) ;
 	
 	// Light controllers own the copy of the PackedData array.
 	// We receive a pointer to the array and USE_HOST_POINTER to map the memory to the GPU
-	void assign_lights(std::vector<PackedData> *data) override;
+	void assign_lights(std::vector<PackedData> *data) ;
 
 	// We take a ptr to the map and create the map, and map_dimensions buffer for the GPU
-	void assign_map(Old_Map *map) override;
+	void assign_map(Old_Map *map) ;
 
 	// We take a ptr to the camera and create a camera direction and position buffer
-	void assign_camera(Camera *camera) override;
+	void assign_camera(Camera *camera) ;
 
 	// TODO: Hoist this to the base class
 	// Creates 3 buffers relating to the texture atlas: texture_atlas, atlas_dim, and tile_dim
@@ -130,15 +178,16 @@ public:
 	void create_texture_atlas(sf::Texture *t, sf::Vector2i tile_dim);
 	
 	// Check to make sure that the buffers have been initiated and set them as kernel args
-	void validate() override;
+	void validate() ;
 
 	// Aquires the GL objects, runs the kernel, releases back the GL objects
-	void compute() override;
+	void compute() ;
 
 	// Take the viewport sprite and draw it to the screen
-	void draw(sf::RenderWindow* window) override;
+	void draw(sf::RenderWindow* window) ;
 
-
+	bool load_config();
+	void save_config();
 	// ================================== DEBUG =======================================
 	
 	// Re compile the kernel and revalidate the args
@@ -147,13 +196,14 @@ public:
 	// Modify the viewport matrix
 	void test_edit_viewport(int width, int height, float v_fov, float h_fov);
 
-	void gui();
 
 private:
 
 	// Iterate the devices available and choose the best one
 	// Also checks for the sharing extension
 	int acquire_platform_and_device();
+
+	bool aquire_hardware();
 
 	int query_hardware();
 
@@ -189,14 +239,13 @@ private:
 	int set_kernel_arg(std::string kernel_name, int index, std::string buffer_name);
 
 	// Run the kernel using a 1d work size
-	// TODO: Test 2d worksize
 	int run_kernel(std::string kernel_name, const int work_dim_x, const int work_dim_y);
 
 	// Run a test kernel that prints out the kernel args
 	void print_kernel_arguments();
 
 	// CL error code handler. ImGui overlaps the assert() function annoyingly so I had to rename it
-	bool vr_assert(int error_code, std::string function_name);
+	static bool vr_assert(int error_code, std::string function_name);
 
 	cl_device_id getDeviceID();
 	cl_platform_id getPlatformID();
@@ -215,6 +264,23 @@ private:
 	// Containers holding the kernels and buffers
 	std::map<std::string, cl_kernel> kernel_map;
 	std::map<std::string, cl_mem> buffer_map;
+	std::unordered_map<std::string, std::pair<sf::Sprite, std::unique_ptr<sf::Texture>>> image_map;
+
+	sf::Sprite viewport_sprite;
+	sf::Texture viewport_texture;
+
+	Old_Map * map = nullptr;
+	Camera *camera = nullptr;
+	//	std::vector<LightController::PackedData> *lights;
+	std::vector<PackedData> *lights;
+	int light_count = 0;
+	sf::Uint8 *viewport_image = nullptr;
+	sf::Vector4f *viewport_matrix = nullptr;
+	sf::Vector2i viewport_resolution;
+
+	int error = 0;
+
+	std::vector<device> device_list;
 
 };
 
