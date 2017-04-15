@@ -4,7 +4,6 @@
 #include <numeric>
 #include "util.hpp"
 #include "Pub_Sub.h"
-#include "raycaster/RayCaster.h"
 #include "raycaster/Hardware_Caster.h"
 #include "LightHandle.h"
 

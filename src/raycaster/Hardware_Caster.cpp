@@ -1002,16 +1002,16 @@ bool Hardware_Caster::vr_assert(int error_code, std::string function_name) {
 	case CL_PLATFORM_NOT_FOUND_KHR :
 		err_msg = "CL_PLATFORM_NOT_FOUND_KHR";
 		break;
-	case RayCaster::SHARING_NOT_SUPPORTED:
+	case Hardware_Caster::SHARING_NOT_SUPPORTED:
 		err_msg = "SHARING_NOT_SUPPORTED";
 		break;
-	case RayCaster::OPENCL_NOT_SUPPORTED:
+	case Hardware_Caster::OPENCL_NOT_SUPPORTED:
 		err_msg = "OPENCL_NOT_SUPPORTED";
 		break;
-	case RayCaster::OPENCL_ERROR:
+	case Hardware_Caster::OPENCL_ERROR:
 		err_msg = "OPENCL_ERROR";
 		break;
-	case RayCaster::ERR:
+	case Hardware_Caster::ERR:
 		err_msg = "ERROR";
 		break;
 	}

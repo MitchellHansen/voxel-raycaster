@@ -112,7 +112,6 @@ void Input::handle_held_keys() {
 
 void Input::dispatch_events() {
 
-	std::cout << event_queue.size() << std::endl;
 	while (event_queue.size() != 0) {
 		notify_subscribers(std::move(event_queue.front()));
 		event_queue.pop_front();

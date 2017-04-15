@@ -54,7 +54,6 @@ int Camera::add_relative_impulse(DIRECTION impulse_direction, float speed) {
 
 	}
 
-	std::cout << movement.x << " : " << movement.y << " : " << movement.z << std::endl;
 	movement += SphereToCart(dir) * speed;
 
 	return 1;

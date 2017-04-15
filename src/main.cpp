@@ -29,7 +29,6 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Network.hpp>
 #include "map/Old_Map.h"
-#include "raycaster/RayCaster.h"
 #include "raycaster/Hardware_Caster.h"
 #include "Vector4.hpp"
 #include "Camera.h"
@@ -39,6 +38,7 @@
 #include "LightHandle.h"
 #include "imgui/imgui-SFML.h"
 #include "imgui/imgui.h"
+#include "map/Map.h"
 
 const int WINDOW_X = 1536;
 const int WINDOW_Y = 1024;
