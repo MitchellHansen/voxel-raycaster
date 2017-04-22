@@ -184,15 +184,15 @@ void Old_Map::generate_terrain() {
 		}
 	}
 
-	for (int x = 100; x < 150; x += 10) {
-		for (int y = 100; y < 150; y += 10) {
-			for (int z = 0; z < 10; z += 1) {
-				
-				voxel_data[x + dimensions.x * (y + dimensions.z * z)] = 6;
+	//for (int x = 100; x < 150; x += 10) {
+	//	for (int y = 100; y < 150; y += 10) {
+	//		for (int z = 0; z < 10; z += 1) {
+	//			
+	//			voxel_data[x + dimensions.x * (y + dimensions.z * z)] = 6;
 
-			}
-		}
-	}
+	//		}
+	//	}
+	//}
 
 
 
@@ -225,7 +225,7 @@ void Old_Map::generate_terrain() {
 	for (int x = 60; x < 65; x++) {
 		for (int y = 60; y < 65; y++) {
 			for (int z = 30; z < 35; z++) {
-				voxel_data[x + dimensions.x * (y + dimensions.z * z)] = 5;
+				voxel_data[x + dimensions.x * (y + dimensions.z * z)] = 6;
 			}
 		}
 	}
@@ -239,13 +239,13 @@ void Old_Map::generate_terrain() {
 		}
 	}
 
-	for (int x = 30; x < 60; x++) {
-		//for (int y = 0; y < dimensions.y; y++) {
-			for (int z = 0; z < 25; z++) {
-				voxel_data[x + dimensions.x * (50 + dimensions.z * z)] = 6;
-			}
-		//}
-	}
+	//for (int x = 30; x < 60; x++) {
+	//	//for (int y = 0; y < dimensions.y; y++) {
+	//		for (int z = 10; z < 25; z++) {
+	//			voxel_data[x + dimensions.x * (50 + dimensions.z * z)] = 6;
+	//		}
+	//	//}
+	//}
 
 	// Hand code in some constructions
 
@@ -303,8 +303,8 @@ void Old_Map::generate_terrain() {
 	//	}
 	//}
 
-	set_voxel(sf::Vector3i(45, 70, 5), 1);
-	set_voxel(sf::Vector3i(47, 70, 5), 1);
+	set_voxel(sf::Vector3i(45, 70, 6), 6);
+	set_voxel(sf::Vector3i(47, 70, 6), 6);
 	set_voxel(sf::Vector3i(100, 100, 50), 1);
 
 }

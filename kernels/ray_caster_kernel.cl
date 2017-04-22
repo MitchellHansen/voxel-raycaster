@@ -46,8 +46,7 @@ float4 view_light(float4 in_color, float3 light, float4 light_color, float3 view
 		float specTmp = max(dot(normalize(convert_float3(mask)), halfwayVector), 0.0f);
 		in_color += pow(specTmp, 8.0f) * light_color * 0.5f / d;
 	}
-
-	if (in_color.w > 1.0){
+	if (in_color.w > 1.0f){
 		in_color.xyz *= in_color.w;
 	}
 
@@ -96,11 +95,11 @@ bool cast_light_intersection_ray(
 	float3 delta_t = fabs(1.0f / ray_dir);
 
 	// offset is how far we are into a voxel, enables sub voxel movement
-	float3 offset = ((ray_pos)-floor(ray_pos)) * convert_float3(voxel_step);
+//	float3 offset = ;
 
 	// Intersection T is the collection of the next intersection points
 	// for all 3 axis XYZ.
-	float3 intersection_t = delta_t *offset;
+	float3 intersection_t = delta_t * ((ray_pos)-floor(ray_pos)) * convert_float3(voxel_step);
 
 	// for negative values, wrap around the delta_t
 	intersection_t += delta_t * -convert_float3(isless(intersection_t, 0));
@@ -117,23 +116,18 @@ bool cast_light_intersection_ray(
 		intersection_t += delta_t * fabs(convert_float3(face_mask.xyz));
 		voxel.xyz += voxel_step.xyz * face_mask.xyz;
 
-		// If the ray went out of bounds
-		int3 overshoot = voxel < *map_dim;
-		int3 undershoot = voxel >= 0;
-
-		if (any(overshoot  == (int3)(0, 0, 0)) ||
-			any(undershoot == (int3)(0, 0, 0))) {
+		if (any(voxel >= *map_dim) ||
+			any(voxel < 0)) {
 			return false;
 		}
 
 		// If we hit a voxel
-		int index = voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z));
-		int voxel_data = map[index];
+		int voxel_data = map[voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z))];
 
 		if (voxel_data != 0)
 			return true;
 
-		if (length_cutoff > 300)
+		if (++length_cutoff > 300)
 			return false;
 
 	//} while (any(isless(intersection_t, (float3)(distance_to_light - 1))));
@@ -147,6 +141,10 @@ bool cast_light_intersection_ray(
 
 // ====================================== Raycaster entry point =====================================
 // ==================================================================================================
+
+constant float4 fog_color = { 0.73f, 0.81f, 0.89f, 0.8f };
+constant float4 overshoot_color = { 0.25f, 0.48f, 0.52f, 0.8f };
+constant float4 overshoot_color_2 = { 0.25f, 0.1f, 0.52f, 0.8f };
 
 __kernel void raycaster(
 	global char* map,
@@ -166,19 +164,16 @@ __kernel void raycaster(
 
 
 
-	int x = get_global_id(0);
-	int y = get_global_id(1);
-
-	int global_id = x * y;
+//	int global_id = x * y;
 
 	// Get and set the random seed from seed memory
-	int seed = seed_memory[global_id];
-	int random_number = rand(&seed);
-	seed_memory[global_id] = seed;
+	//int seed = seed_memory[global_id];
+	//int random_number = rand(&seed);
+	//seed_memory[global_id] = seed;
 
 	// Get the pixel on the viewport, and find the view matrix ray that matches it
 	//int2 pixel = { global_id % (*resolution).x, global_id / (*resolution).x };
-	int2 pixel = (int2)(x, y);
+	int2 pixel = (int2)(get_global_id(0), get_global_id(1));
 
     float3 ray_dir = projection_matrix[pixel.x + (*resolution).x * pixel.y];
 
@@ -214,29 +209,18 @@ __kernel void raycaster(
 	float3 delta_t = fabs(1.0f / ray_dir);
 
 	// offset is how far we are into a voxel, enables sub voxel movement
-	float3 offset = ((*cam_pos) - floor(*cam_pos)) * convert_float3(voxel_step);
-
-
 	// Intersection T is the collection of the next intersection points
     // for all 3 axis XYZ.
-	float3 intersection_t = delta_t * offset;
+	// delta_t * offset = intersection_t
+	float3 intersection_t = delta_t * ((*cam_pos) - floor(*cam_pos)) * convert_float3(voxel_step);
 
 	// for negative values, wrap around the delta_t
 	intersection_t += delta_t * -convert_float3(isless(intersection_t, 0));
 
 
-	// Hard cut-off for how far the ray can travel
-	int max_dist = 800;
 	int dist = 0;
-
-
 	int3 face_mask = { 0, 0, 0 };
-	float4 fog_color = { 0.73f, 0.81f, 0.89f, 0.8f };
-	float4 voxel_color = (float4)(0.0f, 0.0f, 0.0f, 0.001f);
-	float4 overshoot_color = { 0.25f, 0.48f, 0.52f, 0.8f };
-	float4 overshoot_color_2 = { 0.25f, 0.1f, 0.52f, 0.8f };
-
-
+	int voxel_data = 0;
 	// Andrew Woo's raycasting algo
     do {
 
@@ -245,33 +229,29 @@ __kernel void raycaster(
 		intersection_t += delta_t * fabs(convert_float3(face_mask.xyz));
 		voxel.xyz += voxel_step.xyz * face_mask.xyz;
 
-        // If the ray went out of bounds
-		int3 overshoot = voxel < *map_dim;
-		int3 undershoot = voxel >= 0;
-
-		if (overshoot.x == 0 || overshoot.y == 0 || overshoot.z == 0 || undershoot.x == 0 || undershoot.y == 0){
+		if (any(voxel >= *map_dim)){
 			write_imagef(image, pixel, white_light(mix(fog_color, overshoot_color, 1.0 - max(dist / 700.0f, (float)0)), (float3)(lights[7], lights[8], lights[9]), face_mask));
 			return;
 		}
-		if (undershoot.z == 0) {
+		if (any(voxel < 0)) {
 			write_imagef(image, pixel, white_light(mix(fog_color, overshoot_color_2, 1.0 - max(dist / 700.0f, (float)0)), (float3)(lights[7], lights[8], lights[9]), face_mask));
 			return;
 		}
 
         // If we hit a voxel
-        int index = voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z));
-        int voxel_data = map[index];
+        voxel_data = map[voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z))];
 
 		// Debug, add the light position
-		if (all(voxel == convert_int3((float3)(lights[4], lights[5], lights[6]-3))))
-			voxel_data = 1;
+		// if (all(voxel == convert_int3((float3)(lights[4], lights[5], lights[6]-3))))
+		// 	voxel_data = 1;
 
 		if (voxel_data != 0) {
 
-			// Determine where on the 2d plane the ray intersected
+			float4 voxel_color = (float4)(0.0f, 0.0f, 0.0f, 0.001f);
 
-			float3 face_position = (float)(0);
-			float2 tile_face_position = (float)(0);
+			// Determine where on the 2d plane the ray intersected
+			float3 face_position = (float3)(0);
+			float2 tile_face_position = (float2)(0);
 			float3 sign = (float3)(1.0f, 1.0f, 1.0f);
 
 			// First determine the percent of the way the ray is towards the next intersection_t
@@ -300,7 +280,7 @@ __kernel void raycaster(
 
 			else if (face_mask.z == -1) {
 
-				//sign.z *= -1.0;
+				sign.z *= -1.0;
 				float x_percent = (intersection_t.x - (intersection_t.z - delta_t.z)) / delta_t.x;
 				float y_percent = (intersection_t.y - (intersection_t.z - delta_t.z)) / delta_t.y;
 
@@ -318,30 +298,12 @@ __kernel void raycaster(
 			// in order to cast the intersection ray!!
 
 
-
-			if (ray_dir.x > 0) {
-				face_position.x = -face_position.x + 1.0;
-				//face_position.x = -face_position.x + 1;
-				//tile_face_position.x = -tile_face_position.x + 1.0;
-			}
-			if (ray_dir.x < 0) {
-				//face_position.x = face_position.x + 0;
-
-
-				// This cures the Z semmetry on the X axis
-				tile_face_position.x = -tile_face_position.x + 1.0;
-			}
+			face_position.x = select((float)(face_position.x), (float)(-face_position.x + 1.0f), (int)(ray_dir.x > 0));
+			tile_face_position.x = select((float)(tile_face_position.x), (float)(-tile_face_position.x + 1.0f), (int)(ray_dir.x < 0));
 
 			if (ray_dir.y > 0){
-
 				face_position.y =  - face_position.y + 1;
-				//tile_face_position.y = -tile_face_position.y + 1.0;
-			}
-			if (ray_dir.y < 0) {
-
-				//face_position.y = face_position.y + 0;
-
-				// This cures the Y semmetry on the Z tile faces
+			} else {
 				tile_face_position.x = 1.0 - tile_face_position.x;
 
 				// We run into the Hairy ball problem, so we need to define
@@ -352,59 +314,39 @@ __kernel void raycaster(
 				}
 			}
 
-			if (ray_dir.z > 0) {
+			face_position.z = select((float)(face_position.z), (float)(-face_position.z + 1.0f), (int)(ray_dir.z > 0));
+			tile_face_position.y = select((float)(tile_face_position.y), (float)(-tile_face_position.y + 1.0f), (int)(ray_dir.z < 0));
 
-				face_position.z = - face_position.z + 1;
-				//tile_face_position.y = tile_face_position.y + 0.0;
-			}
 
-			if (ray_dir.z < 0) {
-				//sign.z *= -1.0;
-			//	face_position.z = - face_position.z + 1;
-				//face_position.z = face_position.z + 0;
-				tile_face_position.y = -tile_face_position.y + 1.0;
-			}
+			// if (voxel_data == 6){
+			//
+			// 	//float3 ray_pos = (convert_float3(voxel) + face_position);
+			// 	//ray_dir *= sign;
+			// 	delta_t = fabs(1.0f / ray_dir);
+			// 	intersection_t = delta_t * (face_position * convert_float3(voxel_step));
+			//
+			// 	// for negative values, wrap around the delta_t
+			// 	intersection_t += delta_t * -convert_float3(isless(intersection_t, 0));
+			// 	voxel_step = (int3)(1);//convert_int3(sign);
+			// 	voxel_step *= (ray_dir > 0) - (ray_dir < 0);
+			// 	continue;
+			// }
 
-			if (voxel_data == 6){
-			//	intersection_t = (1, 1, 1) - intersection_t;
-				//intersection_t += delta_t * -convert_float3(isless(intersection_t, 0));
-				float3 ray_pos = (convert_float3(voxel) + face_position);
-				//ray_dir *= sign;
-				delta_t = fabs(1.0f / ray_dir);
-				float3 offset = ((ray_pos)-floor(ray_pos)) * convert_float3(voxel_step);
-				intersection_t = delta_t * offset;
-
-				// for negative values, wrap around the delta_t
-				intersection_t += delta_t * -convert_float3(isless(intersection_t, 0));
-				voxel_step = (1, 1, 1);//convert_int3(sign);
-				voxel_step *= (ray_dir > 0) - (ray_dir < 0);
-				continue;
-			}
 			// Now either use the face position to retrieve a texture sample, or
 			// just a plain color for the voxel color
+			voxel_color = select((float4)voxel_color,
+								 (float4)(0.0f, 0.239f, 0.419f, 0.0f),
+								 (int4)(voxel_data == 6));
 
-			if (voxel_data == 6) {
-				voxel_color = (float4)(0.0f, 0.239f, 0.419f, 0.0f);
-			}
-			else if (voxel_data == 5) {
-				float2 tile_size = convert_float2(*atlas_dim / *tile_dim);
-				voxel_color = read_imagef(
-					texture_atlas,
-					convert_int2(tile_face_position * tile_size) +
-					convert_int2((float2)(3, 0) * tile_size)
-				);
+			voxel_color = select((float4)read_imagef(
+									 texture_atlas,
+									 convert_int2(tile_face_position * convert_float2(*atlas_dim / *tile_dim)) +
+									 convert_int2((float2)(0, 0) * convert_float2(*atlas_dim / *tile_dim))
+								 ),
+								 (float4)(0.0f, 0.239f, 0.419f, 0.0f),
+								 (int4)(voxel_data == 5));
 
-				voxel_color.w = 0.0f;
-					//voxel_color = (float4)(0.25, 0.52, 0.30, 0.1);
-			}
-			else if (voxel_data == 1) {
-				voxel_color = (float4)(0.929f, 0.957f, 0.027f, 0.0f);
-			}
-			else {
-				voxel_color = (float4)(1.0f, 0.0f, 0.0f, 0.0f);
-			}
-
-
+		 	voxel_color.w = 0.0f;
 
 			if (cast_light_intersection_ray(
 				map,
@@ -416,8 +358,7 @@ __kernel void raycaster(
 			)) {
 
 				// If the light ray intersected an object on the way to the light point
-				float4 ambient_color = white_light(voxel_color, (float3)(1.0f, 1.0f, 1.0f), face_mask);
-				write_imagef(image, pixel, ambient_color);
+				write_imagef(image, pixel, white_light(voxel_color, (float3)(1.0f, 1.0f, 1.0f), face_mask));
 				return;
 			}
 
@@ -441,9 +382,7 @@ __kernel void raycaster(
 
 		}
 
-        dist++;
-
-    } while (dist < 700.0f);
+    } while (++dist < 700.0f);
 
 
 	write_imagef(image, pixel, white_light(mix(fog_color, (float4)(0.40, 0.00, 0.40, 0.2), 1.0 - max(dist / 700.0f, (float)0)), (float3)(lights[7], lights[8], lights[9]), face_mask));
