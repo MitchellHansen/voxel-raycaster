@@ -11,8 +11,16 @@ Map::Map(uint32_t dimensions) {
 		if (rand() % 25 < 2)
 			voxel_data[i] = 1;
 		else
-			voxel_data[i] = 1;
+			voxel_data[i] = 0;
 	}
+
+	generate_octree(dimensions);
+}
+
+
+void Map::dump_logs() {
+
+	octree.print_block(0);
 }
 
 uint64_t Map::generate_children(sf::Vector3i pos, int voxel_scale) {
@@ -36,7 +44,6 @@ uint64_t Map::generate_children(sf::Vector3i pos, int voxel_scale) {
 	// want to do chunking / loading of raw data I can edit the voxel access
 	if (voxel_scale == 1) {
 
-		// 
 		uint64_t child_descriptor = 0;
 
 		// Setting the individual valid mask bits
@@ -49,8 +56,8 @@ uint64_t Map::generate_children(sf::Vector3i pos, int voxel_scale) {
 		// We are querying leafs, so we need to fill the leaf mask
 		child_descriptor |= 0xFF000000;
 
-		// This is where contours 
-		// The CP will be left blank, contours will be added maybe
+		// The CP will be left blank, contour mask and ptr will need to 
+		// be added here later
 		return child_descriptor;
 
 	}
@@ -92,7 +99,7 @@ uint64_t Map::generate_children(sf::Vector3i pos, int voxel_scale) {
 	// interlace them and allow the memory handler to work correctly.
 
 	// Copy the children to the stack and set the child_descriptors pointer to the correct value
-	child_descriptor |= a.copy_to_stack(descriptor_array);
+	child_descriptor |= octree.copy_to_stack(descriptor_array, voxel_scale);
 
 	// Free space may also be allocated here as well
 	
@@ -100,19 +107,18 @@ uint64_t Map::generate_children(sf::Vector3i pos, int voxel_scale) {
 	return child_descriptor;
 }
 
-void Map::generate_octree() {
+void Map::generate_octree(unsigned int dimensions) {
 
 	// Launch the recursive generator at (0,0,0) as the first point
 	// and the octree dimension as the initial block size
 	uint64_t root_node = generate_children(sf::Vector3i(0, 0, 0), OCT_DIM/2);
-	uint64_t tmp = 0;
 
 	// ========= DEBUG ==============
 	PrettyPrintUINT64(root_node, &output_stream);
 	output_stream << "    " << OCT_DIM << "    " << counter++ << std::endl;
 	// ==============================
 
-	a.root_index = a.copy_to_stack(std::vector<uint64_t>{root_node});
+	octree.root_index = octree.copy_to_stack(std::vector<uint64_t>{root_node}, OCT_DIM);
 
 	// Dump the debug log
 	DumpLog(&output_stream, "raw_output.txt");
@@ -125,7 +131,7 @@ void Map::setVoxel(sf::Vector3i world_position, int val) {
 
 bool Map::getVoxelFromOctree(sf::Vector3i position)
 {
-	return a.get_voxel(position);
+	return octree.get_voxel(position);
 }
 
 bool Map::getVoxel(sf::Vector3i pos){
@@ -137,7 +143,7 @@ bool Map::getVoxel(sf::Vector3i pos){
 	}
 }
 
-void Map::test_map() {
+bool Map::test() {
 
 	std::cout << "Validating map..." << std::endl;
 
@@ -192,5 +198,7 @@ void Map::test_map() {
 	std::cout << "Octree linear xyz access : ";
 	std::cout << timer.restart().asMicroseconds() << " microseconds" << std::endl;
 
+
+	return true;
 }
 

@@ -92,9 +92,8 @@ int main() {
 
 	// =============================
 	Map _map(32);
-	_map.generate_octree();
-	_map.a.print_block(0);
-	_map.test_map();
+	_map.test();
+	_map.dump_logs();
 	//std::cin.get();
 	//return 0;
 	// =============================
@@ -102,7 +101,7 @@ int main() {
 	sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
 	window.setMouseCursorVisible(false);
 	window.setKeyRepeatEnabled(false);
-	window.setFramerateLimit(120);
+	//window.setFramerateLimit(120);
 	window.setVerticalSyncEnabled(false);
 
 	ImGui::SFML::Init(window);

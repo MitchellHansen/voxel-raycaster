@@ -24,16 +24,16 @@ public:
 
 	Map(uint32_t dimensions);
 
-	void generate_octree();
+	void dump_logs();
 
 	void setVoxel(sf::Vector3i position, int val);
 
 	bool getVoxelFromOctree(sf::Vector3i position);
 
 	bool getVoxel(sf::Vector3i pos);
-	Octree a;
+	Octree octree;
 
-	void test_map();
+	bool test();
 
 private:
 
@@ -42,6 +42,9 @@ private:
 	std::stringstream output_stream;
 	// =========================
 
+	void generate_octree(unsigned int dimensions);
+
+	// Generate children is the main recursive function
 	uint64_t generate_children(sf::Vector3i pos, int dim);
 
 	char* voxel_data;

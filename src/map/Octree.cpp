@@ -5,24 +5,38 @@ Octree::Octree() {
 	// initialize the first stack block
 
 	for (int i = 0; i < 0x8000; i++) {
-		blob[i] = 0;
+		descriptor_buffer[i] = 0;
 	}
 }
 
-uint64_t Octree::copy_to_stack(std::vector<uint64_t> children) {
 
-	// Check for the 15 bit boundry		
-	if (stack_pos - children.size() > stack_pos) {
-		global_pos = stack_pos;
-		stack_pos = 0x8000;
-	}
-	else {
-		stack_pos -= children.size();
-	}
+// Copy to stack enables the hybrid depth-breadth first tree by taking
+// a list of valid non-leaf child descriptors contained under a common parent.
 
-	// Check for the far bit
+uint64_t Octree::copy_to_stack(std::vector<uint64_t> children, unsigned int voxel_scale) {
 
-	memcpy(&blob[stack_pos + global_pos], children.data(), children.size() * sizeof(uint64_t));
+	//// Check for the 15 bit boundry		
+	//if (stack_pos - children.size() > stack_pos) {
+	//	global_pos = stack_pos;
+	//	stack_pos = 0x8000;
+	//}
+	//else {
+	//	stack_pos -= children.size();
+	//}
+
+	// Copy to stack needs to keep track of an "anchor_stack" which will hopefully facilitate
+	// relative pointer generation for items being copied to the stack
+
+	// We need to return the relative pointer to the child node list
+	// 16 bits, one far bit, one sign bit? 14 bits == +- 16384
+
+	// Worth halving the ptr reach to enable backwards ptrs?
+	// could increase packability allowing far ptrs and attachments to come before or after
+
+
+
+	stack_pos -= children.size();
+	memcpy(&descriptor_buffer[stack_pos + global_pos], children.data(), children.size() * sizeof(uint64_t));
 
 	// Return the bitmask encoding the index of that value
 	// If we tripped the far bit, allocate a far index to the stack and place
@@ -39,7 +53,7 @@ bool Octree::get_voxel(sf::Vector3i position) {
 	oct_state state;
 
 	// push the root node to the parent stack
-	uint64_t head = blob[root_index];
+	uint64_t head = descriptor_buffer[root_index];
 	state.parent_stack[state.parent_stack_position] = head;
 
 	// Set our initial dimension and the position at the corner of the oct to keep track of our position
@@ -116,7 +130,7 @@ bool Octree::get_voxel(sf::Vector3i position) {
 
 			// access the element at which head points to and then add the specified number of indices
 			// to get to the correct child descriptor
-			head = blob[(head & child_pointer_mask) + count];
+			head = descriptor_buffer[(head & child_pointer_mask) + count];
 
 			// Increment the parent stack position and put the new oct node as the parent
 			state.parent_stack_position++;
@@ -142,7 +156,7 @@ void Octree::print_block(int block_pos) {
 
 	std::stringstream sss;
 	for (int i = block_pos; i < (int)pow(2, 15); i++) {
-		PrettyPrintUINT64(blob[i], &sss);
+		PrettyPrintUINT64(descriptor_buffer[i], &sss);
 		sss << "\n";
 	}
 	DumpLog(&sss, "raw_data.txt");

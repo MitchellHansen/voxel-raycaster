@@ -613,7 +613,7 @@ int Hardware_Caster::compile_kernel(std::string kernel_source, bool is_path, std
 
 	// Try and build the program
 	// "-cl-finite-math-only -cl-fast-relaxed-math -cl-unsafe-math-optimizations"
-	error = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
+	error = clBuildProgram(program, 1, &device_id, "-cl-finite-math-only -cl-fast-relaxed-math -cl-unsafe-math-optimizations", NULL, NULL);
 
 	// Check to see if it errored out
 	if (vr_assert(error, "clBuildProgram")) {
