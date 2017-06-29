@@ -10,11 +10,42 @@ Octree::Octree() {
 }
 
 
+void Octree::Generate(char* data, sf::Vector3i dimensions) {
+
+	// Launch the recursive generator at (0,0,0) as the first point
+	// and the octree dimension as the initial block size
+	std::tuple<uint64_t, uint64_t> root_node = GenerationRecursion(data, dimensions, sf::Vector3i(0, 0, 0), OCT_DIM/2);
+
+	// ========= DEBUG ==============
+	PrettyPrintUINT64(std::get<0>(root_node), &output_stream);
+	output_stream << "    " << OCT_DIM << "    " << counter++ << std::endl;
+	// ==============================
+	
+	// ============= TEMP!!! ===================
+	if (stack_pos - 1 > stack_pos) {
+		global_pos -= stack_pos;
+		stack_pos = 0x8000;
+	}
+	else {
+		stack_pos -= 1;
+	}
+
+	memcpy(&descriptor_buffer[stack_pos + global_pos], &std::get<0>(root_node), 1 * sizeof(uint64_t));
+	// ========================================
+
+	DumpLog(&output_stream, "raw_output.txt");
+
+}
+
 // Copy to stack enables the hybrid depth-breadth first tree by taking
 // a list of valid non-leaf child descriptors contained under a common parent.
 
 // It takes the list of children, and the current level in the voxel hierarchy.
 // It returns the index to the first element of the 
+
+// This is all fine and dandy, but we have the problem where we need to assign
+// relative pointers to objects so we need to keep track of where their children are
+// being assigned.
 
 uint64_t Octree::copy_to_stack(std::vector<uint64_t> children, unsigned int voxel_scale) {
 
@@ -165,4 +196,107 @@ void Octree::print_block(int block_pos) {
 	DumpLog(&sss, "raw_data.txt");
 
 }
+
+std::tuple<uint64_t, uint64_t> Octree::GenerationRecursion(char* data, sf::Vector3i dimensions, sf::Vector3i pos, unsigned int voxel_scale) {
+
+
+	// The 8 subvoxel coords starting from the 1th direction, the direction of the origin of the 3d grid
+	// XY, Z++, XY
+	std::vector<sf::Vector3i> v = {
+		sf::Vector3i(pos.x              , pos.y              , pos.z),
+		sf::Vector3i(pos.x + voxel_scale, pos.y              , pos.z),
+		sf::Vector3i(pos.x              , pos.y + voxel_scale, pos.z),
+		sf::Vector3i(pos.x + voxel_scale, pos.y + voxel_scale, pos.z),
+		sf::Vector3i(pos.x              , pos.y              , pos.z + voxel_scale),
+		sf::Vector3i(pos.x + voxel_scale, pos.y              , pos.z + voxel_scale),
+		sf::Vector3i(pos.x              , pos.y + voxel_scale, pos.z + voxel_scale),
+		sf::Vector3i(pos.x + voxel_scale, pos.y + voxel_scale, pos.z + voxel_scale)
+	};
+
+	// A tuple holding the child descriptor that we're going to fill out and the
+	// absolute position of it within the descriptor buffer
+	std::tuple<uint64_t, uint64_t> descriptor_and_position(0, 0);
+
+	// If we hit the 1th voxel scale then we need to query the 3D grid
+	// and get the voxel at that position. I assume in the future when I
+	// want to do chunking / loading of raw data I can edit the voxel access
+	if (voxel_scale == 1) {
+		
+		// Setting the individual valid mask bits
+		// These don't bound check, should they?
+		for (int i = 0; i < v.size(); i++) {
+			if (get1DIndexedVoxel(data, dimensions, v.at(i)))
+				SetBit(i + 16, &std::get<0>(descriptor_and_position));
+		}
+
+		// We are querying leafs, so we need to fill the leaf mask
+		std::get<0>(descriptor_and_position) |= 0xFF000000;
+
+		// The CP will be left blank, contour mask and ptr will need to 
+		// be added here later
+		return descriptor_and_position;
+
+	}
+
+	std::vector<std::tuple<uint64_t, uint64_t>> descriptor_position_array;
+
+	// Generate down the recursion, returning the descriptor of the current node
+	for (int i = 0; i < v.size(); i++) {
+
+		std::tuple<uint64_t, uint64_t> child(0, 0);
+
+		// Get the child descriptor from the i'th to 8th subvoxel
+		child = GenerationRecursion(data, dimensions, v.at(i), voxel_scale / 2);
+
+		// =========== Debug ===========
+		PrettyPrintUINT64(std::get<0>(child), &output_stream);
+		output_stream << "    " << voxel_scale << "    " << counter++ << std::endl;
+		// =============================
+
+		// If the child is a leaf (contiguous) of non-valid values
+		if (IsLeaf(std::get<0>(child)) && !CheckLeafSign(std::get<0>(child))) {
+			// Leave the valid mask 0, set leaf mask to 1
+			SetBit(i + 16 + 8, &std::get<0>(descriptor_and_position));
+		}
+
+		// If the child is valid and not a leaf
+		else {
+
+			// Set the valid mask, and add it to the descriptor array
+			SetBit(i + 16, &std::get<0>(descriptor_and_position));
+			descriptor_position_array.push_back(child);
+		}
+	}
+	
+	// We are working bottom up so we need to subtract from the stack position
+	// the amount of elements we want to use
+
+	 for (auto desc_pos: descriptor_position_array) {
+		 
+	 }
+
+	if (stack_pos - descriptor_array.size() > stack_pos) {
+		global_pos = stack_pos;
+		stack_pos = 0x8000;
+	}
+	else {
+		stack_pos -= descriptor_array.size();
+	}
+
+
+
+
+	memcpy(&descriptor_buffer[stack_pos + global_pos], descriptor_array.data(), descriptor_array.size() * sizeof(uint64_t));
+
+
+
+
+	// Return the node up the stack
+	return descriptor_and_position;
+}
+
+char Octree::get1DIndexedVoxel(char* data, sf::Vector3i dimensions, sf::Vector3i position) {	
+	return data[position.x + OCT_DIM * (position.y + OCT_DIM * position.z)];
+}
+
 

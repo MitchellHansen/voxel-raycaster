@@ -50,18 +50,6 @@ private:
 
 };
 
-struct oct_state {
-
-	int parent_stack_position = 0;
-	uint64_t parent_stack[32] = { 0 };
-
-	uint8_t scale = 0;
-	uint8_t idx_stack[32] = { 0 };
-
-	uint64_t current_descriptor;
-
-};
-
 inline sf::Vector3f SphereToCart(sf::Vector2f i) {
 
 	auto r = sf::Vector3f(

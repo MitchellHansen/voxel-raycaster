@@ -2,22 +2,42 @@
 #include <SFML/System/Vector3.hpp>
 #include <vector>
 #include "util.hpp"
+#include <tuple>
 
 #define OCT_DIM 32
 
+struct oct_state {
+
+	int parent_stack_position = 0;
+	uint64_t parent_stack[32] = { 0 };
+
+	uint8_t scale = 0;
+	uint8_t idx_stack[32] = { 0 };
+
+	uint64_t current_descriptor;
+
+};
+
 class Octree {
 public:
+
+	static const int buffer_size = 100000;
+
 	Octree();
 	~Octree() {};
 
-	uint64_t *trunk_buffer      = new uint64_t[10000];
-	uint64_t *descriptor_buffer = new uint64_t[100000];
-	uint32_t *attachment_lookup = new uint32_t[100000];
-	uint64_t *attachment_buffer = new uint64_t[100000];
+	void Generate(char* data, sf::Vector3i dimensions);
+	void Load(std::string octree_file_name);
+	
+	uint64_t *trunk_buffer      = new uint64_t[buffer_size]{0};
+	uint64_t *descriptor_buffer = new uint64_t[buffer_size]{0};
+	uint32_t *attachment_lookup = new uint32_t[buffer_size]{0};
+	uint64_t *attachment_buffer = new uint64_t[buffer_size]{0};
 
+	unsigned int trunk_cutoff = 3;
 	uint64_t root_index = 0;
 	uint64_t stack_pos = 0x8000;
-	uint64_t global_pos = 0;
+	uint64_t global_pos = buffer_size - 50;
 
 	uint64_t copy_to_stack(std::vector<uint64_t> children, unsigned int voxel_scale);
 
@@ -28,6 +48,10 @@ public:
 	void print_block(int block_pos);
 
 private:
+
+	std::tuple<uint64_t, uint64_t> GenerationRecursion(char* data, sf::Vector3i dimensions, sf::Vector3i pos, unsigned int voxel_scale);
+
+	static char get1DIndexedVoxel(char* data, sf::Vector3i dimensions, sf::Vector3i position);
 
 	std::vector<uint64_t> anchor_stack;
 	unsigned int octree_voxel_dimension = 32;
@@ -58,4 +82,9 @@ private:
 	const uint64_t contour_pointer_mask = 0xFFFFFF00000000;
 	const uint64_t contour_mask = 0xFF00000000000000;
 
+
+	// ======= DEBUG ===========
+	int counter = 0;
+	std::stringstream output_stream;
+	// =========================
 };

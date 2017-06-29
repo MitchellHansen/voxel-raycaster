@@ -99,7 +99,8 @@ uint64_t Map::generate_children(sf::Vector3i pos, int voxel_scale) {
 	// Any free space between the child descriptors must be added here in order to 
 	// interlace them and allow the memory handler to work correctly.
 
-	// Copy the children to the stack and set the child_descriptors pointer to the correct value
+	// Copy the children to the stack and set the child_descriptors pointer
+	// to the correct value
 	child_descriptor |= octree.copy_to_stack(descriptor_array, voxel_scale);
 
 	// Free space may also be allocated here as well
@@ -110,19 +111,6 @@ uint64_t Map::generate_children(sf::Vector3i pos, int voxel_scale) {
 
 void Map::generate_octree(unsigned int dimensions) {
 
-	// Launch the recursive generator at (0,0,0) as the first point
-	// and the octree dimension as the initial block size
-	uint64_t root_node = generate_children(sf::Vector3i(0, 0, 0), OCT_DIM/2);
-
-	// ========= DEBUG ==============
-	PrettyPrintUINT64(root_node, &output_stream);
-	output_stream << "    " << OCT_DIM << "    " << counter++ << std::endl;
-	// ==============================
-
-	octree.root_index = octree.copy_to_stack(std::vector<uint64_t>{root_node}, OCT_DIM);
-
-	// Dump the debug log
-	DumpLog(&output_stream, "raw_output.txt");
 
 }
 
