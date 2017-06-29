@@ -13,16 +13,19 @@ Octree::Octree() {
 // Copy to stack enables the hybrid depth-breadth first tree by taking
 // a list of valid non-leaf child descriptors contained under a common parent.
 
+// It takes the list of children, and the current level in the voxel hierarchy.
+// It returns the index to the first element of the 
+
 uint64_t Octree::copy_to_stack(std::vector<uint64_t> children, unsigned int voxel_scale) {
 
-	//// Check for the 15 bit boundry		
-	//if (stack_pos - children.size() > stack_pos) {
-	//	global_pos = stack_pos;
-	//	stack_pos = 0x8000;
-	//}
-	//else {
-	//	stack_pos -= children.size();
-	//}
+	// Check for the 15 bit boundry		
+	if (stack_pos - children.size() > stack_pos) {
+		global_pos = stack_pos;
+		stack_pos = 0x8000;
+	}
+	else {
+		stack_pos -= children.size();
+	}
 
 	// Copy to stack needs to keep track of an "anchor_stack" which will hopefully facilitate
 	// relative pointer generation for items being copied to the stack
@@ -35,7 +38,7 @@ uint64_t Octree::copy_to_stack(std::vector<uint64_t> children, unsigned int voxe
 
 
 
-	stack_pos -= children.size();
+	//stack_pos -= children.size();
 	memcpy(&descriptor_buffer[stack_pos + global_pos], children.data(), children.size() * sizeof(uint64_t));
 
 	// Return the bitmask encoding the index of that value

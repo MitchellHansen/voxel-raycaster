@@ -29,13 +29,13 @@ uint64_t Map::generate_children(sf::Vector3i pos, int voxel_scale) {
 	// The 8 subvoxel coords starting from the 1th direction, the direction of the origin of the 3d grid
 	// XY, Z++, XY
 	std::vector<sf::Vector3i> v = { 
-		sf::Vector3i(pos.x      , pos.y      , pos.z),
-		sf::Vector3i(pos.x + voxel_scale, pos.y      , pos.z),
-		sf::Vector3i(pos.x      , pos.y + voxel_scale, pos.z),
+		sf::Vector3i(pos.x              , pos.y              , pos.z),
+		sf::Vector3i(pos.x + voxel_scale, pos.y              , pos.z),
+		sf::Vector3i(pos.x              , pos.y + voxel_scale, pos.z),
 		sf::Vector3i(pos.x + voxel_scale, pos.y + voxel_scale, pos.z),
-		sf::Vector3i(pos.x      , pos.y      , pos.z + voxel_scale),
-		sf::Vector3i(pos.x + voxel_scale, pos.y      , pos.z + voxel_scale),
-		sf::Vector3i(pos.x      , pos.y + voxel_scale, pos.z + voxel_scale),
+		sf::Vector3i(pos.x              , pos.y              , pos.z + voxel_scale),
+		sf::Vector3i(pos.x + voxel_scale, pos.y              , pos.z + voxel_scale),
+		sf::Vector3i(pos.x              , pos.y + voxel_scale, pos.z + voxel_scale),
 		sf::Vector3i(pos.x + voxel_scale, pos.y + voxel_scale, pos.z + voxel_scale) 
 	};
 
@@ -66,6 +66,7 @@ uint64_t Map::generate_children(sf::Vector3i pos, int voxel_scale) {
 	uint64_t child_descriptor = 0;
 	
 	std::vector<uint64_t> descriptor_array;
+	std::vector<uint64_t> index_array;
 
 	// Generate down the recursion, returning the descriptor of the current node
 	for (int i = 0; i < v.size(); i++) {

@@ -92,10 +92,10 @@ int main() {
 
 	// =============================
 	Map _map(32);
-	_map.test();
+	//_map.test();
 	_map.dump_logs();
-	//std::cin.get();
-	//return 0;
+	std::cin.get();
+	return 0;
 	// =============================
 
 	sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
