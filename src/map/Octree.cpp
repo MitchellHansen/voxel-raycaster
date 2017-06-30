@@ -271,16 +271,46 @@ std::tuple<uint64_t, uint64_t> Octree::GenerationRecursion(char* data, sf::Vecto
 	// We are working bottom up so we need to subtract from the stack position
 	// the amount of elements we want to use
 
-	 for (auto desc_pos: descriptor_position_array) {
-		 
-	 }
 
-	if (stack_pos - descriptor_array.size() > stack_pos) {
-		global_pos = stack_pos;
+	int worst_case_insertion_size = descriptor_position_array.size() * 2;
+
+	// check to see if we exceeded this page header, if so set the header and move the global position
+	if (page_header_counter - worst_case_insertion_size <= 0) {
+		
+		// Jump to the page headers position and reset the counter
+		descriptor_buffer_position -= 0x8000 - page_header_counter;
+		page_header_counter = 0x8000;
+
+		// Fill the space with blank
+		memcpy(&descriptor_buffer[descriptor_buffer_position], &current_info_section_position, sizeof(uint64_t));
+
+		descriptor_buffer_position--;
+
+	} 
+
+	// We gotta go backwards as memcpy of a vector can be emulated by starting from the rear
+	for (int i = descriptor_position_array.size() - 1; i >= 0; i--) {
+		
+		uint64_t relative_distance = std::get<1>(descriptor_position_array.at(i)) - descriptor_buffer_position;
+
+		// check to see if the 
+		if (relative_distance > 0x8000) {
+			memcpy(&descriptor_buffer[descriptor_buffer_position], &std::get<1>(descriptor_position_array.at(i)), sizeof(uint64_t));
+			descriptor_buffer_position--;
+		}
+
+		memcpy(&descriptor_buffer[descriptor_buffer_position], descriptor_position_array.at(i), descriptor_array.size() * sizeof(uint64_t));
+
+	}
+
+	
+	
+	if (stack_pos - descriptor_position_array.size() > stack_pos) {
+		global_pos -= stack_pos;
 		stack_pos = 0x8000;
 	}
 	else {
-		stack_pos -= descriptor_array.size();
+		stack_pos -= descriptor_position_array.size();
 	}
 
 

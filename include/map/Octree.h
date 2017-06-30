@@ -18,10 +18,12 @@ struct oct_state {
 
 };
 
+
 class Octree {
 public:
 
 	static const int buffer_size = 100000;
+
 
 	Octree();
 	~Octree() {};
@@ -29,13 +31,24 @@ public:
 	void Generate(char* data, sf::Vector3i dimensions);
 	void Load(std::string octree_file_name);
 	
-	uint64_t *trunk_buffer      = new uint64_t[buffer_size]{0};
-	uint64_t *descriptor_buffer = new uint64_t[buffer_size]{0};
-	uint32_t *attachment_lookup = new uint32_t[buffer_size]{0};
-	uint64_t *attachment_buffer = new uint64_t[buffer_size]{0};
+	uint64_t *trunk_buffer				= new uint64_t[buffer_size]{0};
+	uint64_t trunk_buffer_position		= buffer_size;
+
+	uint64_t *descriptor_buffer			= new uint64_t[buffer_size]{0};
+	uint64_t descriptor_buffer_position = buffer_size;
+
+	uint32_t *attachment_lookup			= new uint32_t[buffer_size]{0};
+	uint64_t attachment_lookup_position = buffer_size;
+
+	uint64_t *attachment_buffer			= new uint64_t[buffer_size]{0};
+	uint64_t attachment_buffer_position = buffer_size;
 
 	unsigned int trunk_cutoff = 3;
 	uint64_t root_index = 0;
+
+	int page_header_counter = 0x8000;
+	uint64_t current_info_section_position = buffer_size - 50;
+
 	uint64_t stack_pos = 0x8000;
 	uint64_t global_pos = buffer_size - 50;
 
@@ -49,7 +62,12 @@ public:
 
 private:
 
-	std::tuple<uint64_t, uint64_t> GenerationRecursion(char* data, sf::Vector3i dimensions, sf::Vector3i pos, unsigned int voxel_scale);
+	std::tuple<uint64_t, uint64_t> GenerationRecursion(
+		char* data,					// raw octree data
+		sf::Vector3i dimensions,	// dimensions of the raw data
+		sf::Vector3i pos,			// position of this generation node
+		unsigned int voxel_scale	// the voxel scale of this node
+	); 
 
 	static char get1DIndexedVoxel(char* data, sf::Vector3i dimensions, sf::Vector3i position);
 
