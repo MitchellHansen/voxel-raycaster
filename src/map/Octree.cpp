@@ -270,8 +270,7 @@ std::tuple<uint64_t, uint64_t> Octree::GenerationRecursion(char* data, sf::Vecto
 	
 	// We are working bottom up so we need to subtract from the stack position
 	// the amount of elements we want to use
-
-
+	
 	int worst_case_insertion_size = descriptor_position_array.size() * 2;
 
 	// check to see if we exceeded this page header, if so set the header and move the global position
@@ -288,38 +287,56 @@ std::tuple<uint64_t, uint64_t> Octree::GenerationRecursion(char* data, sf::Vecto
 
 	} 
 
+	unsigned int far_pointer_count = 0;
+	uint64_t far_pointer_block_position = descriptor_buffer_position;
+
+	// Count the far pointers we need to allocate 
+	for (int i = descriptor_position_array.size() - 1; i >= 0; i--) {
+	
+		// this is not the actual relative distance write, so we pessimistically guess that we will have
+		// the worst relative distance via the insertion size
+		uint64_t relative_distance = std::get<1>(descriptor_position_array.at(i)) - (descriptor_buffer_position - worst_case_insertion_size);
+
+		// check to see if we tripped the far pointer
+		if (relative_distance > 0x8000) {
+
+			// This is writing the ABSOLUTE POSITION for far pointers, is this what I want?
+			memcpy(&descriptor_buffer[descriptor_buffer_position], &std::get<1>(descriptor_position_array.at(i)), sizeof(uint64_t));
+			descriptor_buffer_position--;
+
+			far_pointer_count++;
+		}
+	}
+
 	// We gotta go backwards as memcpy of a vector can be emulated by starting from the rear
 	for (int i = descriptor_position_array.size() - 1; i >= 0; i--) {
 		
+		// just gonna redo the far pointer check loosing a couple of cycles but oh well
 		uint64_t relative_distance = std::get<1>(descriptor_position_array.at(i)) - descriptor_buffer_position;
+
+		uint64_t descriptor = std::get<0>(descriptor_position_array.at(i));
 
 		// check to see if the 
 		if (relative_distance > 0x8000) {
-			memcpy(&descriptor_buffer[descriptor_buffer_position], &std::get<1>(descriptor_position_array.at(i)), sizeof(uint64_t));
-			descriptor_buffer_position--;
+
+			descriptor |= far_bit_mask;
+			descriptor |= far_pointer_block_position;
+
+			far_pointer_block_position--;
+		
+		} else {
+			
+			descriptor |= relative_distance;	
+
 		}
 
-		memcpy(&descriptor_buffer[descriptor_buffer_position], descriptor_position_array.at(i), descriptor_array.size() * sizeof(uint64_t));
+		// We have finished building the CD so we push it onto the buffer
+		memcpy(&descriptor_buffer[descriptor_buffer_position], &descriptor, sizeof(uint64_t));
+		descriptor_buffer_position--;
 
 	}
 
-	
-	
-	if (stack_pos - descriptor_position_array.size() > stack_pos) {
-		global_pos -= stack_pos;
-		stack_pos = 0x8000;
-	}
-	else {
-		stack_pos -= descriptor_position_array.size();
-	}
-
-
-
-
-	memcpy(&descriptor_buffer[stack_pos + global_pos], descriptor_array.data(), descriptor_array.size() * sizeof(uint64_t));
-
-
-
+	std::get<1>(descriptor_and_position) = descriptor_buffer_position + 1;
 
 	// Return the node up the stack
 	return descriptor_and_position;
