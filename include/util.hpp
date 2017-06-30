@@ -151,7 +151,7 @@ inline void PrettyPrintUINT64(uint64_t i, std::stringstream* ss) {
 	*ss << "[" << std::bitset<1>(i >> 15) << "]";
 	*ss << "[" << std::bitset<8>(i >> 16) << "]";
 	*ss << "[" << std::bitset<8>(i >> 24) << "]";
-	*ss << "[" << std::bitset<32>(i >> 32) << "]";
+	*ss << "[" << std::bitset<32>(i >> 32) << "]\n";
 }
 
 inline void PrettyPrintUINT64(uint64_t i) {

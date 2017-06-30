@@ -2,11 +2,12 @@
 
 Octree::Octree() {
 
-	// initialize the first stack block
+	// initialize the the buffers to 0's
+	trunk_buffer		= new uint64_t[buffer_size]();
+	descriptor_buffer	= new uint64_t[buffer_size]();
+	attachment_lookup	= new uint32_t[buffer_size]();
+	attachment_buffer	= new uint64_t[buffer_size]();
 
-	for (int i = 0; i < 0x8000; i++) {
-		descriptor_buffer[i] = 0;
-	}
 }
 
 
@@ -30,55 +31,21 @@ void Octree::Generate(char* data, sf::Vector3i dimensions) {
 		stack_pos -= 1;
 	}
 
-	memcpy(&descriptor_buffer[stack_pos + global_pos], &std::get<0>(root_node), 1 * sizeof(uint64_t));
+	memcpy(&descriptor_buffer[descriptor_buffer_position], &std::get<0>(root_node), sizeof(uint64_t));
+	descriptor_buffer_position--;
+
 	// ========================================
 
 	DumpLog(&output_stream, "raw_output.txt");
 
-}
+	output_stream.str("");
 
-// Copy to stack enables the hybrid depth-breadth first tree by taking
-// a list of valid non-leaf child descriptors contained under a common parent.
-
-// It takes the list of children, and the current level in the voxel hierarchy.
-// It returns the index to the first element of the 
-
-// This is all fine and dandy, but we have the problem where we need to assign
-// relative pointers to objects so we need to keep track of where their children are
-// being assigned.
-
-uint64_t Octree::copy_to_stack(std::vector<uint64_t> children, unsigned int voxel_scale) {
-
-	// Check for the 15 bit boundry		
-	if (stack_pos - children.size() > stack_pos) {
-		global_pos = stack_pos;
-		stack_pos = 0x8000;
-	}
-	else {
-		stack_pos -= children.size();
+	for (int i = 0; i < buffer_size; i++) {
+		PrettyPrintUINT64(descriptor_buffer[i], &output_stream);
 	}
 
-	// Copy to stack needs to keep track of an "anchor_stack" which will hopefully facilitate
-	// relative pointer generation for items being copied to the stack
+	DumpLog(&output_stream, "raw_data.txt");
 
-	// We need to return the relative pointer to the child node list
-	// 16 bits, one far bit, one sign bit? 14 bits == +- 16384
-
-	// Worth halving the ptr reach to enable backwards ptrs?
-	// could increase packability allowing far ptrs and attachments to come before or after
-
-
-
-	//stack_pos -= children.size();
-	memcpy(&descriptor_buffer[stack_pos + global_pos], children.data(), children.size() * sizeof(uint64_t));
-
-	// Return the bitmask encoding the index of that value
-	// If we tripped the far bit, allocate a far index to the stack and place
-	// it at the bottom of the child_descriptor node level array
-	// And then shift the far bit to 1
-
-	// If not, shift the index to its correct place
-	return stack_pos;
 }
 
 bool Octree::get_voxel(sf::Vector3i position) {
@@ -291,11 +258,12 @@ std::tuple<uint64_t, uint64_t> Octree::GenerationRecursion(char* data, sf::Vecto
 	uint64_t far_pointer_block_position = descriptor_buffer_position;
 
 	// Count the far pointers we need to allocate 
-	for (int i = descriptor_position_array.size() - 1; i >= 0; i--) {
+	for (int i = 0; i < descriptor_position_array.size(); i++) {
 	
 		// this is not the actual relative distance write, so we pessimistically guess that we will have
 		// the worst relative distance via the insertion size
-		uint64_t relative_distance = std::get<1>(descriptor_position_array.at(i)) - (descriptor_buffer_position - worst_case_insertion_size);
+
+		int relative_distance = std::get<1>(descriptor_position_array.at(i)) - (descriptor_buffer_position - worst_case_insertion_size);
 
 		// check to see if we tripped the far pointer
 		if (relative_distance > 0x8000) {
@@ -303,16 +271,17 @@ std::tuple<uint64_t, uint64_t> Octree::GenerationRecursion(char* data, sf::Vecto
 			// This is writing the ABSOLUTE POSITION for far pointers, is this what I want?
 			memcpy(&descriptor_buffer[descriptor_buffer_position], &std::get<1>(descriptor_position_array.at(i)), sizeof(uint64_t));
 			descriptor_buffer_position--;
+			page_header_counter--;
 
 			far_pointer_count++;
 		}
 	}
 
 	// We gotta go backwards as memcpy of a vector can be emulated by starting from the rear
-	for (int i = descriptor_position_array.size() - 1; i >= 0; i--) {
+	for (int i = 0; i < descriptor_position_array.size(); i++) {
 		
 		// just gonna redo the far pointer check loosing a couple of cycles but oh well
-		uint64_t relative_distance = std::get<1>(descriptor_position_array.at(i)) - descriptor_buffer_position;
+		int relative_distance = std::get<1>(descriptor_position_array.at(i)) - descriptor_buffer_position;
 
 		uint64_t descriptor = std::get<0>(descriptor_position_array.at(i));
 
@@ -324,15 +293,16 @@ std::tuple<uint64_t, uint64_t> Octree::GenerationRecursion(char* data, sf::Vecto
 
 			far_pointer_block_position--;
 		
-		} else {
-			
-			descriptor |= relative_distance;	
-
+		} else if (relative_distance > 0) {
+		
+			descriptor |= (uint64_t)relative_distance;
+				
 		}
 
 		// We have finished building the CD so we push it onto the buffer
 		memcpy(&descriptor_buffer[descriptor_buffer_position], &descriptor, sizeof(uint64_t));
 		descriptor_buffer_position--;
+		page_header_counter--;
 
 	}
 

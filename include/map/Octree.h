@@ -31,23 +31,23 @@ public:
 	void Generate(char* data, sf::Vector3i dimensions);
 	void Load(std::string octree_file_name);
 	
-	uint64_t *trunk_buffer				= new uint64_t[buffer_size]{0};
+	uint64_t *trunk_buffer;
 	uint64_t trunk_buffer_position		= buffer_size;
 
-	uint64_t *descriptor_buffer			= new uint64_t[buffer_size]{0};
+	uint64_t *descriptor_buffer;
 	uint64_t descriptor_buffer_position = buffer_size;
 
-	uint32_t *attachment_lookup			= new uint32_t[buffer_size]{0};
+	uint32_t *attachment_lookup;
 	uint64_t attachment_lookup_position = buffer_size;
 
-	uint64_t *attachment_buffer			= new uint64_t[buffer_size]{0};
+	uint64_t *attachment_buffer;
 	uint64_t attachment_buffer_position = buffer_size;
 
 	unsigned int trunk_cutoff = 3;
 	uint64_t root_index = 0;
 
 	int page_header_counter = 0x8000;
-	uint64_t current_info_section_position = buffer_size - 50;
+	uint64_t current_info_section_position = ((uint64_t)0)-1;
 
 	uint64_t stack_pos = 0x8000;
 	uint64_t global_pos = buffer_size - 50;
@@ -68,8 +68,8 @@ private:
 		sf::Vector3i pos,			// position of this generation node
 		unsigned int voxel_scale	// the voxel scale of this node
 	); 
-
-	static char get1DIndexedVoxel(char* data, sf::Vector3i dimensions, sf::Vector3i position);
+	
+	char get1DIndexedVoxel(char* data, sf::Vector3i dimensions, sf::Vector3i position);
 
 	std::vector<uint64_t> anchor_stack;
 	unsigned int octree_voxel_dimension = 32;

@@ -24,8 +24,6 @@ public:
 
 	Map(uint32_t dimensions);
 
-	void dump_logs();
-
 	void setVoxel(sf::Vector3i position, int val);
 
 	bool getVoxelFromOctree(sf::Vector3i position);
@@ -43,9 +41,6 @@ private:
 	// =========================
 
 	void generate_octree(unsigned int dimensions);
-
-	// Generate children is the main recursive function
-	uint64_t generate_children(sf::Vector3i pos, int dim);
 
 	char* voxel_data;
 
