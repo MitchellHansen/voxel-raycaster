@@ -22,14 +22,13 @@
 #include <OpenCL/cl_ext.h>
 #endif
 
-#pragma once
 #include "util.hpp"
 #include <iostream>
 #include <chrono>
 #include <SFML/Graphics.hpp>
 #include <SFML/Network.hpp>
 #include "map/Old_Map.h"
-#include "raycaster/Hardware_Caster.h"
+#include "Hardware_Caster.h"
 #include "Vector4.hpp"
 #include "Camera.h"
 #include "Input.h"
