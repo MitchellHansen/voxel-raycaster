@@ -1,6 +1,6 @@
 ﻿
 // This has to be up here or else glew will complain
-#include "GL_Testing.h"
+//#include "GL_Testing.h"
 
 #ifdef linux
 #include <CL/cl.h>
@@ -16,8 +16,8 @@
 
 #elif defined TARGET_OS_MAC
 #include <OpenGL/gl.h>
-# include <OpenGL/OpenGL.h>
-# include <OpenCL/opencl.h>
+#include <OpenGL/OpenGL.h>
+#include <OpenCL/opencl.h>
 #include <OpenCL/cl_gl_ext.h>
 #include <OpenCL/cl_ext.h>
 #endif
@@ -65,30 +65,13 @@ float elap_time(){
 sf::Sprite window_sprite;
 sf::Texture window_texture;
 
-// Y: -1.57 is straight up
-// Y: 1.57 is straight down
-
-
 // TODO: 
-// - Texture axis sign flipping issue
-// - Diffuse fog hard cut off
-// - Infinite light distance, no inverse square
 // - Inconsistent lighting constants. GUI manipulation
-// - Far pointers, attachment lookup and aux buffer, contour lookup & masking
+//      Ancilary settings buffer and memory controller
+// - Attachment lookup and aux buffer, contour lookup & masking
 
 
 int main() {
-
-	// Keep at this at the top of main. I think it has to do with it and
-	// sf::RenderWindow stepping on each others feet
-	#ifdef linux
-	glewInit();
-	#elif defined _WIN32
-	//glewInit();
-	#elif defined TARGET_OS_MAC
-	// Do nothing, extension wrangling handled by macOS
-	#endif 
-
 
 	// =============================
 	Map _map(32);
@@ -112,7 +95,6 @@ int main() {
 	if (raycaster->init() != 1) {
 		abort();
 	}
-
 
 	// Create and generate the old 3d array style map
 	Old_Map* map = new Old_Map(sf::Vector3i(MAP_X, MAP_Y, MAP_Z));

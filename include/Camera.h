@@ -3,6 +3,7 @@
 #include <SFML/System/Vector2.hpp> 
 #include "util.hpp"
 #include "Pub_Sub.h"
+#include <cmath>
 
 class Camera : public VrEventSubscriber{
 public:

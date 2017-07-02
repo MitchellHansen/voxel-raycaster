@@ -85,7 +85,7 @@ struct device_info {
 	cl_uint cl_device_preferred_vector_width_double;
 	char cl_device_profile[256];
 	size_t cl_device_profiling_timer_resolution;
-	cl_device_type cl_device_type;
+	cl_device_type device_type;
 	char cl_device_vendor[128];
 	cl_uint cl_device_vendor_id;
 	char cl_device_version[128];

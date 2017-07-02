@@ -7,7 +7,7 @@
 #include <sstream>
 #include <string>
 #include <imgui/imgui.h>
-
+#include <cmath>
 
 const double PI = 3.141592653589793238463;
 const float  PI_F = 3.14159265358979f;

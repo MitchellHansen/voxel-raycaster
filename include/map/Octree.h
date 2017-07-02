@@ -24,7 +24,6 @@ public:
 
 	static const int buffer_size = 100000;
 
-
 	Octree();
 	~Octree() {};
 
@@ -56,9 +55,11 @@ public:
 
 	// With a position and the head of the stack. Traverse down the voxel hierarchy to find
 	// the IDX and stack position of the highest resolution (maybe set resolution?) oct
-	bool get_voxel(sf::Vector3i position);
+	bool GetVoxel(sf::Vector3i position);
 
 	void print_block(int block_pos);
+
+    bool Validate(char* data, sf::Vector3i dimensions); 
 
 private:
 

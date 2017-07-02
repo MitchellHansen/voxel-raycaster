@@ -478,7 +478,7 @@ int Hardware_Caster::query_hardware() {
 			clGetDeviceInfo(id, CL_DEVICE_PREFERRED_VECTOR_WIDTH_DOUBLE, sizeof(cl_uint), &d.cl_device_preferred_vector_width_double, NULL);
 			clGetDeviceInfo(id, CL_DEVICE_PROFILE, sizeof(char) * 256, &d.cl_device_profile, NULL);
 			clGetDeviceInfo(id, CL_DEVICE_PROFILING_TIMER_RESOLUTION, sizeof(size_t), &d.cl_device_profiling_timer_resolution, NULL);
-			clGetDeviceInfo(id, CL_DEVICE_TYPE, sizeof(cl_device_type), &d.cl_device_type, NULL);
+			clGetDeviceInfo(id, CL_DEVICE_TYPE, sizeof(cl_device_type), &d.device_type, NULL);
 			clGetDeviceInfo(id, CL_DEVICE_VENDOR, sizeof(char)*128, &d.cl_device_vendor, NULL);
 			clGetDeviceInfo(id, CL_DEVICE_VENDOR_ID, sizeof(cl_uint), &d.cl_device_vendor_id, NULL);
 			clGetDeviceInfo(id, CL_DEVICE_VERSION, sizeof(char)*128, &d.cl_device_version, NULL);

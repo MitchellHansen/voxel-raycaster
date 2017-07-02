@@ -25,11 +25,10 @@ public:
 	Map(uint32_t dimensions);
 
 	void setVoxel(sf::Vector3i position, int val);
-
 	bool getVoxelFromOctree(sf::Vector3i position);
-
 	bool getVoxel(sf::Vector3i pos);
-	Octree octree;
+	
+    Octree octree;
 
 	bool test();
 
@@ -39,8 +38,6 @@ private:
 	int counter = 0;
 	std::stringstream output_stream;
 	// =========================
-
-	void generate_octree(unsigned int dimensions);
 
 	char* voxel_data;
 

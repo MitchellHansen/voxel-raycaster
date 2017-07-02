@@ -21,18 +21,13 @@ void Octree::Generate(char* data, sf::Vector3i dimensions) {
 	PrettyPrintUINT64(std::get<0>(root_node), &output_stream);
 	output_stream << "    " << OCT_DIM << "    " << counter++ << std::endl;
 	// ==============================
-	
-	// ============= TEMP!!! ===================
-	if (stack_pos - 1 > stack_pos) {
-		global_pos -= stack_pos;
-		stack_pos = 0x8000;
-	}
-	else {
-		stack_pos -= 1;
-	}
 
+    std::get<0>(root_node) |= 1;    
 	memcpy(&descriptor_buffer[descriptor_buffer_position], &std::get<0>(root_node), sizeof(uint64_t));
-	descriptor_buffer_position--;
+	
+    root_index = descriptor_buffer_position;
+    descriptor_buffer_position--;
+    
 
 	// ========================================
 
@@ -48,13 +43,15 @@ void Octree::Generate(char* data, sf::Vector3i dimensions) {
 
 }
 
-bool Octree::get_voxel(sf::Vector3i position) {
+bool Octree::GetVoxel(sf::Vector3i position) {
 
 	// Struct that holds the state necessary to continue the traversal from the found voxel
 	oct_state state;
 
 	// push the root node to the parent stack
-	uint64_t head = descriptor_buffer[root_index];
+    uint64_t current_index = root_index;
+    uint64_t head = descriptor_buffer[current_index];
+//    PrettyPrintUINT64(head);
 	state.parent_stack[state.parent_stack_position] = head;
 
 	// Set our initial dimension and the position at the corner of the oct to keep track of our position
@@ -98,6 +95,7 @@ bool Octree::get_voxel(sf::Vector3i position) {
 
 			mask_index += 2;
 
+            // What is up with the binary operator on this one? TODO
 			state.idx_stack[state.scale] ^= idx_set_y_mask;
 
 		}
@@ -131,7 +129,8 @@ bool Octree::get_voxel(sf::Vector3i position) {
 
 			// access the element at which head points to and then add the specified number of indices
 			// to get to the correct child descriptor
-			head = descriptor_buffer[(head & child_pointer_mask) + count];
+            current_index = current_index + (head & child_pointer_mask) + count;
+			head = descriptor_buffer[current_index];
 
 			// Increment the parent stack position and put the new oct node as the parent
 			state.parent_stack_position++;
@@ -313,7 +312,35 @@ std::tuple<uint64_t, uint64_t> Octree::GenerationRecursion(char* data, sf::Vecto
 }
 
 char Octree::get1DIndexedVoxel(char* data, sf::Vector3i dimensions, sf::Vector3i position) {	
-	return data[position.x + OCT_DIM * (position.y + OCT_DIM * position.z)];
+	return data[position.x + dimensions.x * (position.y + dimensions.y * position.z)];
 }
 
+bool Octree::Validate(char* data, sf::Vector3i dimensions){
 
+//    std::cout << (int)get1DIndexedVoxel(data, dimensions, sf::Vector3i(16, 16, 16)) << std::endl;
+//    std::cout << (int)GetVoxel(sf::Vector3i(16, 16, 16)) << std::endl;
+
+    std::cout << "Validating map..." << std::endl;
+
+	for (int x = 0; x < OCT_DIM; x++) {
+		for (int y = 0; y < OCT_DIM; y++) {
+			for (int z = 0; z < OCT_DIM; z++) {
+
+				sf::Vector3i pos(x, y, z);
+
+                char arr_val = get1DIndexedVoxel(data, dimensions, pos);
+                char oct_val = GetVoxel(pos);
+
+				if (arr_val != oct_val) {
+					std::cout << "X: " << pos.x << " Y: " << pos.y << " Z: " << pos.z << "   ";
+                    std::cout << (int)arr_val << "  :  " << (int)oct_val << std::endl;
+				}
+
+			}
+		}
+	}
+
+	std::cout << "Done" << std::endl;
+
+	    
+}

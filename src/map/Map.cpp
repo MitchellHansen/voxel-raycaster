@@ -5,31 +5,34 @@ Map::Map(uint32_t dimensions) {
 
 	srand(time(nullptr));
 
-	voxel_data = new char[dimensions * dimensions * dimensions];
+	voxel_data = new char[dimensions * dimensions * dimensions]();
 
 	for (uint64_t i = 0; i < dimensions * dimensions * dimensions; i++) {
-		if (rand() % 25 < 2)
-			voxel_data[i] = 1;
-		else
-			voxel_data[i] = 0;
-	}
 
-	generate_octree(dimensions);
-}
+        voxel_data[i] = 1;
+    }
+//	for (uint64_t i = 0; i < dimensions * dimensions * dimensions; i++) {
+//		if (rand() % 25 < 2)
+//			voxel_data[i] = 1;
+//		else
+//			voxel_data[i] = 0;
+//	}
 
-void Map::generate_octree(unsigned int dimensions) {
-	
+    setVoxel(sf::Vector3i(1, 1, 1), 0);
+
 	octree.Generate(voxel_data, sf::Vector3i(dimensions, dimensions, dimensions));
 
+    octree.Validate(voxel_data, sf::Vector3i(dimensions, dimensions, dimensions));
 }
 
-void Map::setVoxel(sf::Vector3i world_position, int val) {
+void Map::setVoxel(sf::Vector3i pos, int val) {
 
+    voxel_data[pos.x + OCT_DIM * (pos.y + OCT_DIM * pos.z)] = val;
 }
 
 bool Map::getVoxelFromOctree(sf::Vector3i position)
 {
-	return octree.get_voxel(position);
+	return 0;
 }
 
 bool Map::getVoxel(sf::Vector3i pos){
