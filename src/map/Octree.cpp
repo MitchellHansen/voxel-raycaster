@@ -7,7 +7,6 @@ Octree::Octree() {
 	descriptor_buffer	= new uint64_t[buffer_size]();
 	attachment_lookup	= new uint32_t[buffer_size]();
 	attachment_buffer	= new uint64_t[buffer_size]();
-
 }
 
 
@@ -22,17 +21,14 @@ void Octree::Generate(char* data, sf::Vector3i dimensions) {
 	output_stream << "    " << OCT_DIM << "    " << counter++ << std::endl;
 	// ==============================
 
+    // set the root nodes relative pointer to 1 because the next element will be the top of the tree, and push to the stack
     std::get<0>(root_node) |= 1;    
 	memcpy(&descriptor_buffer[descriptor_buffer_position], &std::get<0>(root_node), sizeof(uint64_t));
 	
     root_index = descriptor_buffer_position;
     descriptor_buffer_position--;
-    
-
-	// ========================================
 
 	DumpLog(&output_stream, "raw_output.txt");
-
 	output_stream.str("");
 
 	for (int i = 0; i < buffer_size; i++) {
@@ -41,6 +37,8 @@ void Octree::Generate(char* data, sf::Vector3i dimensions) {
 
 	DumpLog(&output_stream, "raw_data.txt");
 
+    GetVoxel(sf::Vector3i(1, 1, 1));
+    GetVoxel(sf::Vector3i(0, 0, 0));
 }
 
 bool Octree::GetVoxel(sf::Vector3i position) {
@@ -51,7 +49,8 @@ bool Octree::GetVoxel(sf::Vector3i position) {
 	// push the root node to the parent stack
     uint64_t current_index = root_index;
     uint64_t head = descriptor_buffer[current_index];
-//    PrettyPrintUINT64(head);
+    
+    //PrettyPrintUINT64(head);
 	state.parent_stack[state.parent_stack_position] = head;
 
 	// Set our initial dimension and the position at the corner of the oct to keep track of our position
@@ -257,7 +256,7 @@ std::tuple<uint64_t, uint64_t> Octree::GenerationRecursion(char* data, sf::Vecto
 	uint64_t far_pointer_block_position = descriptor_buffer_position;
 
 	// Count the far pointers we need to allocate 
-	for (int i = 0; i < descriptor_position_array.size(); i++) {
+	for (int i = descriptor_position_array.size() - 1; i >= 0; i--) {
 	
 		// this is not the actual relative distance write, so we pessimistically guess that we will have
 		// the worst relative distance via the insertion size
@@ -277,7 +276,7 @@ std::tuple<uint64_t, uint64_t> Octree::GenerationRecursion(char* data, sf::Vecto
 	}
 
 	// We gotta go backwards as memcpy of a vector can be emulated by starting from the rear
-	for (int i = 0; i < descriptor_position_array.size(); i++) {
+	for (int i = descriptor_position_array.size() - 1; i >= 0; i--) {
 		
 		// just gonna redo the far pointer check loosing a couple of cycles but oh well
 		int relative_distance = std::get<1>(descriptor_position_array.at(i)) - descriptor_buffer_position;
@@ -302,9 +301,10 @@ std::tuple<uint64_t, uint64_t> Octree::GenerationRecursion(char* data, sf::Vecto
 		memcpy(&descriptor_buffer[descriptor_buffer_position], &descriptor, sizeof(uint64_t));
 		descriptor_buffer_position--;
 		page_header_counter--;
-
 	}
 
+    // The position this descriptor points to is the last one written to the stack. AKA
+    // the current stack position (empty slot) plus one
 	std::get<1>(descriptor_and_position) = descriptor_buffer_position + 1;
 
 	// Return the node up the stack
@@ -312,7 +312,7 @@ std::tuple<uint64_t, uint64_t> Octree::GenerationRecursion(char* data, sf::Vecto
 }
 
 char Octree::get1DIndexedVoxel(char* data, sf::Vector3i dimensions, sf::Vector3i position) {	
-	return data[position.x + dimensions.x * (position.y + dimensions.y * position.z)];
+	return data[position.x + OCT_DIM * (position.y + OCT_DIM * position.z)];
 }
 
 bool Octree::Validate(char* data, sf::Vector3i dimensions){

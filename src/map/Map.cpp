@@ -5,20 +5,18 @@ Map::Map(uint32_t dimensions) {
 
 	srand(time(nullptr));
 
-	voxel_data = new char[dimensions * dimensions * dimensions]();
+	voxel_data = new char[dimensions * dimensions * dimensions];
 
 	for (uint64_t i = 0; i < dimensions * dimensions * dimensions; i++) {
 
         voxel_data[i] = 1;
     }
-//	for (uint64_t i = 0; i < dimensions * dimensions * dimensions; i++) {
-//		if (rand() % 25 < 2)
-//			voxel_data[i] = 1;
-//		else
-//			voxel_data[i] = 0;
-//	}
-
-    setVoxel(sf::Vector3i(1, 1, 1), 0);
+	for (uint64_t i = 0; i < dimensions * dimensions * dimensions; i++) {
+		if (rand() % 25 < 2)
+			voxel_data[i] = 1;
+		else
+			voxel_data[i] = 0;
+	}
 
 	octree.Generate(voxel_data, sf::Vector3i(dimensions, dimensions, dimensions));
 
