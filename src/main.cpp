@@ -7,6 +7,8 @@
 #include <CL/opencl.h>
 
 #elif defined _WIN32
+// Good lord, the C++ std overwrote windows.h min() max() definitions
+#define NOMINMAX
 #include <windows.h>
 
 // As if hardware is ever going to move away from 1.2
@@ -68,6 +70,9 @@ sf::Texture window_texture;
 // - Inconsistent lighting constants. GUI manipulation
 //      Ancilary settings buffer and memory controller
 // - Attachment lookup and aux buffer, contour lookup & masking
+// - Traversal algorithm + related stacks and data structures
+// - Octree, Map interface with the GPU
+// - Octree, Map refactoring
 
 
 int main() {
@@ -76,7 +81,9 @@ int main() {
 	Map _map(32);
 	//_map.test();
 	//std::cin.get();
-	return 0;
+
+
+	//return 0;
 	// =============================
 
 	sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");

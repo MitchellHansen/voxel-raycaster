@@ -3,7 +3,6 @@
 Octree::Octree() {
 
 	// initialize the the buffers to 0's
-	trunk_buffer		= new uint64_t[buffer_size]();
 	descriptor_buffer	= new uint64_t[buffer_size]();
 	attachment_lookup	= new uint32_t[buffer_size]();
 	attachment_buffer	= new uint64_t[buffer_size]();
@@ -41,10 +40,10 @@ void Octree::Generate(char* data, sf::Vector3i dimensions) {
     GetVoxel(sf::Vector3i(0, 0, 0));
 }
 
-bool Octree::GetVoxel(sf::Vector3i position) {
+OctState Octree::GetVoxel(sf::Vector3i position) {
 
 	// Struct that holds the state necessary to continue the traversal from the found voxel
-	oct_state state;
+	OctState state;
 
 	// push the root node to the parent stack
     uint64_t current_index = root_index;
@@ -115,7 +114,8 @@ bool Octree::GetVoxel(sf::Vector3i position) {
 			if ((head >> 24) & mask_8[mask_index]) {
 
 				// If it is, then we cannot traverse further as CP's won't have been generated
-				return true;
+				state.found = 1;
+				return state;
 			}
 
 			// If all went well and we found a valid non-leaf oct then we will traverse further down the hierarchy
@@ -134,7 +134,7 @@ bool Octree::GetVoxel(sf::Vector3i position) {
 			// Increment the parent stack position and put the new oct node as the parent
 			state.parent_stack_position++;
 			state.parent_stack[state.parent_stack_position] = head;
-
+			
 		}
 		else {
 			// If the oct was not valid, then no CP's exists any further
@@ -144,11 +144,13 @@ bool Octree::GetVoxel(sf::Vector3i position) {
 			// to focus on how to now take care of the end condition.
 			// Currently it adds the last parent on the second to lowest
 			// oct CP. Not sure if thats correct
-			return false;
+			state.found = 0;
+			return state;
 		}
 	}
 
-	return true;
+	state.found = 1;
+	return state;
 }
 
 void Octree::print_block(int block_pos) {
@@ -234,7 +236,8 @@ std::tuple<uint64_t, uint64_t> Octree::GenerationRecursion(char* data, sf::Vecto
 	}
 	
 	// We are working bottom up so we need to subtract from the stack position
-	// the amount of elements we want to use
+	// the amount of elements we want to use. In the worst case this will be 
+	// a far pointer for ever descriptor (size * 2)
 	
 	int worst_case_insertion_size = descriptor_position_array.size() * 2;
 
@@ -329,7 +332,7 @@ bool Octree::Validate(char* data, sf::Vector3i dimensions){
 				sf::Vector3i pos(x, y, z);
 
                 char arr_val = get1DIndexedVoxel(data, dimensions, pos);
-                char oct_val = GetVoxel(pos);
+                char oct_val = GetVoxel(pos).found;
 
 				if (arr_val != oct_val) {
 					std::cout << "X: " << pos.x << " Y: " << pos.y << " Z: " << pos.z << "   ";
@@ -342,5 +345,5 @@ bool Octree::Validate(char* data, sf::Vector3i dimensions){
 
 	std::cout << "Done" << std::endl;
 
-	    
+	return true;
 }

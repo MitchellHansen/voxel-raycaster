@@ -6,7 +6,7 @@
 
 #define OCT_DIM 32
 
-struct oct_state {
+struct OctState {
 
 	int parent_stack_position = 0;
 	uint64_t parent_stack[32] = { 0 };
@@ -15,6 +15,10 @@ struct oct_state {
 	uint8_t idx_stack[32] = { 0 };
 
 	uint64_t current_descriptor;
+
+	// ====== DEBUG =======
+	char found = 1;
+
 
 };
 
@@ -27,11 +31,16 @@ public:
 	Octree();
 	~Octree() {};
 
+	// Generate an octree from 3D indexed array of char data
 	void Generate(char* data, sf::Vector3i dimensions);
+
+	// TODO: Load the octree from a serialized or whatever file
 	void Load(std::string octree_file_name);
 	
-	uint64_t *trunk_buffer;
-	uint64_t trunk_buffer_position		= buffer_size;
+	// I think the best way to transfer all of the data to the GPU. Each buffer will contain a set of blocks
+	// except for the trunk buffer. The paper indicates that the cutoff point for the trunk can vary,
+	// but since I'm going to do seperate buffers, I'm going to set a hard cutoff for the trunk so we
+	// know when to switch buffers
 
 	uint64_t *descriptor_buffer;
 	uint64_t descriptor_buffer_position = buffer_size;
@@ -46,16 +55,17 @@ public:
 	uint64_t root_index = 0;
 
 	int page_header_counter = 0x8000;
+
+	// Cheat and underflow to get the position
 	uint64_t current_info_section_position = ((uint64_t)0)-1;
+	
 
 	uint64_t stack_pos = 0x8000;
 	uint64_t global_pos = buffer_size - 50;
-
-	uint64_t copy_to_stack(std::vector<uint64_t> children, unsigned int voxel_scale);
-
+	
 	// With a position and the head of the stack. Traverse down the voxel hierarchy to find
 	// the IDX and stack position of the highest resolution (maybe set resolution?) oct
-	bool GetVoxel(sf::Vector3i position);
+	OctState GetVoxel(sf::Vector3i position);
 
 	void print_block(int block_pos);
 

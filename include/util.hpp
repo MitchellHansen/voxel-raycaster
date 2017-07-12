@@ -8,6 +8,9 @@
 #include <string>
 #include <imgui/imgui.h>
 #include <cmath>
+#include <SFML/Graphics/Texture.hpp>
+#include <algorithm>
+#include <tuple>
 
 const double PI = 3.141592653589793238463;
 const float  PI_F = 3.14159265358979f;
@@ -249,8 +252,6 @@ inline bool CheckContiguousValid(const uint64_t c) {
 	uint64_t bitmask = 0xFF0000;
 	return (c & bitmask) == bitmask;
 }
-
-
 
 inline bool IsLeaf(const uint64_t descriptor) {
 
