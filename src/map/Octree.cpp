@@ -93,7 +93,7 @@ OctState Octree::GetVoxel(sf::Vector3i position) {
 
 			mask_index += 2;
 
-            // What is up with the binary operator on this one? TODO
+            // TODO What is up with the binary operator on this one? 
 			state.idx_stack[state.scale] ^= idx_set_y_mask;
 
 		}

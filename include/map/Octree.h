@@ -18,8 +18,6 @@ struct OctState {
 
 	// ====== DEBUG =======
 	char found = 1;
-
-
 };
 
 

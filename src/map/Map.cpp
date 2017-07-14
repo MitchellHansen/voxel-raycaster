@@ -25,8 +25,8 @@ Map::Map(uint32_t dimensions) {
 
     octree.Validate(voxel_data, dim3);
 
-	sf::Vector2f cam_dir(2, 0.01);
-	sf::Vector3f cam_pos(10, 10, 10);
+	sf::Vector2f cam_dir(0.95, 0.81);
+	sf::Vector3f cam_pos(10.5, 10.5, 10.5);
 	std::vector<std::tuple<sf::Vector3i, char>> list1 = CastRayCharArray(voxel_data, &dim3, &cam_dir, &cam_pos);
 	std::vector<std::tuple<sf::Vector3i, char>> list2 = CastRayOctree(&octree, &dim3, &cam_dir, &cam_pos);
 
@@ -99,9 +99,9 @@ std::vector<std::tuple<sf::Vector3i, char>>  Map::CastRayCharArray(
 	);
 
 	// for negative values, wrap around the delta_t
-	intersection_t.x += delta_t.x * -(std::min(intersection_t.x, 0.0f));
-	intersection_t.y += delta_t.y * -(std::min(intersection_t.y, 0.0f));
-	intersection_t.z += delta_t.z * -(std::min(intersection_t.z, 0.0f));
+	intersection_t.x -= delta_t.x * (std::min(intersection_t.x, 0.0f));
+	intersection_t.y -= delta_t.y * (std::min(intersection_t.y, 0.0f));
+	intersection_t.z -= delta_t.z * (std::min(intersection_t.z, 0.0f));
 
 
 	int dist = 0;
@@ -115,7 +115,6 @@ std::vector<std::tuple<sf::Vector3i, char>>  Map::CastRayCharArray(
 		face_mask.y = intersection_t.y <= std::min(intersection_t.z, intersection_t.x);
 		face_mask.z = intersection_t.z <= std::min(intersection_t.x, intersection_t.y);
 
-
 		intersection_t.x += delta_t.x * fabs(face_mask.x);
 		intersection_t.y += delta_t.y * fabs(face_mask.y);
 		intersection_t.z += delta_t.z * fabs(face_mask.z);
@@ -123,31 +122,6 @@ std::vector<std::tuple<sf::Vector3i, char>>  Map::CastRayCharArray(
 		voxel.x += voxel_step.x * face_mask.x;
 		voxel.y += voxel_step.y * face_mask.y;
 		voxel.z += voxel_step.z * face_mask.z;
-
-		if ((intersection_t.x) < (intersection_t.y)) {
-			if ((intersection_t.x) < (intersection_t.z)) {
-
-				voxel.x += voxel_step.x;
-				intersection_t.x = intersection_t.x + delta_t.x;
-			}
-			else {
-
-				voxel.z += voxel_step.z;
-				intersection_t.z = intersection_t.z + delta_t.z;
-			}
-		}
-		else {
-			if ((intersection_t.y) < (intersection_t.z)) {
-
-				voxel.y += voxel_step.y;
-				intersection_t.y = intersection_t.y + delta_t.y;
-			}
-			else {
-
-				voxel.z += voxel_step.z;
-				intersection_t.z = intersection_t.z + delta_t.z;
-			}
-		}
 
 		if (voxel.x >= map_dim->x || voxel.y >= map_dim->y || voxel.z >= map_dim->z) {
 			return travel_path;
@@ -179,6 +153,15 @@ std::vector<std::tuple<sf::Vector3i, char>> Map::CastRayOctree(
 	sf::Vector3f* cam_pos
 ) {
 
+	// Setup the voxel coords from the camera origin
+	sf::Vector3i voxel(*cam_pos);
+
+	// THIS DOES NOT HAVE TO RETURN TRUE ON FOUND
+	// This function when passed a "air" voxel will return as far down
+	// the IDX stack as it could go. We use this oct-level to determine
+	// our first position and jump. Updating it as we go
+	OctState traversal_state = octree->GetVoxel(voxel);
+
 	std::vector<std::tuple<sf::Vector3i, char>> travel_path;
 
 	sf::Vector3f ray_dir(1, 0, 0);
@@ -197,6 +180,13 @@ std::vector<std::tuple<sf::Vector3i, char>> Map::CastRayOctree(
 		ray_dir.z
 	);
 
+	// correct for the base ray pointing to (1, 0, 0) as (0, 0). Should equal (1.57, 0)
+	ray_dir = sf::Vector3f(
+		static_cast<float>(ray_dir.z * sin(-1.57) + ray_dir.x * cos(-1.57)),
+		static_cast<float>(ray_dir.y),
+		static_cast<float>(ray_dir.z * cos(-1.57) - ray_dir.x * sin(-1.57))
+	);
+
 
 	// Setup the voxel step based on what direction the ray is pointing
 	sf::Vector3i voxel_step(1, 1, 1);
@@ -205,8 +195,10 @@ std::vector<std::tuple<sf::Vector3i, char>> Map::CastRayOctree(
 	voxel_step.y *= (ray_dir.y > 0) - (ray_dir.y < 0);
 	voxel_step.z *= (ray_dir.z > 0) - (ray_dir.z < 0);
 
-	// Setup the voxel coords from the camera origin
-	sf::Vector3i voxel(*cam_pos);
+	// set the jump multiplier based on the traversal state vs the log base 2 of the maps dimensions
+	int jump_power = 1;
+	if (log2(map_dim->x) != traversal_state.scale)
+		jump_power = pow(2, traversal_state.scale);
 
 	// Delta T is the units a ray must travel along an axis in order to
 	// traverse an integer split
@@ -216,9 +208,16 @@ std::vector<std::tuple<sf::Vector3i, char>> Map::CastRayOctree(
 		fabs(1.0f / ray_dir.z)
 	);
 
+	delta_t *= static_cast<float>(jump_power);
+
 	// offset is how far we are into a voxel, enables sub voxel movement
 	// Intersection T is the collection of the next intersection points
 	// for all 3 axis XYZ.
+
+
+	// TODO: start here
+	// set intersection t to the current hierarchy level each time we change levels
+	// and use that to step
 	sf::Vector3f intersection_t(
 		delta_t.x * (cam_pos->y - floor(cam_pos->x)) * voxel_step.x,
 		delta_t.y * (cam_pos->x - floor(cam_pos->y)) * voxel_step.y,
@@ -226,56 +225,43 @@ std::vector<std::tuple<sf::Vector3i, char>> Map::CastRayOctree(
 	);
 
 	// for negative values, wrap around the delta_t
-	intersection_t.x += delta_t.x * -(std::min(intersection_t.x, 0.0f));
-	intersection_t.y += delta_t.y * -(std::min(intersection_t.y, 0.0f));
-	intersection_t.z += delta_t.z * -(std::min(intersection_t.z, 0.0f));
-
+	intersection_t.x -= delta_t.x * (std::isless(intersection_t.x, 0.0f));
+	intersection_t.y -= delta_t.y * (std::isless(intersection_t.y, 0.0f));
+	intersection_t.z -= delta_t.z * (std::isless(intersection_t.z, 0.0f));
 
 	int dist = 0;
 	sf::Vector3i face_mask(0, 0, 0);
 	int voxel_data = 0;
 
-	OctState traversal_state = octree->GetVoxel(voxel);
-
 	// Andrew Woo's raycasting algo
 	do {
 
+
+
+		// check which direction we step in
 		face_mask.x = intersection_t.x <= std::min(intersection_t.y, intersection_t.z);
 		face_mask.y = intersection_t.y <= std::min(intersection_t.z, intersection_t.x);
 		face_mask.z = intersection_t.z <= std::min(intersection_t.x, intersection_t.y);
 
-
+		// Increment the selected directions intersection, abs the face_mask to stay within the algo constraints
 		intersection_t.x += delta_t.x * fabs(face_mask.x);
 		intersection_t.y += delta_t.y * fabs(face_mask.y);
 		intersection_t.z += delta_t.z * fabs(face_mask.z);
 
-		voxel.x += voxel_step.x * face_mask.x;
-		voxel.y += voxel_step.y * face_mask.y;
-		voxel.z += voxel_step.z * face_mask.z;
+		// step the voxel direction
+		voxel.x += voxel_step.x * face_mask.x * jump_power;
+		voxel.y += voxel_step.y * face_mask.y * jump_power;
+		voxel.z += voxel_step.z * face_mask.z * jump_power;
 
-		if ((intersection_t.x) < (intersection_t.y)) {
-			if ((intersection_t.x) < (intersection_t.z)) {
 
-				voxel.x += voxel_step.x;
-				intersection_t.x = intersection_t.x + delta_t.x;
-			}
-			else {
-
-				voxel.z += voxel_step.z;
-				intersection_t.z = intersection_t.z + delta_t.z;
-			}
+		if (face_mask.x != 0) {
+			
 		}
-		else {
-			if ((intersection_t.y) < (intersection_t.z)) {
+		if (face_mask.y != 0) {
 
-				voxel.y += voxel_step.y;
-				intersection_t.y = intersection_t.y + delta_t.y;
-			}
-			else {
+		}
+		if (face_mask.z != 0) {
 
-				voxel.z += voxel_step.z;
-				intersection_t.z = intersection_t.z + delta_t.z;
-			}
 		}
 
 		if (voxel.x >= map_dim->x || voxel.y >= map_dim->y || voxel.z >= map_dim->z) {

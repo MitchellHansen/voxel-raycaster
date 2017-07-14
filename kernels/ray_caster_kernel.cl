@@ -215,8 +215,7 @@ __kernel void raycaster(
 	float3 intersection_t = delta_t * ((*cam_pos) - floor(*cam_pos)) * convert_float3(voxel_step);
 
 	// for negative values, wrap around the delta_t
-	intersection_t += delta_t * -convert_float3(isless(intersection_t, 0));
-
+	intersection_t -= delta_t * convert_float3(isless(intersection_t, 0));
 
 	int dist = 0;
 	int3 face_mask = { 0, 0, 0 };
