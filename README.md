@@ -15,7 +15,7 @@ In order to build this project you must have Cmake, GLEW, SFML, and the OpenCL d
 
 Video demo:
 
-[![Video demo](http://img.youtube.com/vi/DHcg2ZKend0/0.jpg)](http://www.youtube.com/watch?v=JmD5ISHbKbU)
+[![Video demo](http://img.youtube.com/vi/JmD5ISHbKbU/0.jpg)](http://www.youtube.com/watch?v=JmD5ISHbKbU)
 
 Screenshots:
 
