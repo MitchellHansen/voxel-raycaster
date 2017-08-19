@@ -234,7 +234,7 @@ void Old_Map::generate_terrain() {
 		for (int y = 0; y < dimensions.y; y++) {
 	//		for (int z = 0; z < dimensions.z; z++) {
 				//if (rand() % 1000 < 1)
-					voxel_data[x + dimensions.x * (y + dimensions.z * 1)] = 5;
+					voxel_data[x + dimensions.x * (y + dimensions.z * 1)] = 6;
 	//		}
 		}
 	}

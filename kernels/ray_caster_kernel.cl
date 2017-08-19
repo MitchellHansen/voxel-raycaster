@@ -208,13 +208,16 @@ __kernel void raycaster(
     // traverse an integer split
 	float3 delta_t = fabs(1.0f / ray_dir);
 
-	// offset is how far we are into a voxel, enables sub voxel movement
 	// Intersection T is the collection of the next intersection points
-    // for all 3 axis XYZ.
-	// delta_t * offset = intersection_t
-	float3 intersection_t = delta_t * ((*cam_pos) - floor(*cam_pos)) * convert_float3(voxel_step);
-
-	// for negative values, wrap around the delta_t
+	// for all 3 axis XYZ. We take the full positive cardinality when
+	// subtracting the floor, so we must transfer the sign over from
+	// the voxel step
+	float3 intersection_t = delta_t * ((*cam_pos) - ceil(*cam_pos)) * convert_float3(voxel_step);
+	// When we transfer the sign over, we get the correct direction of
+	// the offset, but we merely transposed over the value instead of mirroring
+	// it over the axis like we want. So here, isless returns a boolean if intersection_t
+	// is less than 0 which dictates whether or not we subtract the delta which in effect
+	// mirrors the offset
 	intersection_t -= delta_t * convert_float3(isless(intersection_t, 0));
 
 	int dist = 0;
@@ -258,6 +261,10 @@ __kernel void raycaster(
 			if (face_mask.x == -1) {
 
 				sign.x *= -1.0;
+
+
+				// the next intersection for this plane - the last intersection of the passed plane / delta of this plane
+				// basically finds how far in on the other 2 axis we are when the ray traversed the plane
 				float z_percent = (intersection_t.z - (intersection_t.x - delta_t.x)) / delta_t.z;
 				float y_percent = (intersection_t.y - (intersection_t.x - delta_t.x)) / delta_t.y;
 
@@ -332,18 +339,25 @@ __kernel void raycaster(
 			// }
 
 			// Now either use the face position to retrieve a texture sample, or
-			// just a plain color for the voxel color
-			voxel_color = select((float4)voxel_color,
-								 (float4)(0.0f, 0.239f, 0.419f, 0.0f),
-								 (int4)(voxel_data == 6));
+			// just a plain color for the voxel color. Notice the JANK -1 after the
+			// conditionals in the select statement. That's because select works on negs
+			// and pos's. So a false equality will still eval as true as it is technically
+			// a positive result (0)
+			voxel_color = select(
+				(float4)(0.25f, 0.64f, 0.87f, 0.0f),
+				(float4)voxel_color,
+			 	(int4)((voxel_data == 5) - 1)
+			);
 
-			voxel_color = select((float4)read_imagef(
-									 texture_atlas,
-									 convert_int2(tile_face_position * convert_float2(*atlas_dim / *tile_dim)) +
-									 convert_int2((float2)(0, 0) * convert_float2(*atlas_dim / *tile_dim))
-								 ),
-								 (float4)(0.0f, 0.239f, 0.419f, 0.0f),
-								 (int4)(voxel_data == 5));
+			voxel_color = select(
+				(float4)(0.0f, 0.239f, 0.419f, 0.0f),
+				(float4)read_imagef(
+					 texture_atlas,
+					 convert_int2(tile_face_position * convert_float2(*atlas_dim / *tile_dim)) +
+					 convert_int2((float2)(3, 0) * convert_float2(*atlas_dim / *tile_dim))
+				 ),
+				 (int4)((voxel_data == 6) - 1)
+			);
 
 		 	voxel_color.w = 0.0f;
 

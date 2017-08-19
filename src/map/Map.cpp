@@ -157,7 +157,7 @@ std::vector<std::tuple<sf::Vector3i, char>> Map::CastRayOctree(
 	sf::Vector3i voxel(*cam_pos);
 
 	// THIS DOES NOT HAVE TO RETURN TRUE ON FOUND
-	// This function when passed a "air" voxel will return as far down
+	// This function when passed an "air" voxel will return as far down
 	// the IDX stack as it could go. We use this oct-level to determine
 	// our first position and jump. Updating it as we go
 	OctState traversal_state = octree->GetVoxel(voxel);
@@ -210,21 +210,28 @@ std::vector<std::tuple<sf::Vector3i, char>> Map::CastRayOctree(
 
 	delta_t *= static_cast<float>(jump_power);
 
-	// offset is how far we are into a voxel, enables sub voxel movement
-	// Intersection T is the collection of the next intersection points
-	// for all 3 axis XYZ.
-
-
 	// TODO: start here
+	// Whats the issue?
+	//		Using traversal_scale 
 	// set intersection t to the current hierarchy level each time we change levels
 	// and use that to step
+
+	
+	// Intersection T is the collection of the next intersection points
+	// for all 3 axis XYZ. We take the full positive cardinality when
+	// subtracting the floor, so we must transfer the sign over from
+	// the voxel step
 	sf::Vector3f intersection_t(
 		delta_t.x * (cam_pos->y - floor(cam_pos->x)) * voxel_step.x,
 		delta_t.y * (cam_pos->x - floor(cam_pos->y)) * voxel_step.y,
 		delta_t.z * (cam_pos->z - floor(cam_pos->z)) * voxel_step.z
 	);
 
-	// for negative values, wrap around the delta_t
+	// When we transfer the sign over, we get the correct direction of 
+	// the offset, but we merely transposed over the value instead of mirroring
+	// it over the axis like we want. So here, isless returns a boolean if intersection_t
+	// is less than 0 which dictates whether or not we subtract the delta which in effect
+	// mirrors the offset
 	intersection_t.x -= delta_t.x * (std::isless(intersection_t.x, 0.0f));
 	intersection_t.y -= delta_t.y * (std::isless(intersection_t.y, 0.0f));
 	intersection_t.z -= delta_t.z * (std::isless(intersection_t.z, 0.0f));
@@ -273,7 +280,7 @@ std::vector<std::tuple<sf::Vector3i, char>> Map::CastRayOctree(
 
 		// If we hit a voxel
 		//voxel_data = map[voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z))];
-		voxel_data = getVoxel(voxel);
+//		voxel_data = getVoxel(voxel);
 		travel_path.push_back(std::make_tuple(voxel, voxel_data));
 
 		if (voxel_data != 0)

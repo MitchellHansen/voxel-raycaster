@@ -130,7 +130,7 @@ int main() {
 	LightPrototype prototype(
 		sf::Vector3f(100.0f, 100.0f, 75.0f),
 		sf::Vector3f(-1.0f, -1.0f, -1.5f),
-		sf::Vector4f(0.2f, 0.9f, 0.0f, 1.0f)
+		sf::Vector4f(0.4f, 0.4f, 0.4f, 1.0f)
 	);
 	
 	std::shared_ptr<LightHandle> handle(light_controller.create_light(prototype));
