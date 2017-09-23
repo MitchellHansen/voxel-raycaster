@@ -14,11 +14,11 @@ void Logger::log(std::string log_string, LogLevel severity, uint32_t line_number
 	switch (severity) {
 		
 		case LogLevel::INFO: {
-			output << "[INFO] --> ";
+			output << "[INFO]  --> ";
 			break;
 		}
 		case LogLevel::WARN: {
-			output << "[WARN] --> ";
+			output << "[WARN]  --> ";
 			break;
 		}
 		case LogLevel::ERROR: {
