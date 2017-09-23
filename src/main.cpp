@@ -273,10 +273,17 @@ int main() {
 		ImGui::NextColumn();
 
 		if (ImGui::Button("Recompile kernel")) {
-			while (raycaster->debug_quick_recompile() != 0);
+			while (!raycaster->debug_quick_recompile());
 		}
 		if (ImGui::Button("Pause")) {
+			
 			paused = !paused;
+			
+			if (paused)
+				Logger::log("Pausing", Logger::LogLevel::INFO);
+			else
+				Logger::log("Unpausing", Logger::LogLevel::INFO);
+			
 		}
 
 		ImGui::End();

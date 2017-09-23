@@ -6,6 +6,8 @@ Hardware_Caster::~Hardware_Caster() {}
 
 int Hardware_Caster::init() {
 
+	Logger::log("Initializing the Hardware Caster", Logger::LogLevel::INFO);
+
 	if (!aquire_hardware()) {
 		Logger::log("Failed to acquire OpenCL hardware", Logger::LogLevel::ERROR, __LINE__, __FILE__);
 		return false;
@@ -66,26 +68,37 @@ int Hardware_Caster::init() {
 
 }
 
-void Hardware_Caster::assign_map(Old_Map *map) {
+bool Hardware_Caster::assign_map(Old_Map *map) {
 
 	this->map = map;
 	auto dimensions = map->getDimensions();
 	
-	create_buffer("map", sizeof(char) * dimensions.x * dimensions.y * dimensions.z, map->get_voxel_data());
-	create_buffer("map_dimensions", sizeof(int) * 3, &dimensions);
-
+	if (!create_buffer("map", sizeof(char) * dimensions.x * dimensions.y * dimensions.z, map->get_voxel_data()))
+		return false;
+	
+	if (!create_buffer("map_dimensions", sizeof(int) * 3, &dimensions))
+		return false;
+	
+	return true;
 }
 
-void Hardware_Caster::assign_camera(Camera *camera) {
+bool Hardware_Caster::assign_camera(Camera *camera) {
 
 	this->camera = camera;
 
-	create_buffer("camera_direction", sizeof(float) * 4, (void*)camera->get_direction_pointer(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
-	create_buffer("camera_position", sizeof(float) * 4, (void*)camera->get_position_pointer(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+	if (!create_buffer("camera_direction", sizeof(float) * 4, (void*)camera->get_direction_pointer(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR))
+		return false;
+	
+	if (!create_buffer("camera_position", sizeof(float) * 4, (void*)camera->get_position_pointer(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR))
+		return false;
+
+	return true;
 }
 
-void Hardware_Caster::validate()
-{
+bool Hardware_Caster::validate() {
+
+	Logger::log("Validating OpenCL kernel args", Logger::LogLevel::INFO);
+
 	// Check to make sure everything has been entered;
 	if (camera == nullptr ||
 		map == nullptr ||
@@ -93,7 +106,8 @@ void Hardware_Caster::validate()
 		viewport_matrix == nullptr) {
 
 		Logger::log("Raycaster.validate() failed, camera, map, or viewport not initialized", Logger::LogLevel::WARN);
-	
+		return false;
+
 	} else {
 	
 		// Set all the kernel args
@@ -111,26 +125,34 @@ void Hardware_Caster::validate()
 		set_kernel_arg("raycaster", 11, "atlas_dim");
 		set_kernel_arg("raycaster", 12, "tile_dim");
 
+		return true;
 		//print_kernel_arguments();
 	}
 
 	
 }
 
-void Hardware_Caster::create_texture_atlas(sf::Texture *t, sf::Vector2i tile_dim) {
+bool Hardware_Caster::create_texture_atlas(sf::Texture *t, sf::Vector2i tile_dim) {
 	
-	create_image_buffer("texture_atlas", t->getSize().x * t->getSize().x * 4 * sizeof(float), t, CL_MEM_READ_ONLY);
+	if (!create_image_buffer("texture_atlas", t->getSize().x * t->getSize().x * 4 * sizeof(float), t, CL_MEM_READ_ONLY))
+		return false;
 	
 	// create_buffer observes arg 3's
 	sf::Vector2u v = t->getSize();
-	create_buffer("atlas_dim", sizeof(sf::Vector2u) , &v);
+	
+	if (!create_buffer("atlas_dim", sizeof(sf::Vector2u) , &v))
+		return false;
 
-	create_buffer("tile_dim", sizeof(sf::Vector2i), &tile_dim);
+	if (!create_buffer("tile_dim", sizeof(sf::Vector2i), &tile_dim))
+		return false;
+
+	return true;
 }
 
-void Hardware_Caster::compute() {
+bool Hardware_Caster::compute() {
+	
 	// correlating work size with texture size? good, bad?
-	run_kernel("raycaster", viewport_texture.getSize().x, viewport_texture.getSize().y);
+	return run_kernel("raycaster", viewport_texture.getSize().x, viewport_texture.getSize().y);
 }
 
 // There is a possibility that I would want to move this over to be all inside it's own
@@ -140,7 +162,8 @@ bool Hardware_Caster::create_viewport(int width, int height, float v_fov, float 
 	
 	// CL needs the screen resolution
 	sf::Vector2i view_res(width, height);
-	create_buffer("viewport_resolution", sizeof(int) * 2, &view_res);
+	if (!create_buffer("viewport_resolution", sizeof(int) * 2, &view_res))
+		return false;
 
 	// And an array of vectors describing the way the "lens" of our
 	// camera works
@@ -233,74 +256,28 @@ bool Hardware_Caster::assign_lights(std::vector<PackedData> *data) {
 	if (!create_buffer("light_count", 8, &light_count))
 		return false;
 
+	return true;
 }
 
 void Hardware_Caster::draw(sf::RenderWindow* window) {
 	window->draw(viewport_sprite);
 }
 
-bool Hardware_Caster::debug_quick_recompile()
-{
-	int error = compile_kernel("../kernels/ray_caster_kernel.cl", true, "raycaster");
-	if (cl_assert(error)) {
+bool Hardware_Caster::debug_quick_recompile() {
+	
+	if (!compile_kernel("../kernels/ray_caster_kernel.cl", true, "raycaster")) {
+		Logger::log("Failed to recompile kernel", Logger::LogLevel::WARN, __LINE__, __FILE__);
 		std::cin.get(); // hang the output window so we can read the error
-		return error;
+		return false;
 	}
-	validate();
+	
+	return validate();
 
-	return true;
 }
 
-void Hardware_Caster::test_edit_viewport(int width, int height, float v_fov, float h_fov)
-{
-	sf::Vector2i view_res(width, height);
+bool Hardware_Caster::aquire_hardware() {
 
-	double y_increment_radians = DegreesToRadians(v_fov / view_res.y);
-	double x_increment_radians = DegreesToRadians(h_fov / view_res.x);
-
-	for (int y = -view_res.y / 2; y < view_res.y / 2; y++) {
-		for (int x = -view_res.x / 2; x < view_res.x / 2; x++) {
-
-			// The base ray direction to slew from
-			sf::Vector3f ray(1, 0, 0);
-
-			// Y axis, pitch
-			ray = sf::Vector3f(
-				static_cast<float>(ray.z * sin(y_increment_radians * y) + ray.x * cos(y_increment_radians * y)),
-				static_cast<float>(ray.y),
-				static_cast<float>(ray.z * cos(y_increment_radians * y) - ray.x * sin(y_increment_radians * y))
-				);
-
-			// Z axis, yaw
-			ray = sf::Vector3f(
-				static_cast<float>(ray.x * cos(x_increment_radians * x) - ray.y * sin(x_increment_radians * x)),
-				static_cast<float>(ray.x * sin(x_increment_radians * x) + ray.y * cos(x_increment_radians * x)),
-				static_cast<float>(ray.z)
-				);
-
-			// correct for the base ray pointing to (1, 0, 0) as (0, 0). Should equal (1.57, 0)
-			ray = sf::Vector3f(
-				static_cast<float>(ray.z * sin(-1.57) + ray.x * cos(-1.57)),
-				static_cast<float>(ray.y),
-				static_cast<float>(ray.z * cos(-1.57) - ray.x * sin(-1.57))
-				);
-
-			int index = (x + view_res.x / 2) + view_res.x * (y + view_res.y / 2);
-			ray = Normalize(ray);
-
-			viewport_matrix[index] = sf::Vector4f(
-				ray.x,
-				ray.y,
-				ray.z,
-				0
-			);
-		}
-	}
-}
-
-
-bool Hardware_Caster::aquire_hardware()
-{
+	Logger::log("Acquiring OpenCL Hardware", Logger::LogLevel::INFO);
 
 	// Get the number of platforms
 	cl_uint platform_count = 0;
@@ -365,6 +342,8 @@ bool Hardware_Caster::aquire_hardware()
 
 void Hardware_Caster::save_config() {
 
+	Logger::log("Saving OpenCL hardware config", Logger::LogLevel::INFO);
+
 	std::ofstream output_file;
 	output_file.open("device_config.bin", std::ofstream::binary | std::ofstream::out | std::ofstream::trunc);
 
@@ -410,18 +389,31 @@ bool Hardware_Caster::load_config() {
 	return true;
 }
 
-int Hardware_Caster::query_hardware() {
+bool Hardware_Caster::query_hardware()
+{
+
+	Logger::log("Querying OpenCL hardware", Logger::LogLevel::INFO);
 
 	// Get the number of platforms
 	cl_uint plt_cnt = 0;
-	clGetPlatformIDs(0, nullptr, &plt_cnt);
+	error = clGetPlatformIDs(0, nullptr, &plt_cnt);
+
+	if (cl_assert(error)) {
+		Logger::log("Failed at clGetPlatformIDs() :" + cl_err_lookup(error), Logger::LogLevel::ERROR, __LINE__, __FILE__);
+		return false;
+	}
 
 	// Fetch the platforms
 	std::map<cl_platform_id, std::vector<device_info>> plt_ids;
 
 	// buffer before map init
 	std::vector<cl_platform_id> plt_buf(plt_cnt);
-	clGetPlatformIDs(plt_cnt, plt_buf.data(), nullptr);
+	error = clGetPlatformIDs(plt_cnt, plt_buf.data(), nullptr);
+
+	if (cl_assert(error)) {
+		Logger::log("Failed at clGetPlatformIDs() :" + cl_err_lookup(error), Logger::LogLevel::ERROR, __LINE__, __FILE__);
+		return false;
+	}
 
 	// Map init
 	for (auto id : plt_buf) {
@@ -437,7 +429,7 @@ int Hardware_Caster::query_hardware() {
 		// Check to see if we even have OpenCL on this machine
 		if (deviceIdCount == 0) {
 			Logger::log("No devices supporting OpenCL found", Logger::LogLevel::ERROR, __LINE__, __FILE__);
-			return OPENCL_NOT_SUPPORTED;
+			return false;
 		}
 
 		// Get the device ids
@@ -505,7 +497,7 @@ int Hardware_Caster::query_hardware() {
 		}
 	}
 
-	return 1;
+	return true;
 }
 
 int Hardware_Caster::create_shared_context() {
@@ -559,13 +551,13 @@ int Hardware_Caster::create_shared_context() {
 
 	if (cl_assert(error)) {
 		Logger::log("Failed at clCreateContext() :" + cl_err_lookup(error), Logger::LogLevel::ERROR, __LINE__, __FILE__);
-		return OPENCL_ERROR;
+		return false;
 	}
 
-	return 1;
+	return true;
 }
 
-int Hardware_Caster::create_command_queue() {
+bool Hardware_Caster::create_command_queue() {
 
 	// If context and device_id have initialized
 	if (context && device_id) {
@@ -574,21 +566,22 @@ int Hardware_Caster::create_command_queue() {
 
 		if (cl_assert(error)) {
 			Logger::log("Failed at clCreateCommandQueue() :" + cl_err_lookup(error), Logger::LogLevel::ERROR, __LINE__, __FILE__);
-			return OPENCL_ERROR;
+			return false;
 		}
 
-		return 1;
-	}
-	else {
+	} else {
+
 		Logger::log("Failed creating the command queue. Context or device_id not initialized", Logger::LogLevel::ERROR, __LINE__, __FILE__);
-		return OPENCL_ERROR;
+		return false;
 	}
+
+	return true;
 }
 
-
-
 bool Hardware_Caster::compile_kernel(std::string kernel_source, bool is_path, std::string kernel_name) {
-
+	
+	Logger::log("Compiling OpenCL Kernel", Logger::LogLevel::INFO);
+	
 	const char* source;
 	std::string tmp;
 
@@ -604,7 +597,6 @@ bool Hardware_Caster::compile_kernel(std::string kernel_source, bool is_path, st
 	size_t kernel_source_size = strlen(source);
 
 	// Load the source into CL's data structure
-
 	cl_program program = clCreateProgramWithSource(
 		context, 1,
 		&source,
@@ -684,7 +676,6 @@ bool Hardware_Caster::create_image_buffer(std::string buffer_name, cl_uint size,
 			return false;
 	}
 
-	int error;
 	cl_mem buff = clCreateFromGLTexture(
 		getContext(), access_type, GL_TEXTURE_2D,
 		0, texture->getNativeHandle(), &error);
@@ -718,7 +709,7 @@ bool Hardware_Caster::create_buffer(std::string buffer_name, cl_uint size, void*
 	if (cl_assert(error)) {
 		Logger::log("Failed at clCreateBuffer() :" + cl_err_lookup(error), Logger::LogLevel::ERROR, __LINE__, __FILE__);
 		Logger::log("Buffer name : " + buffer_name, Logger::LogLevel::ERROR, __LINE__, __FILE__);
-		return OPENCL_ERROR;
+		return false;
 	}
 
 	if (!store_buffer(buff, buffer_name))

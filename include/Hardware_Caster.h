@@ -164,21 +164,21 @@ public:
 	bool assign_lights(std::vector<PackedData> *data) ;
 
 	// We take a ptr to the map and create the map, and map_dimensions buffer for the GPU
-	void assign_map(Old_Map *map) ;
+	bool assign_map(Old_Map *map) ;
 
 	// We take a ptr to the camera and create a camera direction and position buffer
-	void assign_camera(Camera *camera) ;
+	bool assign_camera(Camera *camera) ;
 
 	// TODO: Hoist this to the base class
 	// Creates 3 buffers relating to the texture atlas: texture_atlas, atlas_dim, and tile_dim
 	// With these on the GPU we can texture any quad with an atlas tile
-	void create_texture_atlas(sf::Texture *t, sf::Vector2i tile_dim);
+	bool create_texture_atlas(sf::Texture *t, sf::Vector2i tile_dim);
 	
 	// Check to make sure that the buffers have been initiated and set them as kernel args
-	void validate() ;
+	bool validate() ;
 
 	// Aquires the GL objects, runs the kernel, releases back the GL objects
-	void compute() ;
+	bool compute() ;
 
 	// Take the viewport sprite and draw it to the screen
 	void draw(sf::RenderWindow* window) ;
@@ -202,14 +202,14 @@ private:
 
 	bool aquire_hardware();
 
-	int query_hardware();
+	bool query_hardware();
 
 	// With respect to the individual platforms implementation of sharing
 	// create a shared cl_gl context
 	int create_shared_context();
 
 	// Using the context and the device create a command queue for them
-	int create_command_queue();
+	bool create_command_queue();
 
 	// Buffer operations
 	// All of these functions create and store a buffer in a map with the key representing their name

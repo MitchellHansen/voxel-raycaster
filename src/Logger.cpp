@@ -33,7 +33,7 @@ void Logger::log(std::string log_string, LogLevel severity, uint32_t line_number
 	output << log_string.c_str();
 
 	if (line_number > 0 && file_name)
-		output << "::" << file_name << ":" << line_number << std::endl;
+		output << " (" << file_name << ":" << line_number << ")" << std::endl;
 	else
 		output << std::endl;
 }
