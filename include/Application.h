@@ -22,20 +22,13 @@
 #endif
 
 #include "util.hpp"
-#include <iostream>
-#include <chrono>
 #include <SFML/Graphics.hpp>
-#include <SFML/Network.hpp>
 #include "map/Old_Map.h"
 #include "CLCaster.h"
-#include "Vector4.hpp"
 #include "Camera.h"
 #include "Input.h"
-#include "Pub_Sub.h"
 #include "LightController.h"
 #include "LightHandle.h"
-#include "imgui/imgui-SFML.h"
-#include "imgui/imgui.h"
 #include "map/Map.h"
 
 // Srsly people who macro error codes are the devil
@@ -52,9 +45,48 @@ public:
 	const int MAP_Y = 256;
 	const int MAP_Z = 256;
 
+	Application();
+	~Application();
+	
+	bool init_clcaster();
+	bool init_events();
 
+	bool game_loop();
 
 private:
 
 	static float elap_time();
+
+	sf::Sprite window_sprite;
+	sf::Texture window_texture;
+	sf::Texture spritesheet;
+
+	std::shared_ptr<sf::RenderWindow> window;
+	std::shared_ptr<Old_Map> map;
+	std::shared_ptr<Camera> camera;
+	std::shared_ptr<CLCaster> raycaster;
+	std::shared_ptr<LightHandle> light_handle;
+	std::shared_ptr<LightController> light_controller;
+	Input input_handler;
+	std::shared_ptr<WindowHandler> window_handler;
+
+	// The sfml imgui wrapper I'm using requires Update be called with sf::Time
+	// Might modify it to also accept seconds
+	sf::Clock sf_delta_clock;
+	fps_counter fps;
+
+	// vars for us to use with ImGUI
+	float light_color[4] = { 0, 0, 0, 0 };
+	float light_pos[4] = { 100, 100, 30 };
+	char screenshot_buf[128]{ 0 };
+	bool paused = false;
+	float camera_speed = 1.0;
+
+	// Game loop values
+	float step_size = 0.0166f;
+	double frame_time = 0.0,
+		elapsed_time = 0.0,
+		delta_time = 0.0,
+		accumulator_time = 0.0,
+		current_time = 0.0;
 };
