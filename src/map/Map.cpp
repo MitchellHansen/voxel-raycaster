@@ -1,37 +1,53 @@
 #include "map/Map.h"
+#include "Logger.h"
 
 
 Map::Map(uint32_t dimensions) {
 
 
-	// ========= TEMP 3D voxel data ===========
-	srand(time(nullptr));
+	if ((int)pow(2, (int)log2(dimensions)) != dimensions)
+		Logger::log("Map dimensions not an even exponent of 2", Logger::LogLevel::ERROR, __LINE__, __FILE__);
 
 	voxel_data = new char[dimensions * dimensions * dimensions];
 
-	for (uint64_t i = 0; i < dimensions * dimensions * dimensions; i++) {
-
-        voxel_data[i] = 1;
-    }
+	// randomly set the voxel data for testing
 	for (uint64_t i = 0; i < dimensions * dimensions * dimensions; i++) {
 		if (rand() % 25 < 2)
 			voxel_data[i] = 1;
 		else
 			voxel_data[i] = 0;
-	}
+    }
+
 	sf::Vector3i dim3(dimensions, dimensions, dimensions);
 
+	Logger::log("Generating Octree", Logger::LogLevel::INFO);
 	octree.Generate(voxel_data, dim3);
 
-    octree.Validate(voxel_data, dim3);
+	Logger::log("Validating Octree", Logger::LogLevel::INFO);
+	if (!octree.Validate(voxel_data, dim3)) {
+		Logger::log("Octree validation failed", Logger::LogLevel::ERROR, __LINE__, __FILE__);
+	}
+
+	// TODO: Create test with mock octree data and defined test framework
+	Logger::log("Testing Array vs Octree ray traversal", Logger::LogLevel::INFO);
+	if (!test_oct_arr_traversal(dim3)) {
+		Logger::log("Array and Octree traversals DID NOT MATCH!!!", Logger::LogLevel::ERROR, __LINE__, __FILE__);
+	}
+	
+}
+
+bool Map::test_oct_arr_traversal(sf::Vector3i dimensions) {
 
 	sf::Vector2f cam_dir(0.95, 0.81);
 	sf::Vector3f cam_pos(10.5, 10.5, 10.5);
-	std::vector<std::tuple<sf::Vector3i, char>> list1 = CastRayCharArray(voxel_data, &dim3, &cam_dir, &cam_pos);
-	std::vector<std::tuple<sf::Vector3i, char>> list2 = CastRayOctree(&octree, &dim3, &cam_dir, &cam_pos);
+	std::vector<std::tuple<sf::Vector3i, char>> list1 = CastRayCharArray(voxel_data, &dimensions, &cam_dir, &cam_pos);
+	std::vector<std::tuple<sf::Vector3i, char>> list2 = CastRayOctree(&octree, &dimensions, &cam_dir, &cam_pos);
 
-
-	return;
+	if (list1 != list2) {
+		return false;
+	} else {
+		return true;
+	}
 
 }
 
@@ -44,6 +60,7 @@ char Map::getVoxel(sf::Vector3i pos){
 
 	return octree.GetVoxel(pos).found;
 }
+
 
 std::vector<std::tuple<sf::Vector3i, char>>  Map::CastRayCharArray(
 	char* map,
@@ -242,8 +259,6 @@ std::vector<std::tuple<sf::Vector3i, char>> Map::CastRayOctree(
 
 	// Andrew Woo's raycasting algo
 	do {
-
-
 
 		// check which direction we step in
 		face_mask.x = intersection_t.x <= std::min(intersection_t.y, intersection_t.z);

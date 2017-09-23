@@ -36,8 +36,6 @@ void Octree::Generate(char* data, sf::Vector3i dimensions) {
 
 	DumpLog(&output_stream, "raw_data.txt");
 
-    GetVoxel(sf::Vector3i(1, 1, 1));
-    GetVoxel(sf::Vector3i(0, 0, 0));
 }
 
 OctState Octree::GetVoxel(sf::Vector3i position) {
@@ -323,7 +321,6 @@ bool Octree::Validate(char* data, sf::Vector3i dimensions){
 //    std::cout << (int)get1DIndexedVoxel(data, dimensions, sf::Vector3i(16, 16, 16)) << std::endl;
 //    std::cout << (int)GetVoxel(sf::Vector3i(16, 16, 16)) << std::endl;
 
-    std::cout << "Validating map..." << std::endl;
 
 	for (int x = 0; x < OCT_DIM; x++) {
 		for (int y = 0; y < OCT_DIM; y++) {
@@ -342,8 +339,6 @@ bool Octree::Validate(char* data, sf::Vector3i dimensions){
 			}
 		}
 	}
-
-	std::cout << "Done" << std::endl;
 
 	return true;
 }

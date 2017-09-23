@@ -9,6 +9,7 @@
 #include "Camera.h"
 #include <GL/glew.h>
 #include <unordered_map>
+#include "Logger.h"
 
 #ifdef linux
 #include <CL/cl.h>
@@ -31,18 +32,7 @@
 
 #endif
 
-//struct device {
-//	cl_device_id id;
-//	cl_device_type type;
-//	cl_uint clock_frequency;
-//	char version[128];
-//	cl_platform_id platform;
-//	cl_uint comp_units;
-//	char extensions[1024];
-//	char name[256];
-//	cl_bool is_little_endian = false;
-//	bool cl_gl_sharing = false;
-//};
+#undef ERROR
 
 struct device_info {
 	cl_uint cl_device_address_bits;
@@ -92,15 +82,9 @@ struct device_info {
 	char cl_driver_version[128];
 };
 
-struct raycaster_settings {
-	
-};
-
-
 struct PackedData;
 
-class Hardware_Caster
-{
+class Hardware_Caster {
 
 
 public:
@@ -112,6 +96,13 @@ public:
 		ERR = 803
 	};
 
+	/**
+	 * Device is a storage container for device data we retrieve from OpenCL
+	 * 
+	 * The data is mainly queries as strings or integer types and stored into
+	 * respective containers. We store this data into a file and retrieve it later
+	 * to let users select a preferred compute device and keep track of their choice
+	 */
 	class device {
 
 	public:
@@ -149,7 +140,14 @@ public:
 
 	};
 
-
+	/**
+	 * Hardware caster is the beginning and end to all interaction with the GPU.
+	 * 
+	 * It queries devices, manages the creation of various data structures as well
+	 * as they syncing between the GPU. It Handles computing of the cast as well
+	 * as rendering of the computed cast.
+	 * 
+	 */
 	Hardware_Caster();
 	virtual ~Hardware_Caster();
 
@@ -159,11 +157,11 @@ public:
 
 	// Creates a texture to send to the GPU via height and width
 	// Creates a viewport vector array via vertical and horizontal fov
-	void create_viewport(int width, int height, float v_fov, float h_fov) ;
+	bool create_viewport(int width, int height, float v_fov, float h_fov) ;
 	
 	// Light controllers own the copy of the PackedData array.
 	// We receive a pointer to the array and USE_HOST_POINTER to map the memory to the GPU
-	void assign_lights(std::vector<PackedData> *data) ;
+	bool assign_lights(std::vector<PackedData> *data) ;
 
 	// We take a ptr to the map and create the map, and map_dimensions buffer for the GPU
 	void assign_map(Old_Map *map) ;
@@ -190,7 +188,7 @@ public:
 	// ================================== DEBUG =======================================
 	
 	// Re compile the kernel and revalidate the args
-	int debug_quick_recompile();
+	bool debug_quick_recompile();
 
 	// Modify the viewport matrix
 	void test_edit_viewport(int width, int height, float v_fov, float h_fov);
@@ -217,34 +215,36 @@ private:
 	// All of these functions create and store a buffer in a map with the key representing their name
 	
 	// Create an image buffer from an SF texture. Access Type is the read/write specifier required by OpenCL
-	int create_image_buffer(std::string buffer_name, cl_uint size, sf::Texture* texture, cl_int access_type);
+	bool create_image_buffer(std::string buffer_name, cl_uint size, sf::Texture* texture, cl_int access_type);
 
 	// Create a buffer with CL_MEM_READ_ONLY and CL_MEM_COPY_HOST_PTR
-	int create_buffer(std::string buffer_name, cl_uint size, void* data);
+	bool create_buffer(std::string buffer_name, cl_uint size, void* data);
 
 	// Create a buffer with user defined data flags
-	int create_buffer(std::string buffer_name, cl_uint size, void* data, cl_mem_flags flags);
+	bool create_buffer(std::string buffer_name, cl_uint size, void* data, cl_mem_flags flags);
 	
 	// Store a cl_mem object in the buffer map <string:name, cl_mem:buffer>
-	int store_buffer(cl_mem buffer, std::string buffer_name);
+	bool store_buffer(cl_mem buffer, std::string buffer_name);
 
 	// Using CL release the memory object and remove the KVP associated with the buffer name
-	int release_buffer(std::string buffer_name);
+	bool release_buffer(std::string buffer_name);
 	
 	// Compile the kernel with either a full src string or by is_path=true and kernel_source = a valid path
-	int compile_kernel(std::string kernel_source, bool is_path, std::string kernel_name);
+	bool compile_kernel(std::string kernel_source, bool is_path, std::string kernel_name);
 
 	// Set the arg index for the specified kernel and buffer
-	int set_kernel_arg(std::string kernel_name, int index, std::string buffer_name);
+	bool set_kernel_arg(std::string kernel_name, int index, std::string buffer_name);
 
 	// Run the kernel using a 1d work size
-	int run_kernel(std::string kernel_name, const int work_dim_x, const int work_dim_y);
+	bool run_kernel(std::string kernel_name, const int work_dim_x, const int work_dim_y);
 
 	// Run a test kernel that prints out the kernel args
 	void print_kernel_arguments();
 
 	// CL error code handler. ImGui overlaps the assert() function annoyingly so I had to rename it
-	static bool vr_assert(int error_code, std::string function_name);
+	static bool cl_assert(int error_code);
+	static std::string cl_err_lookup(int error_code);
+	//static bool vr_assert(int error_code)
 
 	cl_device_id getDeviceID();
 	cl_platform_id getPlatformID();

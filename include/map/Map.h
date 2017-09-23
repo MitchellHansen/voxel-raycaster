@@ -14,6 +14,7 @@
 class Map {
 public: 
 
+	// Currently takes a 
 	Map(uint32_t dimensions);
 
 	// Sets a voxel in the 3D char dataset
@@ -40,6 +41,8 @@ public:
     Octree octree;
 
 private:
+
+	bool test_oct_arr_traversal(sf::Vector3i dimensions);
 
 	// ======= DEBUG ===========
 	int counter = 0;

@@ -143,8 +143,11 @@ bool cast_light_intersection_ray(
 // ==================================================================================================
 
 constant float4 fog_color = { 0.73f, 0.81f, 0.89f, 0.8f };
-constant float4 overshoot_color = { 0.25f, 0.48f, 0.52f, 0.8f };
-constant float4 overshoot_color_2 = { 0.25f, 0.1f, 0.52f, 0.8f };
+// constant float4 overshoot_color = { 0.25f, 0.48f, 0.52f, 0.8f };
+// constant float4 overshoot_color_2 = { 0.25f, 0.1f, 0.52f, 0.8f };
+
+constant float4 overshoot_color = { 0.00f, 0.00f, 0.00f, 0.00f };
+constant float4 overshoot_color_2 = { 0.00f, 0.00f, 0.00f, 0.00f };
 
 __kernel void raycaster(
 	global char* map,
@@ -191,9 +194,9 @@ __kernel void raycaster(
 
 	// Yaw
     ray_dir = (float3)(
-            ray_dir.x * cos((*cam_dir).y) - ray_dir.y * sin((*cam_dir).y),
-            ray_dir.x * sin((*cam_dir).y) + ray_dir.y * cos((*cam_dir).y),
-            ray_dir.z
+        ray_dir.x * cos((*cam_dir).y) - ray_dir.y * sin((*cam_dir).y),
+        ray_dir.x * sin((*cam_dir).y) + ray_dir.y * cos((*cam_dir).y),
+        ray_dir.z
     );
 
 

@@ -41,6 +41,12 @@
 #include "imgui/imgui.h"
 #include "map/Map.h"
 
+// Srsly people who macro error codes are the devil
+#undef ERROR
+#include "Logger.h"
+
+
+
 const int WINDOW_X = 1536;
 const int WINDOW_Y = 1024;
 const int WORK_SIZE = WINDOW_X * WINDOW_Y;
@@ -77,12 +83,13 @@ sf::Texture window_texture;
 
 int main() {
 
+	srand(time(nullptr));
+
 	// =============================
 	Map _map(32);
 	//_map.test();
 	//std::cin.get();
-
-
+	
 	//return 0;
 	// =============================
 

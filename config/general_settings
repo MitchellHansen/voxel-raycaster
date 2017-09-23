@@ -1,0 +1,3 @@
+[LOGGING]
+log_level = 0 # INFO, WARN, ERROR
+log_dest = 0 # STDOUT, FILE

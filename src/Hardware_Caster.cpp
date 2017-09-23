@@ -1,24 +1,15 @@
 #include "Hardware_Caster.h"
 
-Hardware_Caster::Hardware_Caster() {
 
-}
-
-
-Hardware_Caster::~Hardware_Caster() {
-}
+Hardware_Caster::Hardware_Caster() {}
+Hardware_Caster::~Hardware_Caster() {}
 
 int Hardware_Caster::init() {
 
-//	query_hardware();
-
-	//// Initialize opencl up to the point where we start assigning buffers
-	//error = acquire_platform_and_device();
-	//if(vr_assert(error, "aquire_platform_and_device"))
-	//	return error;
-
-	if (!aquire_hardware())
+	if (!aquire_hardware()) {
+		Logger::log("Failed to acquire OpenCL hardware", Logger::LogLevel::ERROR, __LINE__, __FILE__);
 		return false;
+	}
 
 	if (!load_config()) {
 
@@ -47,27 +38,31 @@ int Hardware_Caster::init() {
 		save_config();
 	}
 
-	error = create_shared_context();
-	if (vr_assert(error, "create_shared_context"))
-		return error;
-
-	error = create_command_queue();
-	if (vr_assert(error, "create_command_queue"))
-		return error;
-
-	error = compile_kernel("../kernels/ray_caster_kernel.cl", true, "raycaster");
-	if (vr_assert(error, "compile_kernel")) {
-		std::cin.get(); // hang the output window so we can read the error
-		return error;
+	if (!create_shared_context()) {
+		Logger::log("Failed to create shared CL GL context", Logger::LogLevel::ERROR, __LINE__, __FILE__);
+		return false;
 	}
 
+	if (!create_command_queue()) {
+		Logger::log("Failed to create a OpenCL command queue", Logger::LogLevel::ERROR, __LINE__, __FILE__);
+		return false;
+	}
+	
+
+	if (!compile_kernel("../kernels/ray_caster_kernel.cl", true, "raycaster")) {
+		Logger::log("Failed to compile the kernel", Logger::LogLevel::ERROR, __LINE__, __FILE__);
+		std::cin.get(); // hang the output window so we can read the error
+		return false;
+	}
+	
 	srand(time(nullptr));
 
 	int *seed_memory = new int[1920*1080];
 
-	create_buffer("seed", sizeof(int) * 1920 * 1080, seed_memory);
+	if (!create_buffer("seed", sizeof(int) * 1920 * 1080, seed_memory))
+		return false;
 
-	return 1;
+	return true;
 
 }
 
@@ -96,8 +91,8 @@ void Hardware_Caster::validate()
 		map == nullptr ||
 		viewport_image == nullptr ||
 		viewport_matrix == nullptr) {
-		
-		std::cout << "Raycaster.validate() failed, camera, map, or viewport not initialized";
+
+		Logger::log("Raycaster.validate() failed, camera, map, or viewport not initialized", Logger::LogLevel::WARN);
 	
 	} else {
 	
@@ -141,7 +136,7 @@ void Hardware_Caster::compute() {
 // There is a possibility that I would want to move this over to be all inside it's own
 // container to make it so it can be changed via CL_MEM_USE_HOST_PTR. But I doubt it
 // would ever be called enough to warrent that
-void Hardware_Caster::create_viewport(int width, int height, float v_fov, float h_fov) {
+bool Hardware_Caster::create_viewport(int width, int height, float v_fov, float h_fov) {
 	
 	// CL needs the screen resolution
 	sf::Vector2i view_res(width, height);
@@ -196,7 +191,8 @@ void Hardware_Caster::create_viewport(int width, int height, float v_fov, float 
 		}
 	}
 
-	create_buffer("viewport_matrix", sizeof(float) * 4 * view_res.x * view_res.y, viewport_matrix, CL_MEM_USE_HOST_PTR);
+	if (!create_buffer("viewport_matrix", sizeof(float) * 4 * view_res.x * view_res.y, viewport_matrix, CL_MEM_USE_HOST_PTR))
+		return false;
 
 	// Create the image that opencl's rays write to
 	viewport_image = new sf::Uint8[width * height * 4];
@@ -215,11 +211,14 @@ void Hardware_Caster::create_viewport(int width, int height, float v_fov, float 
 	viewport_sprite.setTexture(viewport_texture);
 
 	// Pass the buffer to opencl
-	create_image_buffer("image", sizeof(sf::Uint8) * width * height * 4, &viewport_texture, CL_MEM_WRITE_ONLY);
+	if (!create_image_buffer("image", sizeof(sf::Uint8) * width * height * 4, &viewport_texture, CL_MEM_WRITE_ONLY))
+		return false;
+
+	return true;
 
 }
 
-void Hardware_Caster::assign_lights(std::vector<PackedData> *data) {
+bool Hardware_Caster::assign_lights(std::vector<PackedData> *data) {
 
 	// Get a pointer to the packed light data
 	this->lights = data;
@@ -228,9 +227,11 @@ void Hardware_Caster::assign_lights(std::vector<PackedData> *data) {
 
 	cl_uint packed_size = sizeof(PackedData);
 
-	create_buffer("lights", packed_size * light_count, lights->data(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+	if (!create_buffer("lights", packed_size * light_count, lights->data(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR))
+		return false;
 
-	create_buffer("light_count", 8, &light_count);
+	if (!create_buffer("light_count", 8, &light_count))
+		return false;
 
 }
 
@@ -238,16 +239,16 @@ void Hardware_Caster::draw(sf::RenderWindow* window) {
 	window->draw(viewport_sprite);
 }
 
-int Hardware_Caster::debug_quick_recompile()
+bool Hardware_Caster::debug_quick_recompile()
 {
 	int error = compile_kernel("../kernels/ray_caster_kernel.cl", true, "raycaster");
-	if (vr_assert(error, "compile_kernel")) {
+	if (cl_assert(error)) {
 		std::cin.get(); // hang the output window so we can read the error
 		return error;
 	}
 	validate();
 
-	return 0;
+	return true;
 }
 
 void Hardware_Caster::test_edit_viewport(int width, int height, float v_fov, float h_fov)
@@ -303,19 +304,28 @@ bool Hardware_Caster::aquire_hardware()
 
 	// Get the number of platforms
 	cl_uint platform_count = 0;
-	clGetPlatformIDs(0, nullptr, &platform_count);
+
+	error = clGetPlatformIDs(0, nullptr, &platform_count);
+
+	if (cl_assert(error)) {
+		Logger::log("Failed at clGetPlatformIDs() :" + cl_err_lookup(error), Logger::LogLevel::ERROR, __LINE__, __FILE__);
+		return false;
+	}
 
 	if (platform_count == 0) {
-		std::cout << "There appears to be no OpenCL platforms on this machine" << std::endl;
+		Logger::log("There appears to be no OpenCL platforms on this machine", Logger::LogLevel::ERROR, __LINE__, __FILE__);
 		return false;
 	}
 
 	// Get the ID's for those platforms
 	std::vector<cl_platform_id> plt_buf(platform_count);
 
-	clGetPlatformIDs(platform_count, plt_buf.data(), nullptr);
-	if (vr_assert(error, "clGetPlatformIDs"))
+	error = clGetPlatformIDs(platform_count, plt_buf.data(), nullptr);
+
+	if (cl_assert(error)) {
+		Logger::log("Failed at clGetPlatformIDs() :" + cl_err_lookup(error), Logger::LogLevel::ERROR, __LINE__, __FILE__);
 		return false;
+	}
 
 	// Cycle through the platform ID's
 	for (unsigned int i = 0; i < platform_count; i++) {
@@ -323,12 +333,14 @@ bool Hardware_Caster::aquire_hardware()
 		// And get their device count
 		cl_uint deviceIdCount = 0;
 		error = clGetDeviceIDs(plt_buf[i], CL_DEVICE_TYPE_ALL, 0, nullptr, &deviceIdCount);
-		if (vr_assert(error, "clGetDeviceIDs"))
+
+		if (cl_assert(error)) {
+			Logger::log("Failed at clGetDeviceIDs() :" + cl_err_lookup(error), Logger::LogLevel::ERROR, __LINE__, __FILE__);
 			return false;
+		}
 
 		if (deviceIdCount == 0) {
-			std::cout << "There appears to be no devices associated with this platform" << std::endl;
-
+			Logger::log("There appears to be no OpenCL platforms on this platform", Logger::LogLevel::INFO, __LINE__, __FILE__);
 		}
 		else {
 
@@ -336,8 +348,11 @@ bool Hardware_Caster::aquire_hardware()
 			std::vector<cl_device_id> deviceIds(deviceIdCount);
 
 			error = clGetDeviceIDs(plt_buf[i], CL_DEVICE_TYPE_ALL, deviceIdCount, deviceIds.data(), NULL);
-			if (vr_assert(error, "clGetDeviceIDs"))
+
+			if (cl_assert(error)) {
+				Logger::log("Failed at clGetDeviceIDs() :" + cl_err_lookup(error), Logger::LogLevel::ERROR, __LINE__, __FILE__);
 				return false;
+			}
 
 			for (int d = 0; d < deviceIds.size(); d++) {
 				device_list.emplace_back(device(deviceIds[d], plt_buf.at(i)));
@@ -361,12 +376,12 @@ void Hardware_Caster::save_config() {
 
 bool Hardware_Caster::load_config() {
 
-	std::cout << "Loading hardware config...";
+	Logger::log("Loading hardware config", Logger::LogLevel::INFO);
 
 	std::ifstream input_file("device_config.bin", std::ios::binary | std::ios::in);
 
 	if (!input_file.is_open()) {
-		std::cout << "No config file found" << std::endl;
+		Logger::log("No device_config.bin file found", Logger::LogLevel::WARN);
 		return false;
 	}
 
@@ -379,7 +394,7 @@ bool Hardware_Caster::load_config() {
 	for (auto d : device_list) {
 
 		if (memcmp(&d, &data, sizeof(device::packed_data)) == 0) {
-			std::cout << "Found saved config" << std::endl;
+			Logger::log("Found saved hardware config", Logger::LogLevel::INFO);
 			found = true;
 			device_id = d.getDeviceId();
 			platform_id = d.getPlatformId();
@@ -388,7 +403,7 @@ bool Hardware_Caster::load_config() {
 	}
 
 	if (!found) {
-		std::cout << "No hardware matching config found" << std::endl;
+		Logger::log("No hardware matching the saved device in device_config.bin found", Logger::LogLevel::WARN);
 		return false;
 	}
 
@@ -421,7 +436,7 @@ int Hardware_Caster::query_hardware() {
 
 		// Check to see if we even have OpenCL on this machine
 		if (deviceIdCount == 0) {
-			std::cout << "There appears to be no devices, or none at least supporting OpenCL" << std::endl;
+			Logger::log("No devices supporting OpenCL found", Logger::LogLevel::ERROR, __LINE__, __FILE__);
 			return OPENCL_NOT_SUPPORTED;
 		}
 
@@ -429,8 +444,10 @@ int Hardware_Caster::query_hardware() {
 		std::vector<cl_device_id> deviceIds(deviceIdCount);
 		error = clGetDeviceIDs(plt_buf[i], CL_DEVICE_TYPE_ALL, deviceIdCount, deviceIds.data(), NULL);
 
-		if (vr_assert(error, "clGetDeviceIDs"))
-			return OPENCL_ERROR;
+		if (cl_assert(error)) {
+			Logger::log("Failed at clGetDeviceIDs() :" + cl_err_lookup(error), Logger::LogLevel::ERROR, __LINE__, __FILE__);
+			return false;
+		}
 
 		for (unsigned int q = 0; q < deviceIdCount; q++) {
 
@@ -493,22 +510,6 @@ int Hardware_Caster::query_hardware() {
 
 int Hardware_Caster::create_shared_context() {
 
-	//std::vector<DISPLAY_DEVICEA> display_devices;
-	//DISPLAY_DEVICEA dev;
-	//int k = 0;
-	//dev.cb = sizeof(dev);
-	//HDC hDC;
-	//while(EnumDisplayDevicesA(NULL, k, &dev, 0)) {
-	//	
-	//	display_devices.push_back(dev);
-	//	hDC = CreateDC(dev.DeviceName, dev.DeviceName, 0, 0);
-	//	k++;
-	//}
-	//	
-	//hDC = CreateDC(display_devices.at(1).DeviceName, display_devices.at(1).DeviceName, 0, 0);
-	//std::cout << GetLastError();
-	//HGLRC hGLRC = wglCreateContext(hDC);
-
 	// Hurray for standards!
 	// Setup the context properties to grab the current GL context
 
@@ -556,8 +557,10 @@ int Hardware_Caster::create_shared_context() {
 		&error
 		);
 
-	if (vr_assert(error, "clCreateContext"))
+	if (cl_assert(error)) {
+		Logger::log("Failed at clCreateContext() :" + cl_err_lookup(error), Logger::LogLevel::ERROR, __LINE__, __FILE__);
 		return OPENCL_ERROR;
+	}
 
 	return 1;
 }
@@ -569,20 +572,22 @@ int Hardware_Caster::create_command_queue() {
 		
 		command_queue = clCreateCommandQueue(context, device_id, 0, &error);
 
-		if (vr_assert(error, "clCreateCommandQueue"))
+		if (cl_assert(error)) {
+			Logger::log("Failed at clCreateCommandQueue() :" + cl_err_lookup(error), Logger::LogLevel::ERROR, __LINE__, __FILE__);
 			return OPENCL_ERROR;
+		}
 
 		return 1;
 	}
 	else {
-		std::cout << "Failed creating the command queue. Context or device_id not initialized";
+		Logger::log("Failed creating the command queue. Context or device_id not initialized", Logger::LogLevel::ERROR, __LINE__, __FILE__);
 		return OPENCL_ERROR;
 	}
 }
 
 
 
-int Hardware_Caster::compile_kernel(std::string kernel_source, bool is_path, std::string kernel_name) {
+bool Hardware_Caster::compile_kernel(std::string kernel_source, bool is_path, std::string kernel_name) {
 
 	const char* source;
 	std::string tmp;
@@ -607,16 +612,17 @@ int Hardware_Caster::compile_kernel(std::string kernel_source, bool is_path, std
 		);
 
 	// This is not for compilation, it only loads the source
-	if (vr_assert(error, "clCreateProgramWithSource"))
-		return OPENCL_ERROR;
-
-
+	if (cl_assert(error)) {
+		Logger::log("Failed at clCreateProgramWithSource() :" + cl_err_lookup(error), Logger::LogLevel::ERROR, __LINE__, __FILE__);
+		return false;
+	}
+		
 	// Try and build the program
 	// "-cl-finite-math-only -cl-fast-relaxed-math -cl-unsafe-math-optimizations"
 	error = clBuildProgram(program, 1, &device_id, "-cl-finite-math-only -cl-fast-relaxed-math -cl-unsafe-math-optimizations", NULL, NULL);
 
-	// Check to see if it errored out
-	if (vr_assert(error, "clBuildProgram")) {
+	// Check to see if it error'd out
+	if (cl_assert(error)) {
 
 		// Get the size of the queued log
 		size_t log_size;
@@ -626,24 +632,28 @@ int Hardware_Caster::compile_kernel(std::string kernel_source, bool is_path, std
 		// Grab the log
 		clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, log_size, log, NULL);
 
-		std::cout << log;
-		return OPENCL_ERROR;
+		Logger::log("Failed at clBuildProgram() : " + cl_err_lookup(error), Logger::LogLevel::ERROR, __LINE__, __FILE__);
+		Logger::log(log, Logger::LogLevel::ERROR, __LINE__, __FILE__);
+
+		return false;
 	}
 
 	// Done initializing the kernel
 	cl_kernel kernel = clCreateKernel(program, kernel_name.c_str(), &error);
 
-	if (vr_assert(error, "clCreateKernel"))
-		return OPENCL_ERROR;
+	if (cl_assert(error)) {
+		Logger::log("Failed at clCreateKernel() :" + cl_err_lookup(error), Logger::LogLevel::ERROR, __LINE__, __FILE__);
+		return false;
+	}
 
 	// Do I want these to overlap when repeated??
 	kernel_map[kernel_name] = kernel;
 	//kernel_map.emplace(std::make_pair(kernel_name, kernel));
 
-	return 0;
+	return true;
 }
 
-int Hardware_Caster::set_kernel_arg(
+bool Hardware_Caster::set_kernel_arg(
 	std::string kernel_name,
 	int index,
 	std::string buffer_name) {
@@ -654,21 +664,24 @@ int Hardware_Caster::set_kernel_arg(
 		sizeof(cl_mem),
 		(void *)&buffer_map.at(buffer_name));
 
-	if (vr_assert(error, "clSetKernelArg")){
-		std::cout << buffer_name << std::endl;
-		std::cout << buffer_map.at(buffer_name) << std::endl;
-		return OPENCL_ERROR;
+	if (cl_assert(error)) {
+		Logger::log("Failed at clSetKernelArg() :" + cl_err_lookup(error), Logger::LogLevel::ERROR, __LINE__, __FILE__);
+		Logger::log("Buffer name : " + buffer_name, Logger::LogLevel::ERROR, __LINE__, __FILE__);
+		return false;
 	}
-	return 0;
+
+	return true;
 
 }
 
-int Hardware_Caster::create_image_buffer(std::string buffer_name, cl_uint size, sf::Texture* texture, cl_int access_type) {
+bool Hardware_Caster::create_image_buffer(std::string buffer_name, cl_uint size, sf::Texture* texture, cl_int access_type) {
 
 	// I can imagine overwriting buffers will be common, so I think
 	// this is safe to overwrite / release old buffers quietly
 	if (buffer_map.count(buffer_name) > 0) {
-		release_buffer(buffer_name);
+		Logger::log("buffer_map already contains buffer of the same name, releasing conflicting buffer : " + buffer_name, Logger::LogLevel::INFO);
+		if (!release_buffer(buffer_name))
+			return false;
 	}
 
 	int error;
@@ -676,20 +689,25 @@ int Hardware_Caster::create_image_buffer(std::string buffer_name, cl_uint size, 
 		getContext(), access_type, GL_TEXTURE_2D,
 		0, texture->getNativeHandle(), &error);
 
-	if (vr_assert(error, "clCreateFromGLTexture"))
-		return OPENCL_ERROR;
+	if (cl_assert(error)) {
+		Logger::log("Failed at clCreateFromGLTexture() :" + cl_err_lookup(error), Logger::LogLevel::ERROR, __LINE__, __FILE__);
+		return false;
+	}
 
-	store_buffer(buff, buffer_name);
+	if (!store_buffer(buff, buffer_name))
+		return false;
 
-	return 1;
+	return true;
 }
 
-int Hardware_Caster::create_buffer(std::string buffer_name, cl_uint size, void* data, cl_mem_flags flags) {
+bool Hardware_Caster::create_buffer(std::string buffer_name, cl_uint size, void* data, cl_mem_flags flags) {
 
 	// I can imagine overwriting buffers will be common, so I think
 	// this is safe to overwrite / release old buffers quietly
 	if (buffer_map.count(buffer_name) > 0) {
-		release_buffer(buffer_name);
+		Logger::log("buffer_map already contains buffer of the same name, releasing conflicting buffer : " + buffer_name, Logger::LogLevel::INFO);
+		if (!release_buffer(buffer_name))
+			return false;
 	}
 
 	cl_mem buff = clCreateBuffer(
@@ -697,21 +715,27 @@ int Hardware_Caster::create_buffer(std::string buffer_name, cl_uint size, void* 
 		size, data, &error
 		);
 
-	if (vr_assert(error, "clCreateBuffer"))
+	if (cl_assert(error)) {
+		Logger::log("Failed at clCreateBuffer() :" + cl_err_lookup(error), Logger::LogLevel::ERROR, __LINE__, __FILE__);
+		Logger::log("Buffer name : " + buffer_name, Logger::LogLevel::ERROR, __LINE__, __FILE__);
 		return OPENCL_ERROR;
+	}
 
-	store_buffer(buff, buffer_name);
+	if (!store_buffer(buff, buffer_name))
+		return false;
 
-	return 1;
+	return true;
 
 }
 
-int Hardware_Caster::create_buffer(std::string buffer_name, cl_uint size, void* data) {
+bool Hardware_Caster::create_buffer(std::string buffer_name, cl_uint size, void* data) {
 	
 	// I can imagine overwriting buffers will be common, so I think
 	// this is safe to overwrite / release old buffers quietly
 	if (buffer_map.count(buffer_name) > 0) {
-		release_buffer(buffer_name);
+		Logger::log("buffer_map already contains buffer of the same name, releasing conflicting buffer : " + buffer_name, Logger::LogLevel::INFO);
+		if (!release_buffer(buffer_name))
+			return false;
 	}
 
 	cl_mem buff = clCreateBuffer(
@@ -719,54 +743,66 @@ int Hardware_Caster::create_buffer(std::string buffer_name, cl_uint size, void* 
 		size, data, &error
 		);
 
-	if (vr_assert(error, "clCreateBuffer"))
-		return OPENCL_ERROR;
+	if (cl_assert(error)) {
+		Logger::log("Failed at clCreateBuffer() :" + cl_err_lookup(error), Logger::LogLevel::ERROR, __LINE__, __FILE__);
+		Logger::log("Buffer name : " + buffer_name, Logger::LogLevel::ERROR, __LINE__, __FILE__);
+		return false;
+	}
 
-	store_buffer(buff, buffer_name);
+	if (!store_buffer(buff, buffer_name))
+		return false;
 
-	return 1;
+	return true;
 
 }
 
-int Hardware_Caster::release_buffer(std::string buffer_name) {
+bool Hardware_Caster::release_buffer(std::string buffer_name) {
 
 	if (buffer_map.count(buffer_name) > 0) {
 		
 		int error = clReleaseMemObject(buffer_map.at(buffer_name));
 		
-		if (vr_assert(error, "clReleaseMemObject")) {
-			std::cout << "Error releasing buffer : " << buffer_name;
-			std::cout << "Buffer not removed";
-			return -1;
-
-		} else {
-			buffer_map.erase(buffer_name);
-		}
-
+		if (cl_assert(error)) {
+			Logger::log("Error releasing buffer at clReleaseMemObject()" + cl_err_lookup(error), Logger::LogLevel::ERROR, __LINE__, __FILE__);
+			Logger::log("buffer not removed : " + buffer_name, Logger::LogLevel::WARN, __LINE__, __FILE__);
+			return false;
+		} 
+	
+		buffer_map.erase(buffer_name);
+		
 	} else {
-		std::cout << "Error releasing buffer : " << buffer_name;
-		std::cout << "Buffer not found";
-		return -1;
+		Logger::log("Error releasing buffer, buffer not found : " + buffer_name , Logger::LogLevel::ERROR, __LINE__, __FILE__);
+		return false;
 	}
 
-	return 1;
+	return true;
 
 }
 
-int Hardware_Caster::store_buffer(cl_mem buffer, std::string buffer_name) {
-	buffer_map.emplace(std::make_pair(buffer_name, buffer));
-	return 1;
+bool Hardware_Caster::store_buffer(cl_mem buffer, std::string buffer_name) {
+	
+	if (buffer_map.count(buffer_name) == 0) {
+		buffer_map.emplace(std::make_pair(buffer_name, buffer));
+		return true;
+	}
+
+	Logger::log("Failed to store buffer : " + buffer_name + " , name already taken", Logger::LogLevel::ERROR, __LINE__, __FILE__);
+	return false;
+
 }
 
-int Hardware_Caster::run_kernel(std::string kernel_name, const int work_dim_x, const int work_dim_y) {
+bool Hardware_Caster::run_kernel(std::string kernel_name, const int work_dim_x, const int work_dim_y) {
 
 	size_t global_work_size[2] = { static_cast<size_t>(work_dim_x), static_cast<size_t>(work_dim_y)};
 
 	cl_kernel kernel = kernel_map.at(kernel_name);
 
 	error = clEnqueueAcquireGLObjects(getCommandQueue(), 1, &buffer_map.at("image"), 0, 0, 0);
-	if (vr_assert(error, "clEnqueueAcquireGLObjects"))
-		return OPENCL_ERROR;
+
+	if (cl_assert(error)) {
+		Logger::log("Failed at clEnqueueAcquireGLObjects() :" + cl_err_lookup(error), Logger::LogLevel::ERROR, __LINE__, __FILE__);
+		return false;
+	}
 
 	//error = clEnqueueTask(command_queue, kernel, 0, NULL, NULL);
 	error = clEnqueueNDRangeKernel(
@@ -774,17 +810,28 @@ int Hardware_Caster::run_kernel(std::string kernel_name, const int work_dim_x, c
 		2, NULL, global_work_size,
 		NULL, 0, NULL, NULL);
 
-	if (vr_assert(error, "clEnqueueNDRangeKernel"))
-		return OPENCL_ERROR;
+	if (cl_assert(error)) {
+		Logger::log("Failed at clEnqueueNDRangeKernel() :" + cl_err_lookup(error), Logger::LogLevel::ERROR, __LINE__, __FILE__);
+		return false;
+	}
 
-	clFinish(getCommandQueue());
+	error = clFinish(getCommandQueue());
+
+	if (cl_assert(error)) {
+		Logger::log("Failed at clFinish() :" + cl_err_lookup(error), Logger::LogLevel::ERROR, __LINE__, __FILE__);
+		return false;
+	}
 
 	// What if errors out and gl objects are never released?
 	error = clEnqueueReleaseGLObjects(getCommandQueue(), 1, &buffer_map.at("image"), 0, NULL, NULL);
-	if (vr_assert(error, "clEnqueueReleaseGLObjects"))
-		return OPENCL_ERROR;
 
-	return 1;
+	if (cl_assert(error)) {
+		Logger::log("Failed at clEnqueueReleaseGLObjects() :" + cl_err_lookup(error), Logger::LogLevel::ERROR, __LINE__, __FILE__);
+		return false;
+	}
+
+
+	return true;
 }
 
 void Hardware_Caster::print_kernel_arguments()
@@ -809,217 +856,226 @@ cl_context Hardware_Caster::getContext() { return context; };
 cl_kernel Hardware_Caster::getKernel(std::string kernel_name) { return kernel_map.at(kernel_name); };
 cl_command_queue Hardware_Caster::getCommandQueue() { return command_queue; };
 
-bool Hardware_Caster::vr_assert(int error_code, std::string function_name) {
+bool Hardware_Caster::cl_assert(int error_code) {
+	
+	if (error_code == CL_SUCCESS || error_code == 1)
+		return false;
+	else
+		return true;
+}
 
-	// Just gonna do a little jump table here, just error codes so who cares
-	std::string err_msg = "Error : ";
+
+std::string Hardware_Caster::cl_err_lookup(int error_code) {
+	
+	std::string err_msg = "";
 
 	switch (error_code) {
 
-	case CL_SUCCESS:
-		return false;
-
-	case 1:
-		return false;
-
-	case CL_DEVICE_NOT_FOUND:
-		err_msg += "CL_DEVICE_NOT_FOUND";
-		break;
-	case CL_DEVICE_NOT_AVAILABLE:
-		err_msg = "CL_DEVICE_NOT_AVAILABLE";
-		break;
-	case CL_COMPILER_NOT_AVAILABLE:
-		err_msg = "CL_COMPILER_NOT_AVAILABLE";
-		break;
-	case CL_MEM_OBJECT_ALLOCATION_FAILURE:
-		err_msg = "CL_MEM_OBJECT_ALLOCATION_FAILURE";
-		break;
-	case CL_OUT_OF_RESOURCES:
-		err_msg = "CL_OUT_OF_RESOURCES";
-		break;
-	case CL_OUT_OF_HOST_MEMORY:
-		err_msg = "CL_OUT_OF_HOST_MEMORY";
-		break;
-	case CL_PROFILING_INFO_NOT_AVAILABLE:
-		err_msg = "CL_PROFILING_INFO_NOT_AVAILABLE";
-		break;
-	case CL_MEM_COPY_OVERLAP:
-		err_msg = "CL_MEM_COPY_OVERLAP";
-		break;
-	case CL_IMAGE_FORMAT_MISMATCH:
-		err_msg = "CL_IMAGE_FORMAT_MISMATCH";
-		break;
-	case CL_IMAGE_FORMAT_NOT_SUPPORTED:
-		err_msg = "CL_IMAGE_FORMAT_NOT_SUPPORTED";
-		break;
-	case CL_BUILD_PROGRAM_FAILURE:
-		err_msg = "CL_BUILD_PROGRAM_FAILURE";
-		break;
-	case CL_MAP_FAILURE:
-		err_msg = "CL_MAP_FAILURE";
-		break;
-	case CL_MISALIGNED_SUB_BUFFER_OFFSET:
-		err_msg = "CL_MISALIGNED_SUB_BUFFER_OFFSET";
-		break;
-	case CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST:
-		err_msg = "CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST";
-		break;
-	case CL_COMPILE_PROGRAM_FAILURE:
-		err_msg = "CL_COMPILE_PROGRAM_FAILURE";
-		break;
-	case CL_LINKER_NOT_AVAILABLE:
-		err_msg = "CL_LINKER_NOT_AVAILABLE";
-		break;
-	case CL_LINK_PROGRAM_FAILURE:
-		err_msg = "CL_LINK_PROGRAM_FAILURE";
-		break;
-	case CL_DEVICE_PARTITION_FAILED:
-		err_msg = "CL_DEVICE_PARTITION_FAILED";
-		break;
-	case CL_KERNEL_ARG_INFO_NOT_AVAILABLE:
-		err_msg = "CL_KERNEL_ARG_INFO_NOT_AVAILABLE";
-		break;
-	case CL_INVALID_VALUE:
-		err_msg = "CL_INVALID_VALUE";
-		break;
-	case CL_INVALID_DEVICE_TYPE:
-		err_msg = "CL_INVALID_DEVICE_TYPE";
-		break;
-	case CL_INVALID_PLATFORM:
-		err_msg = "CL_INVALID_PLATFORM";
-		break;
-	case CL_INVALID_DEVICE:
-		err_msg = "CL_INVALID_DEVICE";
-		break;
-	case CL_INVALID_CONTEXT:
-		err_msg = "CL_INVALID_CONTEXT";
-		break;
-	case CL_INVALID_QUEUE_PROPERTIES:
-		err_msg = "CL_INVALID_QUEUE_PROPERTIES";
-		break;
-	case CL_INVALID_COMMAND_QUEUE:
-		err_msg = "CL_INVALID_COMMAND_QUEUE";
-		break;
-	case CL_INVALID_HOST_PTR:
-		err_msg = "CL_INVALID_HOST_PTR";
-		break;
-	case CL_INVALID_MEM_OBJECT:
-		err_msg = "CL_INVALID_MEM_OBJECT";
-		break;
-	case CL_INVALID_IMAGE_FORMAT_DESCRIPTOR:
-		err_msg = "CL_INVALID_IMAGE_FORMAT_DESCRIPTOR";
-		break;
-	case CL_INVALID_IMAGE_SIZE:
-		err_msg = "CL_INVALID_IMAGE_SIZE";
-		break;
-	case CL_INVALID_SAMPLER:
-		err_msg = "CL_INVALID_SAMPLER";
-		break;
-	case CL_INVALID_BINARY:
-		err_msg = "CL_INVALID_BINARY";
-		break;
-	case CL_INVALID_BUILD_OPTIONS:
-		err_msg = "CL_INVALID_BUILD_OPTIONS";
-		break;
-	case CL_INVALID_PROGRAM:
-		err_msg = "CL_INVALID_PROGRAM";
-		break;
-	case CL_INVALID_PROGRAM_EXECUTABLE:
-		err_msg = "CL_INVALID_PROGRAM_EXECUTABLE";
-		break;
-	case CL_INVALID_KERNEL_NAME:
-		err_msg = "CL_INVALID_KERNEL_NAME";
-		break;
-	case CL_INVALID_KERNEL_DEFINITION:
-		err_msg = "CL_INVALID_KERNEL_DEFINITION";
-		break;
-	case CL_INVALID_KERNEL:
-		err_msg = "CL_INVALID_KERNEL";
-		break;
-	case CL_INVALID_ARG_INDEX:
-		err_msg = "CL_INVALID_ARG_INDEX";
-		break;
-	case CL_INVALID_ARG_VALUE:
-		err_msg = "CL_INVALID_ARG_VALUE";
-		break;
-	case CL_INVALID_ARG_SIZE:
-		err_msg = "CL_INVALID_ARG_SIZE";
-		break;
-	case CL_INVALID_KERNEL_ARGS:
-		err_msg = "CL_INVALID_KERNEL_ARGS";
-		break;
-	case CL_INVALID_WORK_DIMENSION:
-		err_msg = "CL_INVALID_WORK_DIMENSION";
-		break;
-	case CL_INVALID_WORK_GROUP_SIZE:
-		err_msg = "CL_INVALID_WORK_GROUP_SIZE";
-		break;
-	case CL_INVALID_WORK_ITEM_SIZE:
-		err_msg = "CL_INVALID_WORK_ITEM_SIZE";
-		break;
-	case CL_INVALID_GLOBAL_OFFSET:
-		err_msg = "CL_INVALID_GLOBAL_OFFSET";
-		break;
-	case CL_INVALID_EVENT_WAIT_LIST:
-		err_msg = "CL_INVALID_EVENT_WAIT_LIST";
-		break;
-	case CL_INVALID_EVENT:
-		err_msg = "CL_INVALID_EVENT";
-		break;
-	case CL_INVALID_OPERATION:
-		err_msg = "CL_INVALID_OPERATION";
-		break;
-	case CL_INVALID_GL_OBJECT:
-		err_msg = "CL_INVALID_GL_OBJECT";
-		break;
-	case CL_INVALID_BUFFER_SIZE:
-		err_msg = "CL_INVALID_BUFFER_SIZE";
-		break;
-	case CL_INVALID_MIP_LEVEL:
-		err_msg = "CL_INVALID_MIP_LEVEL";
-		break;
-	case CL_INVALID_GLOBAL_WORK_SIZE:
-		err_msg = "CL_INVALID_GLOBAL_WORK_SIZE";
-		break;
-	case CL_INVALID_PROPERTY:
-		err_msg = "CL_INVALID_PROPERTY";
-		break;
-	case CL_INVALID_IMAGE_DESCRIPTOR:
-		err_msg = "CL_INVALID_IMAGE_DESCRIPTOR";
-		break;
-	case CL_INVALID_COMPILER_OPTIONS:
-		err_msg = "CL_INVALID_COMPILER_OPTIONS";
-		break;
-	case CL_INVALID_LINKER_OPTIONS:
-		err_msg = "CL_INVALID_LINKER_OPTIONS";
-		break;
-	case CL_INVALID_DEVICE_PARTITION_COUNT:
-		err_msg = "CL_INVALID_DEVICE_PARTITION_COUNT";
-		break;
-	case CL_INVALID_GL_SHAREGROUP_REFERENCE_KHR :
-		err_msg = "CL_INVALID_GL_SHAREGROUP_REFERENCE_KHR";
-		break;
-	case CL_PLATFORM_NOT_FOUND_KHR :
-		err_msg = "CL_PLATFORM_NOT_FOUND_KHR";
-		break;
-	case Hardware_Caster::SHARING_NOT_SUPPORTED:
-		err_msg = "SHARING_NOT_SUPPORTED";
-		break;
-	case Hardware_Caster::OPENCL_NOT_SUPPORTED:
-		err_msg = "OPENCL_NOT_SUPPORTED";
-		break;
-	case Hardware_Caster::OPENCL_ERROR:
-		err_msg = "OPENCL_ERROR";
-		break;
-	case Hardware_Caster::ERR:
-		err_msg = "ERROR";
-		break;
+		case CL_SUCCESS:
+			err_msg += "CL_SUCCESS";
+			break;
+		case 1:
+			err_msg += "CL_SUCCESS";
+			break;
+		case CL_DEVICE_NOT_FOUND:
+			err_msg += "CL_DEVICE_NOT_FOUND";
+			break;
+		case CL_DEVICE_NOT_AVAILABLE:
+			err_msg = "CL_DEVICE_NOT_AVAILABLE";
+			break;
+		case CL_COMPILER_NOT_AVAILABLE:
+			err_msg = "CL_COMPILER_NOT_AVAILABLE";
+			break;
+		case CL_MEM_OBJECT_ALLOCATION_FAILURE:
+			err_msg = "CL_MEM_OBJECT_ALLOCATION_FAILURE";
+			break;
+		case CL_OUT_OF_RESOURCES:
+			err_msg = "CL_OUT_OF_RESOURCES";
+			break;
+		case CL_OUT_OF_HOST_MEMORY:
+			err_msg = "CL_OUT_OF_HOST_MEMORY";
+			break;
+		case CL_PROFILING_INFO_NOT_AVAILABLE:
+			err_msg = "CL_PROFILING_INFO_NOT_AVAILABLE";
+			break;
+		case CL_MEM_COPY_OVERLAP:
+			err_msg = "CL_MEM_COPY_OVERLAP";
+			break;
+		case CL_IMAGE_FORMAT_MISMATCH:
+			err_msg = "CL_IMAGE_FORMAT_MISMATCH";
+			break;
+		case CL_IMAGE_FORMAT_NOT_SUPPORTED:
+			err_msg = "CL_IMAGE_FORMAT_NOT_SUPPORTED";
+			break;
+		case CL_BUILD_PROGRAM_FAILURE:
+			err_msg = "CL_BUILD_PROGRAM_FAILURE";
+			break;
+		case CL_MAP_FAILURE:
+			err_msg = "CL_MAP_FAILURE";
+			break;
+		case CL_MISALIGNED_SUB_BUFFER_OFFSET:
+			err_msg = "CL_MISALIGNED_SUB_BUFFER_OFFSET";
+			break;
+		case CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST:
+			err_msg = "CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST";
+			break;
+		case CL_COMPILE_PROGRAM_FAILURE:
+			err_msg = "CL_COMPILE_PROGRAM_FAILURE";
+			break;
+		case CL_LINKER_NOT_AVAILABLE:
+			err_msg = "CL_LINKER_NOT_AVAILABLE";
+			break;
+		case CL_LINK_PROGRAM_FAILURE:
+			err_msg = "CL_LINK_PROGRAM_FAILURE";
+			break;
+		case CL_DEVICE_PARTITION_FAILED:
+			err_msg = "CL_DEVICE_PARTITION_FAILED";
+			break;
+		case CL_KERNEL_ARG_INFO_NOT_AVAILABLE:
+			err_msg = "CL_KERNEL_ARG_INFO_NOT_AVAILABLE";
+			break;
+		case CL_INVALID_VALUE:
+			err_msg = "CL_INVALID_VALUE";
+			break;
+		case CL_INVALID_DEVICE_TYPE:
+			err_msg = "CL_INVALID_DEVICE_TYPE";
+			break;
+		case CL_INVALID_PLATFORM:
+			err_msg = "CL_INVALID_PLATFORM";
+			break;
+		case CL_INVALID_DEVICE:
+			err_msg = "CL_INVALID_DEVICE";
+			break;
+		case CL_INVALID_CONTEXT:
+			err_msg = "CL_INVALID_CONTEXT";
+			break;
+		case CL_INVALID_QUEUE_PROPERTIES:
+			err_msg = "CL_INVALID_QUEUE_PROPERTIES";
+			break;
+		case CL_INVALID_COMMAND_QUEUE:
+			err_msg = "CL_INVALID_COMMAND_QUEUE";
+			break;
+		case CL_INVALID_HOST_PTR:
+			err_msg = "CL_INVALID_HOST_PTR";
+			break;
+		case CL_INVALID_MEM_OBJECT:
+			err_msg = "CL_INVALID_MEM_OBJECT";
+			break;
+		case CL_INVALID_IMAGE_FORMAT_DESCRIPTOR:
+			err_msg = "CL_INVALID_IMAGE_FORMAT_DESCRIPTOR";
+			break;
+		case CL_INVALID_IMAGE_SIZE:
+			err_msg = "CL_INVALID_IMAGE_SIZE";
+			break;
+		case CL_INVALID_SAMPLER:
+			err_msg = "CL_INVALID_SAMPLER";
+			break;
+		case CL_INVALID_BINARY:
+			err_msg = "CL_INVALID_BINARY";
+			break;
+		case CL_INVALID_BUILD_OPTIONS:
+			err_msg = "CL_INVALID_BUILD_OPTIONS";
+			break;
+		case CL_INVALID_PROGRAM:
+			err_msg = "CL_INVALID_PROGRAM";
+			break;
+		case CL_INVALID_PROGRAM_EXECUTABLE:
+			err_msg = "CL_INVALID_PROGRAM_EXECUTABLE";
+			break;
+		case CL_INVALID_KERNEL_NAME:
+			err_msg = "CL_INVALID_KERNEL_NAME";
+			break;
+		case CL_INVALID_KERNEL_DEFINITION:
+			err_msg = "CL_INVALID_KERNEL_DEFINITION";
+			break;
+		case CL_INVALID_KERNEL:
+			err_msg = "CL_INVALID_KERNEL";
+			break;
+		case CL_INVALID_ARG_INDEX:
+			err_msg = "CL_INVALID_ARG_INDEX";
+			break;
+		case CL_INVALID_ARG_VALUE:
+			err_msg = "CL_INVALID_ARG_VALUE";
+			break;
+		case CL_INVALID_ARG_SIZE:
+			err_msg = "CL_INVALID_ARG_SIZE";
+			break;
+		case CL_INVALID_KERNEL_ARGS:
+			err_msg = "CL_INVALID_KERNEL_ARGS";
+			break;
+		case CL_INVALID_WORK_DIMENSION:
+			err_msg = "CL_INVALID_WORK_DIMENSION";
+			break;
+		case CL_INVALID_WORK_GROUP_SIZE:
+			err_msg = "CL_INVALID_WORK_GROUP_SIZE";
+			break;
+		case CL_INVALID_WORK_ITEM_SIZE:
+			err_msg = "CL_INVALID_WORK_ITEM_SIZE";
+			break;
+		case CL_INVALID_GLOBAL_OFFSET:
+			err_msg = "CL_INVALID_GLOBAL_OFFSET";
+			break;
+		case CL_INVALID_EVENT_WAIT_LIST:
+			err_msg = "CL_INVALID_EVENT_WAIT_LIST";
+			break;
+		case CL_INVALID_EVENT:
+			err_msg = "CL_INVALID_EVENT";
+			break;
+		case CL_INVALID_OPERATION:
+			err_msg = "CL_INVALID_OPERATION";
+			break;
+		case CL_INVALID_GL_OBJECT:
+			err_msg = "CL_INVALID_GL_OBJECT";
+			break;
+		case CL_INVALID_BUFFER_SIZE:
+			err_msg = "CL_INVALID_BUFFER_SIZE";
+			break;
+		case CL_INVALID_MIP_LEVEL:
+			err_msg = "CL_INVALID_MIP_LEVEL";
+			break;
+		case CL_INVALID_GLOBAL_WORK_SIZE:
+			err_msg = "CL_INVALID_GLOBAL_WORK_SIZE";
+			break;
+		case CL_INVALID_PROPERTY:
+			err_msg = "CL_INVALID_PROPERTY";
+			break;
+		case CL_INVALID_IMAGE_DESCRIPTOR:
+			err_msg = "CL_INVALID_IMAGE_DESCRIPTOR";
+			break;
+		case CL_INVALID_COMPILER_OPTIONS:
+			err_msg = "CL_INVALID_COMPILER_OPTIONS";
+			break;
+		case CL_INVALID_LINKER_OPTIONS:
+			err_msg = "CL_INVALID_LINKER_OPTIONS";
+			break;
+		case CL_INVALID_DEVICE_PARTITION_COUNT:
+			err_msg = "CL_INVALID_DEVICE_PARTITION_COUNT";
+			break;
+		case CL_INVALID_GL_SHAREGROUP_REFERENCE_KHR:
+			err_msg = "CL_INVALID_GL_SHAREGROUP_REFERENCE_KHR";
+			break;
+		case CL_PLATFORM_NOT_FOUND_KHR:
+			err_msg = "CL_PLATFORM_NOT_FOUND_KHR";
+			break;
+		case Hardware_Caster::SHARING_NOT_SUPPORTED:
+			err_msg = "SHARING_NOT_SUPPORTED";
+			break;
+		case Hardware_Caster::OPENCL_NOT_SUPPORTED:
+			err_msg = "OPENCL_NOT_SUPPORTED";
+			break;
+		case Hardware_Caster::OPENCL_ERROR:
+			err_msg = "OPENCL_ERROR";
+			break;
+		case Hardware_Caster::ERR:
+			err_msg = "ERROR";
+			break;
+		default:
+			err_msg = "UNKNOWN_ERROR";
 	}
 
-	std::cout << err_msg << "  =at=  " << function_name << std::endl;
-	return true;
-}
+	return err_msg;
 
+}
 
 Hardware_Caster::device::device(cl_device_id device_id, cl_platform_id platform_id) {
 
@@ -1028,10 +1084,19 @@ Hardware_Caster::device::device(cl_device_id device_id, cl_platform_id platform_
 
 	int error = 0;
 	error = clGetPlatformInfo(platform_id, CL_PLATFORM_NAME, 128, (void*)&data.platform_name, nullptr);
-	if (vr_assert(error, "clGetPlatformInfo"))
+	if (cl_assert(error)) {
+		Logger::log("Failed at function clGetPlatformInfo", Logger::LogLevel::ERROR, __LINE__, __FILE__);
 		return;
-
+	}
+		
 	error = clGetDeviceInfo(device_id, CL_DEVICE_VERSION, sizeof(char) * 128, &data.opencl_version, NULL);
+
+	// Just check for error on the first call
+	if (cl_assert(error)) {
+		Logger::log("Failed at function clGetDeviceInfo", Logger::LogLevel::ERROR, __LINE__, __FILE__);
+		return;
+	}
+
 	error = clGetDeviceInfo(device_id, CL_DEVICE_TYPE, sizeof(cl_device_type), &data.device_type, NULL);
 	error = clGetDeviceInfo(device_id, CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(cl_uint), &data.clock_frequency, NULL);
 	error = clGetDeviceInfo(device_id, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cl_uint), &data.compute_units, NULL);
