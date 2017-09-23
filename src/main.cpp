@@ -85,13 +85,8 @@ int main() {
 
 	srand(time(nullptr));
 
-	// =============================
 	Map _map(32);
-	//_map.test();
-	//std::cin.get();
-	
 	//return 0;
-	// =============================
 
 	sf::RenderWindow window(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
 	window.setMouseCursorVisible(false);
@@ -104,24 +99,22 @@ int main() {
 
 	// Start up the raycaster
 	std::shared_ptr<Hardware_Caster> raycaster(new Hardware_Caster());
-	
-	if (raycaster->init() != 1) {
+	if (!raycaster->init())
 		abort();
-	}
-
+	
 	// Create and generate the old 3d array style map
-	Old_Map* map = new Old_Map(sf::Vector3i(MAP_X, MAP_Y, MAP_Z));
+	std::shared_ptr<Old_Map> map(new Old_Map(sf::Vector3i(MAP_X, MAP_Y, MAP_Z)));
 	map->generate_terrain();
 
 	// Send the data to the GPU
 	raycaster->assign_map(map);
 
 	// Create a new camera with (starting position, direction)
-	Camera *camera = new Camera(
+	std::shared_ptr<Camera> camera(new Camera(
 		sf::Vector3f(50, 50, 50),
 		sf::Vector2f(1.5f, 0.0f),
 		&window
-	);
+	));
 
 	// *link* the camera to the GPU
 	raycaster->assign_camera(camera);
@@ -129,59 +122,65 @@ int main() {
 	// Generate and send the viewport to the GPU. Also creates the viewport texture
 	raycaster->create_viewport(WINDOW_X, WINDOW_Y, 0.625f * 90.0f, 90.0f);
 
-	float w = 60.0;
-	float h = 90.0;
-
-
+	// Initialize the light controller and link it to the GPU
 	LightController light_controller(raycaster);
+
+	// Create a light prototype, send it to the controller, and get the handle back
 	LightPrototype prototype(
 		sf::Vector3f(100.0f, 100.0f, 75.0f),
 		sf::Vector3f(-1.0f, -1.0f, -1.5f),
 		sf::Vector4f(0.4f, 0.4f, 0.4f, 1.0f)
 	);
-	
-	std::shared_ptr<LightHandle> handle(light_controller.create_light(prototype));
+	std::shared_ptr<LightHandle> light_handle(light_controller.create_light(prototype));
 
 	// Load in the spritesheet texture
 	sf::Texture spritesheet;
-	spritesheet.loadFromFile("../assets/textures/minecraft_tiles.png");
+	if (!spritesheet.loadFromFile("../assets/textures/minecraft_tiles.png"))
+		Logger::log("Failed to load spritesheet from file", Logger::LogLevel::WARN);
 	raycaster->create_texture_atlas(&spritesheet, sf::Vector2i(16, 16));
 
 	// Checks to see if proper data was uploaded, then sets the kernel args
 	// ALL DATA LOADING MUST BE FINISHED
-	raycaster->validate();
+	if (!raycaster->validate()) {
+		abort();
+	};
 
+	// Start up the input handler and link the camera to some of the events
 	Input input_handler;
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyHeld);
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyPressed);
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::MouseMoved);
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::MouseButtonPressed);
 
+	// Start up a window handler which subscribes to input and listens for window closed events
 	WindowHandler win_hand(&window);
 	win_hand.subscribe_to_publisher(&input_handler, vr::Event::EventType::Closed);
+	win_hand.subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyPressed);
 
-
-	float step_size = 0.0166f;
-	double  frame_time = 0.0,
-		elapsed_time = 0.0,
-		delta_time = 0.0,
-		accumulator_time = 0.0,
-		current_time = 0.0;
 
 	// The sfml imgui wrapper I'm using requires Update be called with sf::Time
 	// Might modify it to also accept seconds
 	sf::Clock sf_delta_clock;
 	fps_counter fps;
 
+	// vars for us to use with ImGUI
 	float light_color[4] = { 0, 0, 0, 0 };
 	float light_pos[4] = { 100, 100, 30 };
 	char screenshot_buf[128]{0};
-
 	bool paused = false;
 	float camera_speed = 1.0;
 
+	// Game loop values
+	float step_size = 0.0166f;
+	double frame_time = 0.0,
+		elapsed_time = 0.0,
+		delta_time = 0.0,
+		accumulator_time = 0.0,
+		current_time = 0.0;
+
 	while (window.isOpen()) {
 
+		// Have the input handler empty the event stack, generate events for held keys, and then dispatch the events to listeners
 		input_handler.consume_sf_events(&window);
 		input_handler.handle_held_keys();
 		input_handler.dispatch_events();
@@ -205,15 +204,18 @@ int main() {
 
 		ImGui::SFML::Update(window, sf_delta_clock.restart());
 
+		// Pausing stops camera and light updates, as well as raycaster computes
 		if (!paused) {
 			camera->update(delta_time);
-			handle->update(delta_time);
+			light_handle->update(delta_time);
 
 			// Run the raycast
-			raycaster->compute();
-			
+			if (!raycaster->compute()) {
+				abort();
+			};
 		}
 
+		// Let the raycaster draw it screen buffer
 		raycaster->draw(&window);
 
 		// Give the frame counter the frame time and draw the average frame time
@@ -292,7 +294,7 @@ int main() {
 
 		if (ImGui::SliderFloat4("Color", light_color, 0, 1)) {
 			sf::Vector4f light(light_color[0], light_color[1], light_color[2], light_color[3]);
-			handle->set_rgbi(light);
+			light_handle->set_rgbi(light);
 		}
 
 		if (ImGui::SliderFloat("Camera Speed", &camera_speed, 0, 4)) {
@@ -301,7 +303,7 @@ int main() {
 
 		if (ImGui::SliderFloat3("Position", light_pos, 0, MAP_X)) {
 			sf::Vector3f light(light_pos[0], light_pos[1], light_pos[2]);
-			handle->set_position(light);
+			light_handle->set_position(light);
 		}
 
 		if (ImGui::CollapsingHeader("Window options"))
@@ -317,7 +319,8 @@ int main() {
 
 		ImGui::Render();
 
-
+		// ImGUI messes up somthing in the SFML GL state, so we need a single draw call to right things
+		// then we can move on to flip the screen buffer via display
 		window.draw(sf::CircleShape(0));
 		window.display();
 

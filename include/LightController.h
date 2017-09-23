@@ -8,9 +8,9 @@
 #include "LightHandle.h"
 
 
-// Lighting is a bit tricky as we need to 
-
-
+// Typical light workflow:
+// 1.) Create light prototype with desired values
+// 2.) Submit prototype to the LightController 
 
 struct LightPrototype {
 	
@@ -56,6 +56,7 @@ public:
 	LightController(std::shared_ptr<Hardware_Caster> raycaster);
 	~LightController();
 
+	// find a free light 'slot' and create
 	std::shared_ptr<LightHandle> create_light(LightPrototype light_prototype);
 	void remove_light(unsigned int light_index);
 

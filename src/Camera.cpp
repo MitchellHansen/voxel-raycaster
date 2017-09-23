@@ -2,14 +2,13 @@
 #include "Pub_Sub.h"
 
 
-Camera::Camera() {
-}
+Camera::Camera() {}
 
 
 Camera::Camera(sf::Vector3f position, sf::Vector2f direction, sf::RenderWindow* window) :
-	position(position), direction(direction), window(window)
-	{
-		fixed = sf::Vector2i(sf::Vector2i(window->getSize().x/2, window->getSize().y/2));
+	position(position), direction(direction), window(window) {
+		
+	fixed = sf::Vector2i(sf::Vector2i(window->getSize().x/2, window->getSize().y/2));
 }
 
 Camera::~Camera() {

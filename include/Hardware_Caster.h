@@ -153,7 +153,7 @@ public:
 
 	
 	// Queries hardware, creates the command queue and context, and compiles kernel
-	int init();
+	bool init();
 
 	// Creates a texture to send to the GPU via height and width
 	// Creates a viewport vector array via vertical and horizontal fov
@@ -164,12 +164,13 @@ public:
 	bool assign_lights(std::vector<PackedData> *data) ;
 
 	// We take a ptr to the map and create the map, and map_dimensions buffer for the GPU
-	bool assign_map(Old_Map *map) ;
+	bool assign_map(std::shared_ptr<Old_Map> map);
+	bool release_map();
 
 	// We take a ptr to the camera and create a camera direction and position buffer
-	bool assign_camera(Camera *camera) ;
+	bool assign_camera(std::shared_ptr<Camera> camera);
+	bool release_camera();
 
-	// TODO: Hoist this to the base class
 	// Creates 3 buffers relating to the texture atlas: texture_atlas, atlas_dim, and tile_dim
 	// With these on the GPU we can texture any quad with an atlas tile
 	bool create_texture_atlas(sf::Texture *t, sf::Vector2i tile_dim);
@@ -183,7 +184,10 @@ public:
 	// Take the viewport sprite and draw it to the screen
 	void draw(sf::RenderWindow* window) ;
 
+	// Load the saved device config from a file
 	bool load_config();
+
+	// Save the chosen device config to a file
 	void save_config();
 	// ================================== DEBUG =======================================
 	
@@ -196,17 +200,14 @@ public:
 
 private:
 
-	// Iterate the devices available and choose the best one
-	// Also checks for the sharing extension
-	int acquire_platform_and_device();
-
-	bool aquire_hardware();
-
+	// Cycle through the OpenCL devices and store *all* of their data, not super useful
 	bool query_hardware();
 
-	// With respect to the individual platforms implementation of sharing
-	// create a shared cl_gl context
-	int create_shared_context();
+	// Cycle through the OpenCL devices and store only the minimal amount of data that we need
+	bool aquire_hardware();
+
+	// Create a shared cl_gl context with respect to the individual platforms implementation of sharing
+	bool create_shared_context();
 
 	// Using the context and the device create a command queue for them
 	bool create_command_queue();
@@ -241,18 +242,23 @@ private:
 	// Run a test kernel that prints out the kernel args
 	void print_kernel_arguments();
 
-	// CL error code handler. ImGui overlaps the assert() function annoyingly so I had to rename it
+	// Cl can return 0 or 1 for success, greater or lower for fail. Return true or false based on that requirement
 	static bool cl_assert(int error_code);
+	
+	// Take an integer error code and return the string of the related CL ENUM
 	static std::string cl_err_lookup(int error_code);
-	//static bool vr_assert(int error_code)
 
+	// Setters and getters
 	cl_device_id getDeviceID();
 	cl_platform_id getPlatformID();
 	cl_context getContext();
 	cl_kernel getKernel(std::string kernel_name);
 	cl_command_queue getCommandQueue();
 
-	// Our device data
+	// List of queried devices
+	std::vector<device> device_list;
+
+	// Our picked device data
 	cl_platform_id platform_id;
 	cl_device_id device_id;
 
@@ -265,21 +271,22 @@ private:
 	std::map<std::string, cl_mem> buffer_map;
 	std::unordered_map<std::string, std::pair<sf::Sprite, std::unique_ptr<sf::Texture>>> image_map;
 
+	// Hardware caster holds and renders its own textures
 	sf::Sprite viewport_sprite;
 	sf::Texture viewport_texture;
 
-	Old_Map * map = nullptr;
-	Camera *camera = nullptr;
-	//	std::vector<LightController::PackedData> *lights;
-	std::vector<PackedData> *lights;
-	int light_count = 0;
 	sf::Uint8 *viewport_image = nullptr;
 	sf::Vector4f *viewport_matrix = nullptr;
 	sf::Vector2i viewport_resolution;
 
-	int error = 0;
+	std::shared_ptr<Camera> camera;
+	std::shared_ptr<Old_Map> map;
 
-	std::vector<device> device_list;
+	std::vector<PackedData> *lights;
+	int light_count = 0;
+	
+
+	int error = 0;
 
 };
 

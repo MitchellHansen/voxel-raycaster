@@ -4,7 +4,7 @@
 Hardware_Caster::Hardware_Caster() {}
 Hardware_Caster::~Hardware_Caster() {}
 
-int Hardware_Caster::init() {
+bool Hardware_Caster::init() {
 
 	Logger::log("Initializing the Hardware Caster", Logger::LogLevel::INFO);
 
@@ -68,28 +68,55 @@ int Hardware_Caster::init() {
 
 }
 
-bool Hardware_Caster::assign_map(Old_Map *map) {
-
+bool Hardware_Caster::assign_map(std::shared_ptr<Old_Map> map) {
+	
 	this->map = map;
 	auto dimensions = map->getDimensions();
-	
+
 	if (!create_buffer("map", sizeof(char) * dimensions.x * dimensions.y * dimensions.z, map->get_voxel_data()))
 		return false;
-	
+
 	if (!create_buffer("map_dimensions", sizeof(int) * 3, &dimensions))
 		return false;
-	
+
 	return true;
 }
 
-bool Hardware_Caster::assign_camera(Camera *camera) {
+bool Hardware_Caster::release_map() {
+	
+	this->map = nullptr;
 
+	if (!release_buffer("map"))
+		return false;
+
+	if (!release_buffer("map_dimensions"))
+		return false;
+
+	return true;
+}
+
+
+bool Hardware_Caster::assign_camera(std::shared_ptr<Camera> camera) {
+	
 	this->camera = camera;
 
 	if (!create_buffer("camera_direction", sizeof(float) * 4, (void*)camera->get_direction_pointer(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR))
 		return false;
-	
+
 	if (!create_buffer("camera_position", sizeof(float) * 4, (void*)camera->get_position_pointer(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR))
+		return false;
+
+	return true;
+}
+
+bool Hardware_Caster::release_camera() {
+
+	this->camera = nullptr;
+
+	if (!release_buffer("camera_direction"))
+		return false;
+
+	if (!release_buffer("camera_position"))
 		return false;
 
 	return true;
@@ -99,37 +126,41 @@ bool Hardware_Caster::validate() {
 
 	Logger::log("Validating OpenCL kernel args", Logger::LogLevel::INFO);
 
-	// Check to make sure everything has been entered;
-	if (camera == nullptr ||
-		map == nullptr ||
-		viewport_image == nullptr ||
-		viewport_matrix == nullptr) {
-
-		Logger::log("Raycaster.validate() failed, camera, map, or viewport not initialized", Logger::LogLevel::WARN);
+	// Check to make sure everything has been entered
+	if (!camera.get()) {
+		Logger::log("Raycaster.validate() failed, camera not initialized", Logger::LogLevel::WARN);
 		return false;
-
-	} else {
-	
-		// Set all the kernel args
-		set_kernel_arg("raycaster", 0, "map");
-		set_kernel_arg("raycaster", 1, "map_dimensions");
-		set_kernel_arg("raycaster", 2, "viewport_resolution");
-		set_kernel_arg("raycaster", 3, "viewport_matrix");
-		set_kernel_arg("raycaster", 4, "camera_direction");
-		set_kernel_arg("raycaster", 5, "camera_position");
-		set_kernel_arg("raycaster", 6, "lights");
-		set_kernel_arg("raycaster", 7, "light_count");
-		set_kernel_arg("raycaster", 8, "image");
-		set_kernel_arg("raycaster", 9, "seed");
-		set_kernel_arg("raycaster", 10, "texture_atlas");
-		set_kernel_arg("raycaster", 11, "atlas_dim");
-		set_kernel_arg("raycaster", 12, "tile_dim");
-
-		return true;
-		//print_kernel_arguments();
 	}
-
+	if (!map.get()) {
+		Logger::log("Raycaster.validate() failed, map not initialized", Logger::LogLevel::WARN);
+		return false;
+	}
+	if (!viewport_image) {
+		Logger::log("Raycaster.validate() failed, viewport_image not initialized", Logger::LogLevel::WARN);
+		return false;
+	}
+	if (!viewport_matrix) {
+		Logger::log("Raycaster.validate() failed, viewport_matrix not initialized", Logger::LogLevel::WARN);
+		return false;
+	}
 	
+	// Set all the kernel args
+	set_kernel_arg("raycaster", 0, "map");
+	set_kernel_arg("raycaster", 1, "map_dimensions");
+	set_kernel_arg("raycaster", 2, "viewport_resolution");
+	set_kernel_arg("raycaster", 3, "viewport_matrix");
+	set_kernel_arg("raycaster", 4, "camera_direction");
+	set_kernel_arg("raycaster", 5, "camera_position");
+	set_kernel_arg("raycaster", 6, "lights");
+	set_kernel_arg("raycaster", 7, "light_count");
+	set_kernel_arg("raycaster", 8, "image");
+	set_kernel_arg("raycaster", 9, "seed");
+	set_kernel_arg("raycaster", 10, "texture_atlas");
+	set_kernel_arg("raycaster", 11, "atlas_dim");
+	set_kernel_arg("raycaster", 12, "tile_dim");
+
+	return true;
+
 }
 
 bool Hardware_Caster::create_texture_atlas(sf::Texture *t, sf::Vector2i tile_dim) {
@@ -500,7 +531,8 @@ bool Hardware_Caster::query_hardware()
 	return true;
 }
 
-int Hardware_Caster::create_shared_context() {
+bool Hardware_Caster::create_shared_context()
+{
 
 	// Hurray for standards!
 	// Setup the context properties to grab the current GL context

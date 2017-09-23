@@ -11,8 +11,6 @@ public:
 
 	bool init(std::string root_config_path);
 
-
-
 private:
 
 

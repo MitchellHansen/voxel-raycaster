@@ -52,12 +52,10 @@ bool Map::test_oct_arr_traversal(sf::Vector3i dimensions) {
 }
 
 void Map::setVoxel(sf::Vector3i pos, int val) {
-
     voxel_data[pos.x + OCT_DIM * (pos.y + OCT_DIM * pos.z)] = val;
 }
 
 char Map::getVoxel(sf::Vector3i pos){
-
 	return octree.GetVoxel(pos).found;
 }
 
