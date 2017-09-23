@@ -19,11 +19,14 @@
 /**
  * TODO:
  * - Inconsistent lighting constants. GUI manipulation
- *      Ancillary settings buffer and memory controller
+ *      + Ancillary settings buffer and memory controller
  * - Attachment lookup and aux buffer, contour lookup & masking
  * - Traversal algorithm + related stacks and data structures
+ *		+ Passing to GPU, Syncing?
  * - Octree, Map interface with the GPU
  * - Octree, Map refactoring
+ * - Separate Application stages into areas that make sense
+ * - 
  */
 
 #include "Application.h"

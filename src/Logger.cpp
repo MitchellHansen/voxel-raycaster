@@ -56,7 +56,6 @@ bool Logger::open_log_file() {
 	} else {
 		return true;
 	}
-
 }
 
 std::ostream& Logger::get_stream() {

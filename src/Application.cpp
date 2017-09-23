@@ -79,8 +79,7 @@ bool Application::init_clcaster() {
 
 bool Application::init_events() {
 
-	// Start up the input handler and link the camera to some of the events
-
+	// Link the camera to the input handler
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyHeld);
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyPressed);
 	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::MouseMoved);
