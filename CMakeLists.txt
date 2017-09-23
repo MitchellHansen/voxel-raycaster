@@ -29,10 +29,6 @@ if (WIN32)
 	message(STATUS "GLEW found: ${GLEW_FOUND}")
 endif()
 
-# Find Vulkan
-#find_package(VULKAN REQUIRED)
-#message(STATUS "VULKAN found: ${VULKAN_FOUND}")
-
 # Find OpenGL
 find_package( OpenGL REQUIRED)
 message(STATUS "OpenGL found: ${OPENGL_FOUND}")
@@ -41,7 +37,6 @@ message(STATUS "OpenGL found: ${OPENGL_FOUND}")
 include_directories(${SFML_INCLUDE_DIR})
 include_directories(${OpenCL_INCLUDE_DIRS})
 include_directories(${OpenGL_INCLUDE_DIRS})
-#include_directories(${Vulkan_INCLUDE_DIRS})
 include_directories(include)
 
 # Glob all thr sources into their values
@@ -116,20 +111,15 @@ foreach (source IN ITEMS ${SHADERS})
 	endif()
 endforeach()
 
-# put all the sources into their own filter folders
-#SOURCE_GROUP("kernels" FILES ${KERNELS}) 
-#SOURCE_GROUP("headers" FILES ${HEADERS}) 
-#SOURCE_GROUP("sources" FILES ${SOURCES})
-#SOURCE_GROUP("shaders" FILES ${SHADERS})
-
-
 # Link CL, GL, and SFML
 target_link_libraries (${PNAME} ${SFML_LIBRARIES} ${SFML_DEPENDENCIES})
 target_link_libraries (${PNAME} ${OpenCL_LIBRARY})
 target_link_libraries (${PNAME} ${OPENGL_LIBRARIES})
-target_link_libraries (${PNAME} ${GLEW_LIBRARIES})
-#target_link_libraries (${PNAME} ${Vulkan_LIBRARIES})
-#target_link_libraries(${PNAME} "/Users/cs445001_09/Desktop/voxel-raycaster/SFML/extlibs/freetype.framework/Versions/A/freetype")
+
+if (WIN32)
+	target_link_libraries (${PNAME} ${GLEW_LIBRARIES})
+endif()
+
 
 if (NOT WIN32)
 	target_link_libraries (${PNAME} -lpthread)

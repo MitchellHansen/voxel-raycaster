@@ -45,7 +45,7 @@
 
 // TODO: 
 // - Inconsistent lighting constants. GUI manipulation
-//      Ancilary settings buffer and memory controller
+//      Ancillary settings buffer and memory controller
 // - Attachment lookup and aux buffer, contour lookup & masking
 // - Traversal algorithm + related stacks and data structures
 // - Octree, Map interface with the GPU
