@@ -1,6 +1,6 @@
 #include "LightController.h"
 
-LightController::LightController(std::shared_ptr<Hardware_Caster> raycaster) : packed_data_array(reserved_count), open_list(reserved_count) {
+LightController::LightController(std::shared_ptr<CLCaster> raycaster) : packed_data_array(reserved_count), open_list(reserved_count) {
 
 	// initialize the open list with numbers 1 -> open_list.size()
 	std::iota(open_list.begin(), open_list.end(), 0);

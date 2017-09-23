@@ -1,10 +1,10 @@
-#include "Hardware_Caster.h"
+#include "CLCaster.h"
 
 
-Hardware_Caster::Hardware_Caster() {}
-Hardware_Caster::~Hardware_Caster() {}
+CLCaster::CLCaster() {}
+CLCaster::~CLCaster() {}
 
-bool Hardware_Caster::init() {
+bool CLCaster::init() {
 
 	Logger::log("Initializing the Hardware Caster", Logger::LogLevel::INFO);
 
@@ -68,7 +68,7 @@ bool Hardware_Caster::init() {
 
 }
 
-bool Hardware_Caster::assign_map(std::shared_ptr<Old_Map> map) {
+bool CLCaster::assign_map(std::shared_ptr<Old_Map> map) {
 	
 	this->map = map;
 	auto dimensions = map->getDimensions();
@@ -82,7 +82,7 @@ bool Hardware_Caster::assign_map(std::shared_ptr<Old_Map> map) {
 	return true;
 }
 
-bool Hardware_Caster::release_map() {
+bool CLCaster::release_map() {
 	
 	this->map = nullptr;
 
@@ -96,7 +96,7 @@ bool Hardware_Caster::release_map() {
 }
 
 
-bool Hardware_Caster::assign_camera(std::shared_ptr<Camera> camera) {
+bool CLCaster::assign_camera(std::shared_ptr<Camera> camera) {
 	
 	this->camera = camera;
 
@@ -109,7 +109,7 @@ bool Hardware_Caster::assign_camera(std::shared_ptr<Camera> camera) {
 	return true;
 }
 
-bool Hardware_Caster::release_camera() {
+bool CLCaster::release_camera() {
 
 	this->camera = nullptr;
 
@@ -122,7 +122,7 @@ bool Hardware_Caster::release_camera() {
 	return true;
 }
 
-bool Hardware_Caster::validate() {
+bool CLCaster::validate() {
 
 	Logger::log("Validating OpenCL kernel args", Logger::LogLevel::INFO);
 
@@ -163,7 +163,7 @@ bool Hardware_Caster::validate() {
 
 }
 
-bool Hardware_Caster::create_texture_atlas(sf::Texture *t, sf::Vector2i tile_dim) {
+bool CLCaster::create_texture_atlas(sf::Texture *t, sf::Vector2i tile_dim) {
 	
 	if (!create_image_buffer("texture_atlas", t->getSize().x * t->getSize().x * 4 * sizeof(float), t, CL_MEM_READ_ONLY))
 		return false;
@@ -180,7 +180,7 @@ bool Hardware_Caster::create_texture_atlas(sf::Texture *t, sf::Vector2i tile_dim
 	return true;
 }
 
-bool Hardware_Caster::compute() {
+bool CLCaster::compute() {
 	
 	// correlating work size with texture size? good, bad?
 	return run_kernel("raycaster", viewport_texture.getSize().x, viewport_texture.getSize().y);
@@ -189,7 +189,7 @@ bool Hardware_Caster::compute() {
 // There is a possibility that I would want to move this over to be all inside it's own
 // container to make it so it can be changed via CL_MEM_USE_HOST_PTR. But I doubt it
 // would ever be called enough to warrent that
-bool Hardware_Caster::create_viewport(int width, int height, float v_fov, float h_fov) {
+bool CLCaster::create_viewport(int width, int height, float v_fov, float h_fov) {
 	
 	// CL needs the screen resolution
 	sf::Vector2i view_res(width, height);
@@ -272,7 +272,7 @@ bool Hardware_Caster::create_viewport(int width, int height, float v_fov, float 
 
 }
 
-bool Hardware_Caster::assign_lights(std::vector<PackedData> *data) {
+bool CLCaster::assign_lights(std::vector<PackedData> *data) {
 
 	// Get a pointer to the packed light data
 	this->lights = data;
@@ -290,11 +290,11 @@ bool Hardware_Caster::assign_lights(std::vector<PackedData> *data) {
 	return true;
 }
 
-void Hardware_Caster::draw(sf::RenderWindow* window) {
+void CLCaster::draw(sf::RenderWindow* window) {
 	window->draw(viewport_sprite);
 }
 
-bool Hardware_Caster::debug_quick_recompile() {
+bool CLCaster::debug_quick_recompile() {
 	
 	if (!compile_kernel("../kernels/ray_caster_kernel.cl", true, "raycaster")) {
 		Logger::log("Failed to recompile kernel", Logger::LogLevel::WARN, __LINE__, __FILE__);
@@ -306,7 +306,7 @@ bool Hardware_Caster::debug_quick_recompile() {
 
 }
 
-bool Hardware_Caster::aquire_hardware() {
+bool CLCaster::aquire_hardware() {
 
 	Logger::log("Acquiring OpenCL Hardware", Logger::LogLevel::INFO);
 
@@ -371,7 +371,7 @@ bool Hardware_Caster::aquire_hardware() {
 	return true;
 }
 
-void Hardware_Caster::save_config() {
+void CLCaster::save_config() {
 
 	Logger::log("Saving OpenCL hardware config", Logger::LogLevel::INFO);
 
@@ -384,7 +384,7 @@ void Hardware_Caster::save_config() {
 	output_file.close();
 }
 
-bool Hardware_Caster::load_config() {
+bool CLCaster::load_config() {
 
 	Logger::log("Loading hardware config", Logger::LogLevel::INFO);
 
@@ -420,7 +420,7 @@ bool Hardware_Caster::load_config() {
 	return true;
 }
 
-bool Hardware_Caster::query_hardware()
+bool CLCaster::query_hardware()
 {
 
 	Logger::log("Querying OpenCL hardware", Logger::LogLevel::INFO);
@@ -531,7 +531,7 @@ bool Hardware_Caster::query_hardware()
 	return true;
 }
 
-bool Hardware_Caster::create_shared_context()
+bool CLCaster::create_shared_context()
 {
 
 	// Hurray for standards!
@@ -589,7 +589,7 @@ bool Hardware_Caster::create_shared_context()
 	return true;
 }
 
-bool Hardware_Caster::create_command_queue() {
+bool CLCaster::create_command_queue() {
 
 	// If context and device_id have initialized
 	if (context && device_id) {
@@ -610,7 +610,7 @@ bool Hardware_Caster::create_command_queue() {
 	return true;
 }
 
-bool Hardware_Caster::compile_kernel(std::string kernel_source, bool is_path, std::string kernel_name) {
+bool CLCaster::compile_kernel(std::string kernel_source, bool is_path, std::string kernel_name) {
 	
 	Logger::log("Compiling OpenCL Kernel", Logger::LogLevel::INFO);
 	
@@ -677,7 +677,7 @@ bool Hardware_Caster::compile_kernel(std::string kernel_source, bool is_path, st
 	return true;
 }
 
-bool Hardware_Caster::set_kernel_arg(
+bool CLCaster::set_kernel_arg(
 	std::string kernel_name,
 	int index,
 	std::string buffer_name) {
@@ -698,7 +698,7 @@ bool Hardware_Caster::set_kernel_arg(
 
 }
 
-bool Hardware_Caster::create_image_buffer(std::string buffer_name, cl_uint size, sf::Texture* texture, cl_int access_type) {
+bool CLCaster::create_image_buffer(std::string buffer_name, cl_uint size, sf::Texture* texture, cl_int access_type) {
 
 	// I can imagine overwriting buffers will be common, so I think
 	// this is safe to overwrite / release old buffers quietly
@@ -723,7 +723,7 @@ bool Hardware_Caster::create_image_buffer(std::string buffer_name, cl_uint size,
 	return true;
 }
 
-bool Hardware_Caster::create_buffer(std::string buffer_name, cl_uint size, void* data, cl_mem_flags flags) {
+bool CLCaster::create_buffer(std::string buffer_name, cl_uint size, void* data, cl_mem_flags flags) {
 
 	// I can imagine overwriting buffers will be common, so I think
 	// this is safe to overwrite / release old buffers quietly
@@ -751,7 +751,7 @@ bool Hardware_Caster::create_buffer(std::string buffer_name, cl_uint size, void*
 
 }
 
-bool Hardware_Caster::create_buffer(std::string buffer_name, cl_uint size, void* data) {
+bool CLCaster::create_buffer(std::string buffer_name, cl_uint size, void* data) {
 	
 	// I can imagine overwriting buffers will be common, so I think
 	// this is safe to overwrite / release old buffers quietly
@@ -779,7 +779,7 @@ bool Hardware_Caster::create_buffer(std::string buffer_name, cl_uint size, void*
 
 }
 
-bool Hardware_Caster::release_buffer(std::string buffer_name) {
+bool CLCaster::release_buffer(std::string buffer_name) {
 
 	if (buffer_map.count(buffer_name) > 0) {
 		
@@ -802,7 +802,7 @@ bool Hardware_Caster::release_buffer(std::string buffer_name) {
 
 }
 
-bool Hardware_Caster::store_buffer(cl_mem buffer, std::string buffer_name) {
+bool CLCaster::store_buffer(cl_mem buffer, std::string buffer_name) {
 	
 	if (buffer_map.count(buffer_name) == 0) {
 		buffer_map.emplace(std::make_pair(buffer_name, buffer));
@@ -814,7 +814,7 @@ bool Hardware_Caster::store_buffer(cl_mem buffer, std::string buffer_name) {
 
 }
 
-bool Hardware_Caster::run_kernel(std::string kernel_name, const int work_dim_x, const int work_dim_y) {
+bool CLCaster::run_kernel(std::string kernel_name, const int work_dim_x, const int work_dim_y) {
 
 	size_t global_work_size[2] = { static_cast<size_t>(work_dim_x), static_cast<size_t>(work_dim_y)};
 
@@ -857,7 +857,7 @@ bool Hardware_Caster::run_kernel(std::string kernel_name, const int work_dim_x, 
 	return true;
 }
 
-void Hardware_Caster::print_kernel_arguments()
+void CLCaster::print_kernel_arguments()
 {
 	compile_kernel("../kernels/print_arguments.cl", true, "printer");
 	set_kernel_arg("printer", 0, "map");
@@ -873,13 +873,13 @@ void Hardware_Caster::print_kernel_arguments()
 	run_kernel("printer", 1, 1);
 }
 
-cl_device_id Hardware_Caster::getDeviceID() { return device_id; };
-cl_platform_id Hardware_Caster::getPlatformID() { return platform_id; };
-cl_context Hardware_Caster::getContext() { return context; };
-cl_kernel Hardware_Caster::getKernel(std::string kernel_name) { return kernel_map.at(kernel_name); };
-cl_command_queue Hardware_Caster::getCommandQueue() { return command_queue; };
+cl_device_id CLCaster::getDeviceID() { return device_id; };
+cl_platform_id CLCaster::getPlatformID() { return platform_id; };
+cl_context CLCaster::getContext() { return context; };
+cl_kernel CLCaster::getKernel(std::string kernel_name) { return kernel_map.at(kernel_name); };
+cl_command_queue CLCaster::getCommandQueue() { return command_queue; };
 
-bool Hardware_Caster::cl_assert(int error_code) {
+bool CLCaster::cl_assert(int error_code) {
 	
 	if (error_code == CL_SUCCESS || error_code == 1)
 		return false;
@@ -888,7 +888,7 @@ bool Hardware_Caster::cl_assert(int error_code) {
 }
 
 
-std::string Hardware_Caster::cl_err_lookup(int error_code) {
+std::string CLCaster::cl_err_lookup(int error_code) {
 	
 	std::string err_msg = "";
 
@@ -1080,16 +1080,16 @@ std::string Hardware_Caster::cl_err_lookup(int error_code) {
 		case CL_PLATFORM_NOT_FOUND_KHR:
 			err_msg = "CL_PLATFORM_NOT_FOUND_KHR";
 			break;
-		case Hardware_Caster::SHARING_NOT_SUPPORTED:
+		case CLCaster::SHARING_NOT_SUPPORTED:
 			err_msg = "SHARING_NOT_SUPPORTED";
 			break;
-		case Hardware_Caster::OPENCL_NOT_SUPPORTED:
+		case CLCaster::OPENCL_NOT_SUPPORTED:
 			err_msg = "OPENCL_NOT_SUPPORTED";
 			break;
-		case Hardware_Caster::OPENCL_ERROR:
+		case CLCaster::OPENCL_ERROR:
 			err_msg = "OPENCL_ERROR";
 			break;
-		case Hardware_Caster::ERR:
+		case CLCaster::ERR:
 			err_msg = "ERROR";
 			break;
 		default:
@@ -1100,7 +1100,7 @@ std::string Hardware_Caster::cl_err_lookup(int error_code) {
 
 }
 
-Hardware_Caster::device::device(cl_device_id device_id, cl_platform_id platform_id) {
+CLCaster::device::device(cl_device_id device_id, cl_platform_id platform_id) {
 
 	this->device_id = device_id;
 	this->platform_id = platform_id;
@@ -1135,7 +1135,7 @@ Hardware_Caster::device::device(cl_device_id device_id, cl_platform_id platform_
 }
 
 
-Hardware_Caster::device::device(const device& d) {
+CLCaster::device::device(const device& d) {
 
 	// member values, copy individually
 	device_id = d.device_id;
@@ -1148,7 +1148,7 @@ Hardware_Caster::device::device(const device& d) {
 
 }
 
-void Hardware_Caster::device::print(std::ostream& stream) const {
+void CLCaster::device::print(std::ostream& stream) const {
 
 	stream << "\n\tDevice ID        : " << device_id << std::endl;
 	stream << "\tDevice Name      : " << data.device_name << std::endl;
@@ -1180,6 +1180,6 @@ void Hardware_Caster::device::print(std::ostream& stream) const {
 
 }
 
-void Hardware_Caster::device::print_packed_data(std::ostream& stream) {
+void CLCaster::device::print_packed_data(std::ostream& stream) {
 	stream.write(reinterpret_cast<char*>(&data), sizeof(data));
 }

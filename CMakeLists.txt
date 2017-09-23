@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.1)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Set the project name
-set(PNAME Game)
+set(PNAME VoxelRaycaster)
 project(${PNAME})
 
 # Set up variables, and find SFML

@@ -84,7 +84,7 @@ struct device_info {
 
 struct PackedData;
 
-class Hardware_Caster {
+class CLCaster {
 
 
 public:
@@ -148,8 +148,8 @@ public:
 	 * as rendering of the computed cast.
 	 * 
 	 */
-	Hardware_Caster();
-	virtual ~Hardware_Caster();
+	CLCaster();
+	virtual ~CLCaster();
 
 	
 	// Queries hardware, creates the command queue and context, and compiles kernel

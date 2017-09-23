@@ -1,13 +1,9 @@
-﻿
-// This has to be up here or else glew will complain
-//#include "GL_Testing.h"
-
-#ifdef linux
+﻿#ifdef linux
 #include <CL/cl.h>
 #include <CL/opencl.h>
 
 #elif defined _WIN32
-// Good lord, the C++ std overwrote windows.h min() max() definitions
+// Good lord, windows.h overwrote the std::min() max() definitions
 #define NOMINMAX
 #include <windows.h>
 
@@ -30,7 +26,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Network.hpp>
 #include "map/Old_Map.h"
-#include "Hardware_Caster.h"
+#include "CLCaster.h"
 #include "Vector4.hpp"
 #include "Camera.h"
 #include "Input.h"
@@ -45,28 +41,15 @@
 #undef ERROR
 #include "Logger.h"
 
-
-
 const int WINDOW_X = 1536;
 const int WINDOW_Y = 1024;
-const int WORK_SIZE = WINDOW_X * WINDOW_Y;
 
 const int MAP_X = 256;
 const int MAP_Y = 256;
 const int MAP_Z = 256;
 
 float elap_time(){
-	static std::chrono::time_point<std::chrono::system_clock> start;
-	static bool started = false;
 
-	if (!started){
-		start = std::chrono::system_clock::now();
-		started = true;
-	}
-
-	std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
-	std::chrono::duration<double> elapsed_time = now - start;
-	return static_cast<float>(elapsed_time.count());
 }
 
 sf::Sprite window_sprite;
@@ -98,7 +81,7 @@ int main() {
 	window.resetGLStates();
 
 	// Start up the raycaster
-	std::shared_ptr<Hardware_Caster> raycaster(new Hardware_Caster());
+	std::shared_ptr<CLCaster> raycaster(new CLCaster());
 	if (!raycaster->init())
 		abort();
 	

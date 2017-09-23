@@ -4,7 +4,7 @@
 #include <numeric>
 #include "util.hpp"
 #include "Pub_Sub.h"
-#include "Hardware_Caster.h"
+#include "CLCaster.h"
 #include "LightHandle.h"
 
 
@@ -48,12 +48,12 @@ struct PackedData {
 };
 
 class LightHandle;
-class Hardware_Caster;
+class CLCaster;
 
 class LightController : public VrEventSubscriber {
 public:
 
-	LightController(std::shared_ptr<Hardware_Caster> raycaster);
+	LightController(std::shared_ptr<CLCaster> raycaster);
 	~LightController();
 
 	// find a free light 'slot' and create
