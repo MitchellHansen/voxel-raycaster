@@ -49,7 +49,6 @@ bool CLCaster::init() {
 		Logger::log("Failed to create a OpenCL command queue", Logger::LogLevel::ERROR, __LINE__, __FILE__);
 		return false;
 	}
-	
 
 	if (!compile_kernel("../kernels/ray_caster_kernel.cl", true, "raycaster")) {
 		Logger::log("Failed to compile the kernel", Logger::LogLevel::ERROR, __LINE__, __FILE__);
@@ -75,7 +74,6 @@ bool CLCaster::assign_map(std::shared_ptr<Old_Map> map) {
 
 	if (!create_buffer("map", sizeof(char) * dimensions.x * dimensions.y * dimensions.z, map->get_voxel_data()))
 		return false;
-
 	if (!create_buffer("map_dimensions", sizeof(int) * 3, &dimensions))
 		return false;
 
@@ -88,7 +86,6 @@ bool CLCaster::release_map() {
 
 	if (!release_buffer("map"))
 		return false;
-
 	if (!release_buffer("map_dimensions"))
 		return false;
 
@@ -96,13 +93,45 @@ bool CLCaster::release_map() {
 }
 
 
+bool CLCaster::assign_octree(std::shared_ptr<Map> octree) {
+
+	this->octree = octree;
+
+	if (!create_buffer("octree_descriptor_buffer", octree->octree.buffer_size, &octree->octree.descriptor_buffer))
+		return false;
+	if (!create_buffer("octree_attachment_lookup_buffer", octree->octree.buffer_size, &octree->octree.attachment_lookup))
+		return false;
+	if (!create_buffer("octree_attachment_buffer", octree->octree.buffer_size, &octree->octree.attachment_buffer))
+		return false;
+	if (!create_buffer("settings_buffer", sizeof(uint64_t), &octree->octree.root_index))
+		return false;
+
+	return true;
+}
+
+
+bool CLCaster::release_octree()
+{
+	this->octree = nullptr;
+
+	if (!release_buffer("octree_descriptor_buffer"))
+		return false;
+	if (!release_buffer("octree_attachment_lookup_buffer"))
+		return false;
+	if (!release_buffer("octree_attachment_buffer"))
+		return false;
+	if (!release_buffer("settings_buffer"))
+		return false;
+
+	return true;
+}
+
 bool CLCaster::assign_camera(std::shared_ptr<Camera> camera) {
 	
 	this->camera = camera;
 
 	if (!create_buffer("camera_direction", sizeof(float) * 4, (void*)camera->get_direction_pointer(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR))
 		return false;
-
 	if (!create_buffer("camera_position", sizeof(float) * 4, (void*)camera->get_position_pointer(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR))
 		return false;
 
@@ -115,7 +144,6 @@ bool CLCaster::release_camera() {
 
 	if (!release_buffer("camera_direction"))
 		return false;
-
 	if (!release_buffer("camera_position"))
 		return false;
 
@@ -154,10 +182,14 @@ bool CLCaster::validate() {
 	set_kernel_arg("raycaster", 6, "lights");
 	set_kernel_arg("raycaster", 7, "light_count");
 	set_kernel_arg("raycaster", 8, "image");
-	set_kernel_arg("raycaster", 9, "seed");
-	set_kernel_arg("raycaster", 10, "texture_atlas");
-	set_kernel_arg("raycaster", 11, "atlas_dim");
-	set_kernel_arg("raycaster", 12, "tile_dim");
+	//set_kernel_arg("raycaster", 9, "seed");
+	set_kernel_arg("raycaster", 9, "texture_atlas");
+	set_kernel_arg("raycaster", 10, "atlas_dim");
+	set_kernel_arg("raycaster", 11, "tile_dim");
+	set_kernel_arg("raycaster", 12, "octree_descriptor_buffer");
+	set_kernel_arg("raycaster", 13, "octree_attachment_lookup_buffer");
+	set_kernel_arg("raycaster", 14, "octree_attachment_buffer");
+	set_kernel_arg("raycaster", 15, "settings_buffer");
 
 	return true;
 
@@ -173,7 +205,6 @@ bool CLCaster::create_texture_atlas(sf::Texture *t, sf::Vector2i tile_dim) {
 	
 	if (!create_buffer("atlas_dim", sizeof(sf::Vector2u) , &v))
 		return false;
-
 	if (!create_buffer("tile_dim", sizeof(sf::Vector2i), &tile_dim))
 		return false;
 
@@ -283,7 +314,6 @@ bool CLCaster::assign_lights(std::vector<PackedData> *data) {
 
 	if (!create_buffer("lights", packed_size * light_count, lights->data(), CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR))
 		return false;
-
 	if (!create_buffer("light_count", 8, &light_count))
 		return false;
 
@@ -1079,18 +1109,6 @@ std::string CLCaster::cl_err_lookup(int error_code) {
 			break;
 		case CL_PLATFORM_NOT_FOUND_KHR:
 			err_msg = "CL_PLATFORM_NOT_FOUND_KHR";
-			break;
-		case CLCaster::SHARING_NOT_SUPPORTED:
-			err_msg = "SHARING_NOT_SUPPORTED";
-			break;
-		case CLCaster::OPENCL_NOT_SUPPORTED:
-			err_msg = "OPENCL_NOT_SUPPORTED";
-			break;
-		case CLCaster::OPENCL_ERROR:
-			err_msg = "OPENCL_ERROR";
-			break;
-		case CLCaster::ERR:
-			err_msg = "ERROR";
 			break;
 		default:
 			err_msg = "UNKNOWN_ERROR";

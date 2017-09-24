@@ -70,16 +70,16 @@ void LightHandle::recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr:
 			vr::JoystickMoved *joystick_event = static_cast<vr::JoystickMoved*>(event.get());
 
 			if (joystick_event->axis == sf::Joystick::Axis::X) {
-				movement.x = -joystick_event->position / 5;
+				movement.x = -joystick_event->position / 100;
 				//add_relative_impulse(Camera::DIRECTION::FORWARD, joystick_event->position);
 			}
 			else if (joystick_event->axis == sf::Joystick::Axis::Y) {
-				movement.y = joystick_event->position / 5;
+				movement.y = joystick_event->position / 100;
 				//add_relative_impulse(Camera::DIRECTION::RIGHT, joystick_event->position);
 			}
-			//else if (joystick_event->axis == sf::Joystick::Axis::Z) {
-			//	add_relative_impulse(Camera::DIRECTION::DOWN, joystick_event->position);
-			//}
+			else if (joystick_event->axis == sf::Joystick::Axis::Z) {
+				movement.y = joystick_event->position / 100;
+			}
 		}
 }
 

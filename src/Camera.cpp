@@ -167,23 +167,39 @@ void Camera::recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Even
 		vr::JoystickMoved *joystick_event = static_cast<vr::JoystickMoved*>(event.get());
 
 		if (joystick_event->axis == sf::Joystick::Axis::X) {
-			movement.x -= joystick_event->position / 5;
-			//add_relative_impulse(Camera::DIRECTION::FORWARD, joystick_event->position);
+			if (joystick_event->position > 0)
+				add_relative_impulse(Camera::DIRECTION::RIGHT, joystick_event->position / 100);
+			else
+				add_relative_impulse(Camera::DIRECTION::LEFT, joystick_event->position / 100);
 		}
 		else if (joystick_event->axis == sf::Joystick::Axis::Y) {
-			movement.y += joystick_event->position / 5;
-			//add_relative_impulse(Camera::DIRECTION::RIGHT, joystick_event->position);
+			if (joystick_event->position > 0)
+				add_relative_impulse(Camera::DIRECTION::FORWARD, joystick_event->position / 100);
+			else
+				add_relative_impulse(Camera::DIRECTION::REARWARD, joystick_event->position / 100);
 		}
-		//else if (joystick_event->axis == sf::Joystick::Axis::Z) {
-		//	add_relative_impulse(Camera::DIRECTION::DOWN, joystick_event->position);
-		//}
+		else if (joystick_event->axis == sf::Joystick::Axis::Z) {
+			if (joystick_event->position > 0)
+				add_relative_impulse(Camera::DIRECTION::DOWN, joystick_event->position / 100);
+			else
+				add_relative_impulse(Camera::DIRECTION::UP, joystick_event->position / 100);
+		}
+		else if (joystick_event->axis == sf::Joystick::Axis::U) {
+			slew_camera(sf::Vector2f(
+				deltas.y / 1200.0f,
+				deltas.x / 1200.0f
+			));
+		}
+
+
+
 	}
 
 }
 
 void Camera::look_at_center() {
 
-	direction = CartToNormalizedSphere(sf::Vector3f(75, 75, 75) - position);
+	direction = CartToNormalizedSphere(sf::Vector3f(60, 60, 35) - position);
 }
 
 sf::Vector2f* Camera::get_direction_pointer() {

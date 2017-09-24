@@ -2,6 +2,7 @@
 #include <iostream>
 #include <memory>
 #include "imgui/imgui-SFML.h"
+#include "Logger.h"
 
 
 Input::Input() :
@@ -22,9 +23,8 @@ void Input::consume_sf_events(sf::RenderWindow *window) {
 
 	sf::Event e;
 	while (window->pollEvent(e)) {
-		
-		ImGui::SFML::ProcessEvent(e);
 		sf_event_queue.push_back(e);
+		ImGui::SFML::ProcessEvent(e);
 	}
 
 	transpose_sf_events(sf_event_queue);
@@ -120,6 +120,7 @@ void Input::dispatch_events() {
 }
 
 void Input::transpose_sf_events(std::list<sf::Event> sf_event_queue) {
+	
 	
 	for (auto sf_event: sf_event_queue) {
 

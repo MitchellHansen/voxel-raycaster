@@ -12,7 +12,7 @@ Map::Map(uint32_t dimensions) {
 
 	// randomly set the voxel data for testing
 	for (uint64_t i = 0; i < dimensions * dimensions * dimensions; i++) {
-		if (rand() % 25 < 2)
+		if (i % 2 == 0)
 			voxel_data[i] = 1;
 		else
 			voxel_data[i] = 0;

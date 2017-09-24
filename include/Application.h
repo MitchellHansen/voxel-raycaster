@@ -63,6 +63,7 @@ private:
 
 	std::shared_ptr<sf::RenderWindow> window;
 	std::shared_ptr<Old_Map> map;
+	std::shared_ptr<Map> octree;
 	std::shared_ptr<Camera> camera;
 	std::shared_ptr<CLCaster> raycaster;
 	std::shared_ptr<LightHandle> light_handle;

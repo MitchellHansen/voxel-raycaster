@@ -10,6 +10,7 @@
 #include <GL/glew.h>
 #include <unordered_map>
 #include "Logger.h"
+#include "map/Map.h"
 
 #ifdef linux
 #include <CL/cl.h>
@@ -86,23 +87,79 @@ struct PackedData;
 
 class CLCaster {
 
-
 public:
 
-	enum ERROR_CODES {
-		SHARING_NOT_SUPPORTED = 800,
-		OPENCL_NOT_SUPPORTED = 801,
-		OPENCL_ERROR = 802,
-		ERR = 803
-	};
+	/**
+	 * CLCaster is the beginning and end to all interaction with the GPU.
+	 * 
+	 * It queries devices, manages the creation of various data structures as well
+	 * as they syncing between the GPU. It Handles computing of the cast as well
+	 * as rendering of the computed cast.
+	 * 
+	 */
+
+	CLCaster();
+	virtual ~CLCaster();
+	
+	// Queries hardware, creates the command queue and context, and compiles kernel
+	bool init();
+
+	// Creates a texture to send to the GPU via height and width
+	// Creates a viewport vector array via vertical and horizontal fov
+	bool create_viewport(int width, int height, float v_fov, float h_fov) ;
+	
+	// Light controllers own the copy of the PackedData array.
+	// We receive a pointer to the array and USE_HOST_POINTER to map the memory to the GPU
+	bool assign_lights(std::vector<PackedData> *data) ;
+
+	// We take a ptr to the map and create the map, and map_dimensions buffer for the GPU
+	bool assign_map(std::shared_ptr<Old_Map> map);
+	bool release_map();
+
+	// We take a ptr to the map and create the map, and map_dimensions buffer for the GPU
+	bool assign_octree(std::shared_ptr<Map> octree);
+	bool release_octree();
+
+	// We take a ptr to the camera and create a camera direction and position buffer
+	bool assign_camera(std::shared_ptr<Camera> camera);
+	bool release_camera();
+
+	// Creates 3 buffers relating to the texture atlas: texture_atlas, atlas_dim, and tile_dim
+	// With these on the GPU we can texture any quad with an atlas tile
+	bool create_texture_atlas(sf::Texture *t, sf::Vector2i tile_dim);
+	
+	// Check to make sure that the buffers have been initiated and set them as kernel args
+	bool validate() ;
+
+	// Aquires the GL objects, runs the kernel, releases back the GL objects
+	bool compute() ;
+
+	// Take the viewport sprite and draw it to the screen
+	void draw(sf::RenderWindow* window) ;
+
+	// Load the saved device config from a file
+	bool load_config();
+
+	// Save the chosen device config to a file
+	void save_config();
+	// ================================== DEBUG =======================================
+	
+	// Re compile the kernel and revalidate the args
+	bool debug_quick_recompile();
+
+	// Modify the viewport matrix
+	void test_edit_viewport(int width, int height, float v_fov, float h_fov);
+
+
+private:
 
 	/**
-	 * Device is a storage container for device data we retrieve from OpenCL
-	 * 
-	 * The data is mainly queries as strings or integer types and stored into
-	 * respective containers. We store this data into a file and retrieve it later
-	 * to let users select a preferred compute device and keep track of their choice
-	 */
+	* Device is a storage container for device data we retrieve from OpenCL
+	*
+	* The data is mainly queries as strings or integer types and stored into
+	* respective containers. We store this data into a file and retrieve it later
+	* to let users select a preferred compute device and keep track of their choice
+	*/
 	class device {
 
 	public:
@@ -139,66 +196,6 @@ public:
 		bool cl_gl_sharing = false;
 
 	};
-
-	/**
-	 * Hardware caster is the beginning and end to all interaction with the GPU.
-	 * 
-	 * It queries devices, manages the creation of various data structures as well
-	 * as they syncing between the GPU. It Handles computing of the cast as well
-	 * as rendering of the computed cast.
-	 * 
-	 */
-	CLCaster();
-	virtual ~CLCaster();
-
-	
-	// Queries hardware, creates the command queue and context, and compiles kernel
-	bool init();
-
-	// Creates a texture to send to the GPU via height and width
-	// Creates a viewport vector array via vertical and horizontal fov
-	bool create_viewport(int width, int height, float v_fov, float h_fov) ;
-	
-	// Light controllers own the copy of the PackedData array.
-	// We receive a pointer to the array and USE_HOST_POINTER to map the memory to the GPU
-	bool assign_lights(std::vector<PackedData> *data) ;
-
-	// We take a ptr to the map and create the map, and map_dimensions buffer for the GPU
-	bool assign_map(std::shared_ptr<Old_Map> map);
-	bool release_map();
-
-	// We take a ptr to the camera and create a camera direction and position buffer
-	bool assign_camera(std::shared_ptr<Camera> camera);
-	bool release_camera();
-
-	// Creates 3 buffers relating to the texture atlas: texture_atlas, atlas_dim, and tile_dim
-	// With these on the GPU we can texture any quad with an atlas tile
-	bool create_texture_atlas(sf::Texture *t, sf::Vector2i tile_dim);
-	
-	// Check to make sure that the buffers have been initiated and set them as kernel args
-	bool validate() ;
-
-	// Aquires the GL objects, runs the kernel, releases back the GL objects
-	bool compute() ;
-
-	// Take the viewport sprite and draw it to the screen
-	void draw(sf::RenderWindow* window) ;
-
-	// Load the saved device config from a file
-	bool load_config();
-
-	// Save the chosen device config to a file
-	void save_config();
-	// ================================== DEBUG =======================================
-	
-	// Re compile the kernel and revalidate the args
-	bool debug_quick_recompile();
-
-	// Modify the viewport matrix
-	void test_edit_viewport(int width, int height, float v_fov, float h_fov);
-
-
-private:
 
 	// Cycle through the OpenCL devices and store *all* of their data, not super useful
 	bool query_hardware();
@@ -281,6 +278,7 @@ private:
 
 	std::shared_ptr<Camera> camera;
 	std::shared_ptr<Old_Map> map;
+	std::shared_ptr<Map> octree;
 
 	std::vector<PackedData> *lights;
 	int light_count = 0;

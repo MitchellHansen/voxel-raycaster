@@ -25,12 +25,9 @@ float4 white_light(float4 input, float3 light, int3 mask) {
 
 }
 
-
 // Phong + diffuse lighting function for g
-
 //  0  1  2  3  4  5  6  7   8   9
 // {r, g, b, i, x, y, z, x', y', z'}
-
 
 float4 view_light(float4 in_color, float3 light, float4 light_color, float3 view, int3 mask) {
 
@@ -63,7 +60,155 @@ int rand(int* seed) // 1 <= *seed < m
 	return(*seed);
 }
 
+bool get_oct_vox(
+	int3 position,
+	global ulong *octree_descriptor_buffer,
+	global uint *octree_attachment_lookup_buffer,
+	global ulong *octree_attachment_buffer,
+	global ulong *settings_buffer
+){
 
+	// (X, Y, Z) mask for the idx
+	const uchar idx_set_x_mask = 0x1;
+	const uchar idx_set_y_mask = 0x2;
+	const uchar idx_set_z_mask = 0x4;
+
+	const uchar mask_8[8] = {
+		0x1,  0x2,  0x4,  0x8,
+		0x10, 0x20, 0x40, 0x80
+	};
+
+	// Mask for counting the previous valid bits
+	const uchar count_mask_8[8] = {
+		0x1,  0x3,  0x7,  0xF,
+		0x1F, 0x3F, 0x7F, 0xFF
+	};
+
+		// uint64_t manipulation masks
+	const ulong child_pointer_mask = 0x0000000000007fff;
+	const ulong far_bit_mask = 0x8000;
+	const ulong valid_mask = 0xFF0000;
+	const ulong leaf_mask = 0xFF000000;
+	const ulong contour_pointer_mask = 0xFFFFFF00000000;
+	const ulong contour_mask = 0xFF00000000000000;
+
+
+	// push the root node to the parent stack
+	ulong current_index = *settings_buffer;
+	ulong head = octree_descriptor_buffer[current_index];
+
+	uint parent_stack_position = 0;
+	ulong parent_stack[32];
+
+	uchar scale = 0;
+	uchar idx_stack[32];
+
+	ulong current_descriptor = 0;
+
+	bool found = false;
+
+	parent_stack[parent_stack_position] = head;
+
+	// Set our initial dimension and the position at the corner of the oct to keep track of our position
+	int dimension = 32;
+	int3 quad_position = (0, 0, 0);
+
+	// While we are not at the required resolution
+	//		Traverse down by setting the valid/leaf mask to the subvoxel
+	//		Check to see if it is valid
+	//			Yes?
+	//				Check to see if it is a leaf
+	//				No? Break
+	//				Yes? Scale down to the next hierarchy, push the parent to the stack
+	//
+	//			No?
+	//				Break
+	while (dimension > 1) {
+
+		// So we can be a little bit tricky here and increment our
+		// array index that holds our masks as we build the idx.
+		// Adding 1 for X, 2 for Y, and 4 for Z
+		int mask_index = 0;
+
+
+		// Do the logic steps to find which sub oct we step down into
+		if (position.x >= (dimension / 2) + quad_position.x) {
+
+			// Set our voxel position to the (0,0) of the correct oct
+			quad_position.x += (dimension / 2);
+
+			// increment the mask index and mentioned above
+			mask_index += 1;
+
+			// Set the idx to represent the move
+			idx_stack[scale] |= idx_set_x_mask;
+
+		}
+		if (position.y >= (dimension / 2) + quad_position.y) {
+
+			quad_position.y |= (dimension / 2);
+
+			mask_index += 2;
+
+			// TODO What is up with the binary operator on this one?
+			idx_stack[scale] ^= idx_set_y_mask;
+
+		}
+		if (position.z >= (dimension / 2) + quad_position.z) {
+
+			quad_position.z += (dimension / 2);
+
+			mask_index += 4;
+
+			idx_stack[scale] |= idx_set_z_mask;
+
+		}
+
+		// Check to see if we are on a valid oct
+		if ((head >> 16) & mask_8[mask_index]) {
+
+			// Check to see if it is a leaf
+			if ((head >> 24) & mask_8[mask_index]) {
+
+				// If it is, then we cannot traverse further as CP's won't have been generated
+				found = true;
+				return found;
+			}
+
+			// If all went well and we found a valid non-leaf oct then we will traverse further down the hierarchy
+			scale++;
+			dimension /= 2;
+
+			// Count the number of valid octs that come before and add it to the index to get the position
+			// Negate it by one as it counts itself
+			int count = popcount((uchar)(head >> 16) & count_mask_8[mask_index]) - 1;
+
+			// access the element at which head points to and then add the specified number of indices
+			// to get to the correct child descriptor
+			current_index = current_index + (head & child_pointer_mask) + count;
+			head = octree_descriptor_buffer[current_index];
+
+			// Increment the parent stack position and put the new oct node as the parent
+			parent_stack_position++;
+			parent_stack[parent_stack_position] = head;
+
+		}
+		else {
+			// If the oct was not valid, then no CP's exists any further
+			// This implicitly says that if it's non-valid then it must be a leaf!!
+
+			// It appears that the traversal is now working but I need
+			// to focus on how to now take care of the end condition.
+			// Currently it adds the last parent on the second to lowest
+			// oct CP. Not sure if thats correct
+			found = 0;
+			return found;
+		}
+	}
+
+	found = 1;
+	return found;
+}
 
 // =================================== Boolean ray intersection ============================
 // =========================================================================================
@@ -71,8 +216,8 @@ int rand(int* seed) // 1 <= *seed < m
 bool cast_light_intersection_ray(
 	global char* map,
 	global int3* map_dim,
-	 float3 ray_dir,
-	 float3 ray_pos,
+	float3 ray_dir,
+    float3 ray_pos,
 	global float* lights,
 	global int* light_count
 
@@ -147,12 +292,15 @@ __kernel void raycaster(
 	global float* lights,
 	global int* light_count,
 	__write_only image2d_t image,
-	global int* seed_memory,
+	//global int* seed_memory,
 	__read_only image2d_t texture_atlas,
 	global int2 *atlas_dim,
-	global int2 *tile_dim
+	global int2 *tile_dim,
+	global ulong *octree_descriptor_buffer,
+	global uint *octree_attachment_lookup_buffer,
+	global ulong *octree_attachment_buffer,
+	global ulong *settings_buffer
 ){
-
 	//	int global_id = x * y;
 
 	// Get and set the random seed from seed memory
@@ -224,8 +372,24 @@ __kernel void raycaster(
 			return;
 		}
 
+
         // If we hit a voxel
-        voxel_data = map[voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z))];
+		if (voxel.x < 32 && voxel.y < 32 && voxel.z < 32){
+			if (get_oct_vox(
+				voxel,
+				octree_descriptor_buffer,
+				octree_attachment_lookup_buffer,
+				octree_attachment_buffer,
+				settings_buffer
+				)){
+					voxel_data = 1;
+				} else {
+					voxel_data = 0;
+				}
+		} else {
+			voxel_data = map[voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z))];
+		}
+
 
 		if (voxel_data != 0) {
 
@@ -323,6 +487,8 @@ __kernel void raycaster(
 
 		 	voxel_color.w = 0.0f;
 
+			// This has a very large performance hit, I assume CL doesn't really
+			// like calling into other functions with lots of state.
 			if (cast_light_intersection_ray(
 				map,
 				map_dim,
