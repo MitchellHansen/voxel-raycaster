@@ -11,7 +11,7 @@ public:
 	enum LogDest { STDOUT, FILE };
 
 	// Log auto, takes a string and the severity of the log level and either prints it or tosses it
-	static void log(std::string log_string, LogLevel severity, uint32_t line_number = 0, char* file_name = nullptr);
+	static void log(std::string log_string, LogLevel severity, uint32_t line_number = 0, const char* file_name = nullptr);
 
 	static void set_log_level(LogLevel log_level);
 	static void set_log_destination(LogDest log_destination);

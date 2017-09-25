@@ -1,6 +1,5 @@
 #include "CLCaster.h"
 
-
 CLCaster::CLCaster() {}
 CLCaster::~CLCaster() {}
 
@@ -570,8 +569,10 @@ bool CLCaster::create_shared_context()
 #ifdef linux
 
 	cl_context_properties context_properties[] = {
-		CL_GL_CONTEXT_KHR, (cl_context_properties)glXGetCurrentContext(),
-		CL_GLX_DISPLAY_KHR, (cl_context_properties)glXGetCurrentDisplay(),
+		//CL_GL_CONTEXT_KHR, (cl_context_properties)glXGetCurrentContext(),
+		//CL_GLX_DISPLAY_KHR, (cl_context_properties)glXGetCurrentDisplay(),
+        CL_GL_CONTEXT_KHR, (cl_context_properties)eglGetCurrentContext(),
+        CL_EGL_DISPLAY_KHR, (cl_context_properties)eglGetCurrentDisplay(),
 		CL_CONTEXT_PLATFORM, (cl_context_properties)platform_id,
 		0
 	};

@@ -171,11 +171,11 @@ bool Application::game_loop() {
 		sf::Vector2f dir = camera->get_direction();
 		sf::Vector3f pos = camera->get_position();
 
-		ImGui::Text(std::to_string(dir.x).c_str());
-		ImGui::Text(std::to_string(dir.y).c_str());
-		ImGui::Text(std::to_string(pos.x).c_str());
-		ImGui::Text(std::to_string(pos.y).c_str());
-		ImGui::Text(std::to_string(pos.z).c_str());
+		ImGui::Text("%f", dir.x);
+		ImGui::Text("%f", dir.y);
+		ImGui::Text("%f", pos.x);
+		ImGui::Text("%f", pos.y);
+		ImGui::Text("%f", pos.z);
 
 		ImGui::NextColumn();
 

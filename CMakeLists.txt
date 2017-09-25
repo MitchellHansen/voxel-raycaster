@@ -23,20 +23,30 @@ message(STATUS "SFML found: ${SFML_FOUND}")
 find_package( OpenCL REQUIRED )
 message(STATUS "OpenCL found: ${OPENCL_FOUND}")
 
+# Find OpenGL
+find_package( OpenGL REQUIRED)
+message(STATUS "OpenGL found: ${OPENGL_FOUND}")
+
+# Windows requires us to use GLEW to link the GL shit
 if (WIN32)
 	# Find GLEW
 	find_package(GLEW REQUIRED)
 	message(STATUS "GLEW found: ${GLEW_FOUND}")
 endif()
 
-# Find OpenGL
-find_package( OpenGL REQUIRED)
-message(STATUS "OpenGL found: ${OPENGL_FOUND}")
+# beignet only supports EGL and not GLX for the cl_khr_gl_sharing extension
+if (UNIX)
+    find_package(EGL REQUIRED)
+    message(STATUS "EGL found: ${EGL_FOUND}")
+endif (UNIX)
 
 # Include the directories for the main program, GL, CL and SFML's headers
 include_directories(${SFML_INCLUDE_DIR})
 include_directories(${OpenCL_INCLUDE_DIRS})
 include_directories(${OpenGL_INCLUDE_DIRS})
+if (UNIX)
+    include_directories(${EGL_INCLUDE_DIRS})
+endif()
 include_directories(include)
 
 # Glob all thr sources into their values
@@ -115,6 +125,10 @@ endforeach()
 target_link_libraries (${PNAME} ${SFML_LIBRARIES} ${SFML_DEPENDENCIES})
 target_link_libraries (${PNAME} ${OpenCL_LIBRARY})
 target_link_libraries (${PNAME} ${OPENGL_LIBRARIES})
+
+if (UNIX)
+    target_link_libraries (${PNAME} ${EGL_LIBRARIES})
+endif()
 
 if (WIN32)
 	target_link_libraries (${PNAME} ${GLEW_LIBRARIES})

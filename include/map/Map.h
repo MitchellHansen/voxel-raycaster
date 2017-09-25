@@ -23,14 +23,14 @@ public:
 	// Gets a voxel at the 3D position in the octree
 	char getVoxel(sf::Vector3i pos);
 
-	std::vector<std::tuple<sf::Vector3i, char>> Map::CastRayOctree(
+	std::vector<std::tuple<sf::Vector3i, char>> CastRayOctree(
 		Octree *octree,
 		sf::Vector3i* map_dim,
 		sf::Vector2f* cam_dir,
 		sf::Vector3f* cam_pos
 	);
 
-	std::vector<std::tuple<sf::Vector3i, char>> Map::CastRayCharArray(
+	std::vector<std::tuple<sf::Vector3i, char>> CastRayCharArray(
 		char *map,
 		sf::Vector3i* map_dim,
 		sf::Vector2f* cam_dir,

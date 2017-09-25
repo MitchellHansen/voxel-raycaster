@@ -15,7 +15,8 @@
 #ifdef linux
 #include <CL/cl.h>
 #include <CL/opencl.h>
-#include <GL/glx.h>
+#include <EGL/egl.h>
+//#include <GL/glx.h>
 
 #elif defined _WIN32
 #include <CL/cl_gl.h>
