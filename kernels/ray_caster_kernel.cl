@@ -110,7 +110,7 @@ bool get_oct_vox(
 	parent_stack[parent_stack_position] = head;
 
 	// Set our initial dimension and the position at the corner of the oct to keep track of our position
-	int dimension = 32;
+	int dimension = 128;
 	int3 quad_position = (0, 0, 0);
 
 	// While we are not at the required resolution
@@ -374,7 +374,7 @@ __kernel void raycaster(
 
 
         // If we hit a voxel
-		if (voxel.x < 32 && voxel.y < 32 && voxel.z < 32){
+		if (voxel.x < 128 && voxel.y < 128 && voxel.z < 128){
 			if (get_oct_vox(
 				voxel,
 				octree_descriptor_buffer,

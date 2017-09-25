@@ -4,7 +4,7 @@
 #include "util.hpp"
 #include <tuple>
 
-#define OCT_DIM 32
+#define OCT_DIM 128
 
 struct OctState {
 

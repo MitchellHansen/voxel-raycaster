@@ -12,11 +12,11 @@ Map::Map(uint32_t dimensions, Old_Map* array_map) {
 
 	// randomly set the voxel data for testing
 	for (uint64_t i = 0; i < dimensions * dimensions * dimensions; i++) {
-		if (rand() % 10000 < 3)
-			voxel_data[i] = 1;
-		else
+		//if (rand() % 10000 < 3)
+		//	voxel_data[i] = 1;
+		//else
 			voxel_data[i] = 0;
-    }
+	}
 
 	char* char_array = array_map->get_voxel_data();
 	sf::Vector3i arr_dimensions = array_map->getDimensions();

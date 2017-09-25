@@ -38,7 +38,7 @@ bool Application::init_clcaster() {
 	// Send the data to the GPU
 	raycaster->assign_map(map);
 
-	octree = std::make_shared<Map>(32, map.get());
+	octree = std::make_shared<Map>(128, map.get());
 	raycaster->assign_octree(octree);
 
 
