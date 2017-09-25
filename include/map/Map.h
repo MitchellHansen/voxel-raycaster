@@ -7,6 +7,7 @@
 #include "util.hpp"
 #include "map/Octree.h"
 #include <time.h>
+#include "map/Old_Map.h"
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -15,7 +16,7 @@ class Map {
 public: 
 
 	// Currently takes a 
-	Map(uint32_t dimensions);
+	Map(uint32_t dimensions, Old_Map* array_map);
 
 	// Sets a voxel in the 3D char dataset
 	void setVoxel(sf::Vector3i position, int val);

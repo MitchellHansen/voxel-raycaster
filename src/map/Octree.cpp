@@ -322,9 +322,9 @@ bool Octree::Validate(char* data, sf::Vector3i dimensions){
 //    std::cout << (int)GetVoxel(sf::Vector3i(16, 16, 16)) << std::endl;
 
 
-	for (int x = 0; x < OCT_DIM; x++) {
-		for (int y = 0; y < OCT_DIM; y++) {
-			for (int z = 0; z < OCT_DIM; z++) {
+	for (int x = 0; x < dimensions.x; x++) {
+		for (int y = 0; y < dimensions.y; y++) {
+			for (int z = 0; z < dimensions.z; z++) {
 
 				sf::Vector3i pos(x, y, z);
 
@@ -334,6 +334,7 @@ bool Octree::Validate(char* data, sf::Vector3i dimensions){
 				if (arr_val != oct_val) {
 					std::cout << "X: " << pos.x << " Y: " << pos.y << " Z: " << pos.z << "   ";
                     std::cout << (int)arr_val << "  :  " << (int)oct_val << std::endl;
+					return false;
 				}
 
 			}

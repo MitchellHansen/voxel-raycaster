@@ -96,11 +96,11 @@ bool CLCaster::assign_octree(std::shared_ptr<Map> octree) {
 
 	this->octree = octree;
 
-	if (!create_buffer("octree_descriptor_buffer", octree->octree.buffer_size, &octree->octree.descriptor_buffer))
+	if (!create_buffer("octree_descriptor_buffer", octree->octree.buffer_size * sizeof(uint64_t), octree->octree.descriptor_buffer))
 		return false;
-	if (!create_buffer("octree_attachment_lookup_buffer", octree->octree.buffer_size, &octree->octree.attachment_lookup))
+	if (!create_buffer("octree_attachment_lookup_buffer", octree->octree.buffer_size * sizeof(uint32_t), octree->octree.attachment_lookup))
 		return false;
-	if (!create_buffer("octree_attachment_buffer", octree->octree.buffer_size, &octree->octree.attachment_buffer))
+	if (!create_buffer("octree_attachment_buffer", octree->octree.buffer_size * sizeof(uint64_t), octree->octree.attachment_buffer))
 		return false;
 	if (!create_buffer("settings_buffer", sizeof(uint64_t), &octree->octree.root_index))
 		return false;

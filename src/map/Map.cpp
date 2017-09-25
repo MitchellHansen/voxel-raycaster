@@ -2,7 +2,7 @@
 #include "Logger.h"
 
 
-Map::Map(uint32_t dimensions) {
+Map::Map(uint32_t dimensions, Old_Map* array_map) {
 
 
 	if ((int)pow(2, (int)log2(dimensions)) != dimensions)
@@ -12,11 +12,25 @@ Map::Map(uint32_t dimensions) {
 
 	// randomly set the voxel data for testing
 	for (uint64_t i = 0; i < dimensions * dimensions * dimensions; i++) {
-		if (i % 2 == 0)
+		if (rand() % 10000 < 3)
 			voxel_data[i] = 1;
 		else
 			voxel_data[i] = 0;
     }
+
+	char* char_array = array_map->get_voxel_data();
+	sf::Vector3i arr_dimensions = array_map->getDimensions();
+
+	for (int x = 0; x < dimensions; x++) {
+		for (int y = 0; y < dimensions; y++) {
+			for (int z = 0; z < dimensions; z++) {
+				
+				char v = char_array[x + arr_dimensions.x * (y + arr_dimensions.z * z)];
+				if (v)
+					voxel_data[x + dimensions * (y + dimensions * z)] = 1;
+			}
+		}
+	}
 
 	sf::Vector3i dim3(dimensions, dimensions, dimensions);
 
