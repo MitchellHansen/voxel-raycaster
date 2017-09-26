@@ -31,6 +31,9 @@ float4 white_light(float4 input, float3 light, int3 mask) {
 
 float4 view_light(float4 in_color, float3 light, float4 light_color, float3 view, int3 mask) {
 
+	if (all(light == (0.0f,0.0f,0.0f)))
+		return (0,0,0,0);
+
 	float d = Distance(light) / 100.0f;
 	d *= d;
 
@@ -39,6 +42,8 @@ float4 view_light(float4 in_color, float3 light, float4 light_color, float3 view
 
 	if (dot(light, normalize(convert_float3(mask))) > 0.0f)
 	{
+		// Small dots of light are caused by floating point error
+		// flipping bits on the face mask and screwing up this calculation
 		float3 halfwayVector = normalize(normalize(light) + normalize(view));
 		float specTmp = max(dot(normalize(convert_float3(mask)), halfwayVector), 0.0f);
 		in_color += pow(specTmp, 8.0f) * light_color * 0.5f / d;
@@ -232,6 +237,9 @@ bool cast_light_intersection_ray(
 	int3 voxel_step = { 1, 1, 1 };
 	voxel_step *= (ray_dir > 0) - (ray_dir < 0);
 
+	if (any(ray_dir == (0.0f,0.0f,0.0f)))
+		return false;
+
 	// Setup the voxel coords from the camera origin
 	int3 voxel = convert_int3(ray_pos);
 
@@ -336,6 +344,8 @@ __kernel void raycaster(
 
     // Delta T is the units a ray must travel along an axis in order to
     // traverse an integer split
+	if (any(ray_dir == (0.0f,0.0f,0.0f)))
+		return;
 	float3 delta_t = fabs(1.0f / ray_dir);
 
 	// Intersection T is the collection of the next intersection points
@@ -351,11 +361,19 @@ __kernel void raycaster(
 	// mirrors the offset
 	intersection_t -= delta_t * convert_float3(isless(intersection_t, 0));
 
-	int dist = 0;
+	int distance_traveled = 0;
+	int max_distance = 700;
+	uint bounce_count = 0;
 	int3 face_mask = { 0, 0, 0 };
 	int voxel_data = 0;
+	float3 face_position = (0,0,0);
+	float4 voxel_color= (0,0,0,0);
+	float2 tile_face_position = (0,0);
+	float3 sign = (0,0,0);
+	float4 first_strike = (0,0,0,0);
+
 	// Andrew Woo's raycasting algo
-    do {
+    while (distance_traveled < max_distance && bounce_count < 2) {
 
 		// Fancy no branch version of the logic step
 		face_mask = intersection_t.xyz <= min(intersection_t.yzx, intersection_t.zxy);
@@ -364,41 +382,39 @@ __kernel void raycaster(
 
 		// Test for out of bounds contions, add fog
 		if (any(voxel >= *map_dim)){
-			write_imagef(image, pixel, white_light(mix(fog_color, overshoot_color, 1.0 - max(dist / 700.0f, (float)0)), (float3)(lights[7], lights[8], lights[9]), face_mask));
+			write_imagef(image, pixel, white_light(mix(fog_color, overshoot_color, 1.0 - max(distance_traveled / 700.0f, (float)0)), (float3)(lights[7], lights[8], lights[9]), face_mask));
 			return;
 		}
 		if (any(voxel < 0)) {
-			write_imagef(image, pixel, white_light(mix(fog_color, overshoot_color_2, 1.0 - max(dist / 700.0f, (float)0)), (float3)(lights[7], lights[8], lights[9]), face_mask));
+			write_imagef(image, pixel, white_light(mix(fog_color, overshoot_color_2, 1.0 - max(distance_traveled / 700.0f, (float)0)), (float3)(lights[7], lights[8], lights[9]), face_mask));
 			return;
 		}
 
 
         // If we hit a voxel
-		if (voxel.x < 128 && voxel.y < 128 && voxel.z < 128){
-			if (get_oct_vox(
-				voxel,
-				octree_descriptor_buffer,
-				octree_attachment_lookup_buffer,
-				octree_attachment_buffer,
-				settings_buffer
-				)){
-					voxel_data = 1;
-				} else {
-					voxel_data = 0;
-				}
-		} else {
+		// if (voxel.x < 128 && voxel.y < 128 && voxel.z < 128){
+		// 	if (get_oct_vox(
+		// 		voxel,
+		// 		octree_descriptor_buffer,
+		// 		octree_attachment_lookup_buffer,
+		// 		octree_attachment_buffer,
+		// 		settings_buffer
+		// 		)){
+		// 			voxel_data = 1;
+		// 		} else {
+		// 			voxel_data = 0;
+		// 		}
+		// } else {
 			voxel_data = map[voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z))];
-		}
+		//}
 
 
 		if (voxel_data != 0) {
 
-			float4 voxel_color = (float4)(0.0f, 0.0f, 0.0f, 0.001f);
-
 			// Determine where on the 2d plane the ray intersected
-			float3 face_position = (float3)(0);
-			float2 tile_face_position = (float2)(0);
-			float3 sign = (float3)(1.0f, 1.0f, 1.0f);
+			face_position = (float3)(0);
+			tile_face_position = (float2)(0);
+			sign = (float3)(1.0f, 1.0f, 1.0f);
 
 			// First determine the percent of the way the ray is towards the next intersection_t
 			// in relation to the xyz position on the plane
@@ -444,7 +460,6 @@ __kernel void raycaster(
 			// and will just "copy" the quadrant. This includes shadows as they use the face_position
 			// in order to cast the intersection ray!!
 
-
 			face_position.x = select((float)(face_position.x), (float)(-face_position.x + 1.0f), (int)(ray_dir.x > 0));
 			tile_face_position.x = select((float)(tile_face_position.x), (float)(-tile_face_position.x + 1.0f), (int)(ray_dir.x < 0));
 
@@ -469,60 +484,116 @@ __kernel void raycaster(
 			// conditionals in the select statement. That's because select works on negs
 			// and pos's. So a false equality will still eval as true as it is technically
 			// a positive result (0)
-			voxel_color = select(
-				(float4)(0.25f, 0.64f, 0.87f, 0.0f),
-				(float4)voxel_color,
-			 	(int4)((voxel_data == 5) - 1)
-			);
+			// voxel_color = select(
+			// 	(float4)(0.25f, 0.64f, 0.87f, 0.0f),
+			// 	(float4)voxel_color,
+			//  	(int4)((voxel_data == 5) - 1)
+			// );
 
-			voxel_color = select(
-				(float4)(0.0f, 0.239f, 0.419f, 0.0f),
-				(float4)read_imagef(
-					 texture_atlas,
-					 convert_int2(tile_face_position * convert_float2(*atlas_dim / *tile_dim)) +
-					 convert_int2((float2)(3, 0) * convert_float2(*atlas_dim / *tile_dim))
-				 ),
-				 (int4)((voxel_data == 6) - 1)
-			);
-
-		 	voxel_color.w = 0.0f;
-
-			// This has a very large performance hit, I assume CL doesn't really
-			// like calling into other functions with lots of state.
-			if (cast_light_intersection_ray(
-				map,
-				map_dim,
-				normalize((float3)(lights[4], lights[5], lights[6]) - (convert_float3(voxel) + face_position)),
-				(convert_float3(voxel) + face_position),
-				lights,
-				light_count
-			)) {
-
-				// If the light ray intersected an object on the way to the light point
-				write_imagef(image, pixel, white_light(voxel_color, (float3)(1.0f, 1.0f, 1.0f), face_mask));
-				return;
-			}
-
-			//  0  1  2  3  4  5  6  7   8   9
-			// {r, g, b, i, x, y, z, x', y', z'}
-
-			write_imagef(
-				image,
-				pixel,
-				view_light(
-					voxel_color,
-					(convert_float3(voxel) + face_position) - (float3)(lights[4], lights[5], lights[6]),
-					(float4)(lights[0], lights[1], lights[2], lights[3]),
-					(convert_float3(voxel) + face_position) - (*cam_pos),
-					face_mask * voxel_step
-					)
+			if (bounce_count == 0){
+				voxel_color = (float4)read_imagef(
+						 texture_atlas,
+						 convert_int2(tile_face_position * convert_float2(*atlas_dim / *tile_dim)) +
+						 convert_int2((float2)(3, 0) * convert_float2(*atlas_dim / *tile_dim))
 				);
 
-			return;
+				voxel_color.w = 0.0f;
+				first_strike = view_light(
+			 			voxel_color,
+			 			(convert_float3(voxel) + face_position) - (float3)(lights[4], lights[5], lights[6]),
+			 			(float4)(lights[0], lights[1], lights[2], lights[3]),
+			 			(convert_float3(voxel) + face_position) - (*cam_pos),
+			 			face_mask * voxel_step
+			 	);
+				max_distance = 10;
+				distance_traveled = 0;
+			} else {
+				// voxel_color = (float4)read_imagef(
+				// 		 texture_atlas,
+				// 		 convert_int2(tile_face_position * convert_float2(*atlas_dim / *tile_dim)) +
+				// 		 convert_int2((float2)(3, 0) * convert_float2(*atlas_dim / *tile_dim))
+				// );
+
+				voxel_color.w = 0.2f;
+				first_strike = white_light(voxel_color, (float3)(1.0f, 1.0f, 1.0f), face_mask);
+			}
+			//
+			// voxel_color = select(
+			// 	(float4)(0.0f, 0.239f, 0.419f, 0.0f),
+			// 	(float4)read_imagef(
+			// 		 texture_atlas,
+			// 		 convert_int2(tile_face_position * convert_float2(*atlas_dim / *tile_dim)) +
+			// 		 convert_int2((float2)(3, 0) * convert_float2(*atlas_dim / *tile_dim))
+			// 	 ),
+			// 	 (int4)((voxel_data == 6) - 1)
+			// );
+
+
+			// The new direction of the ray
+			// The list of lights and their distances
+
+			// a way to accumulate color and light intensity through multiple bounces??
+			//		Only for indirect lighting and refraction
+			//
+
+			float3 hit_pos = convert_float3(voxel) + face_position;
+			ray_dir = normalize((float3)(lights[4], lights[5], lights[6]) - hit_pos);
+			if (any(ray_dir == (0.0f,0.0f,0.0f)))
+				return;
+
+			voxel -= voxel_step * face_mask;
+			voxel_step = ( 1, 1, 1 );
+			voxel_step *= (ray_dir > 0) - (ray_dir < 0);
+
+			//voxel = convert_int3(hit_pos);
+
+			delta_t = fabs(1.0f / ray_dir);
+			intersection_t = delta_t * ((hit_pos)-floor(hit_pos)) * convert_float3(voxel_step);
+			intersection_t += delta_t * -convert_float3(isless(intersection_t, 0));
+
+			bounce_count += 1;
+
+			// max_distance = DistanceBetweenPoints(convert_float3(voxel) + face_position, (float3)(lights[4], lights[5], lights[6]));
+
+			// // This has a very large performance hit, I assume CL doesn't really
+			// like calling into other functions with lots of state.
+			// if (cast_light_intersection_ray(
+			// 	map,
+			// 	map_dim,
+			// 	normalize((float3)(lights[4], lights[5], lights[6]) - (convert_float3(voxel) + face_position)),
+			// 	(convert_float3(voxel) + face_position),
+			// 	lights,
+			// 	light_count
+			// )) {
+			//
+			// 	// If the light ray intersected an object on the way to the light point
+			// 	write_imagef(image, pixel, white_light(voxel_color, (float3)(1.0f, 1.0f, 1.0f), face_mask));
+			// 	return;
+			// }
+
+
+
+			//return;
 		}
 
-    } while (++dist < 700.0f);
+		distance_traveled++;
 
-	//write_imagef(image, pixel, white_light(mix(fog_color, (float4)(0.40, 0.00, 0.40, 0.2), 1.0 - max(dist / 700.0f, (float)0)), (float3)(lights[7], lights[8], lights[9]), face_mask));
+    }
+	write_imagef(
+		image,
+		pixel,
+		first_strike
+		);
+	// write_imagef(
+	// 	image,
+	// 	pixel,
+	// 	view_light(
+	// 		voxel_color,
+	// 		(convert_float3(voxel) + face_position) - (float3)(lights[4], lights[5], lights[6]),
+	// 		(float4)(lights[0], lights[1], lights[2], lights[3]),
+	// 		(convert_float3(voxel) + face_position) - (*cam_pos),
+	// 		face_mask * voxel_step
+	// 		)
+	// 	);
     return;
 }
