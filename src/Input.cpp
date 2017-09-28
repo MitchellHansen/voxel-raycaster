@@ -1,8 +1,10 @@
-﻿#include "Input.h"
+﻿#pragma once
+#include "Input.h"
 #include <iostream>
 #include <memory>
-#include "imgui/imgui-SFML.h"
 #include "Logger.h"
+#include "LightHandle.h"
+#include "imgui/imgui-SFML.h"
 
 
 Input::Input() :
@@ -119,6 +121,67 @@ void Input::dispatch_events() {
 
 }
 
+
+void Input::render_gui() {
+
+	ImGui::Begin("Input Debugger");
+
+	ImDrawList* draw_list = ImGui::GetWindowDrawList();
+	static ImVec4 col = ImVec4(1.0f, 0.0f, 1.0f, 1.0f);
+	const ImVec2 p = ImGui::GetCursorScreenPos();
+	const ImU32 col32 = ImColor(col);
+
+	std::vector<float> axis_values = {
+		sf::Joystick::getAxisPosition(0, sf::Joystick::Axis::X) / 2,
+		sf::Joystick::getAxisPosition(0, sf::Joystick::Axis::Y) / 2,
+		sf::Joystick::getAxisPosition(0, sf::Joystick::Axis::U) / 2,
+		sf::Joystick::getAxisPosition(0, sf::Joystick::Axis::R) / 2,
+		sf::Joystick::getAxisPosition(0, sf::Joystick::Axis::Z) / 2,
+		sf::Joystick::getAxisPosition(0, sf::Joystick::Axis::V) / 2
+	};
+
+	ImGui::Columns(3, "Axis's"); // 4-ways, with border
+	ImGui::Separator();
+	ImGui::Text("X Y"); ImGui::NextColumn();
+	ImGui::Text("U R"); ImGui::NextColumn();
+	ImGui::Text("Z V"); ImGui::NextColumn();
+	ImGui::Separator();
+
+	for (int i = 0; i < 3; i++) {
+
+
+		float offset = ImGui::GetColumnWidth(i);
+
+		draw_list->AddLine(ImVec2(p.x + 0 + offset * i, p.y + 50), ImVec2(p.x + 100 + offset * i, p.y + 50), col32, 1.0);
+		draw_list->AddLine(ImVec2(p.x + 50 + offset * i, p.y + 0), ImVec2(p.x + 50 + offset * i, p.y + 100), col32, 1.0);
+		draw_list->AddCircleFilled(ImVec2(p.x + axis_values[2 * i] + 50 + offset * i, p.y + axis_values[2 * i + 1] + 50), 6, col32, 32);
+
+		ImGui::Dummy(ImVec2(100, 100));
+		ImGui::NextColumn();
+	}
+
+	ImGui::Text("Pressed Keyboard Keys");
+	
+	ImGui::Separator();
+	
+	ImGui::Columns(6);
+
+	for (auto i : held_keys) {
+		ImGui::Text(key_strings.at(i).c_str());
+		ImGui::NextColumn();
+	}
+
+	ImGui::Separator();
+
+	ImGui::End();
+
+}
+
+
+void Input::update_gui() {
+	rendering = true;
+}
+
 void Input::transpose_sf_events(std::list<sf::Event> sf_event_queue) {
 	
 	
@@ -228,4 +291,109 @@ void Input::transpose_sf_events(std::list<sf::Event> sf_event_queue) {
 		}
 	}
 }
+
+const std::vector<std::string> Input::key_strings = {
+	"A",
+	"B",
+	"C",
+	"D",
+	"E",
+	"F",
+	"G",
+	"H",
+	"I",
+	"J",
+	"K",
+	"L",
+	"M",
+	"N",
+	"O",
+	"P",
+	"Q",
+	"R",
+	"S",
+	"T",
+	"U",
+	"V",
+	"W",
+	"X",
+	"Y",
+	"Z",
+	"Num0",
+	"Num1",
+	"Num2",
+	"Num3",
+	"Num4",
+	"Num5",
+	"Num6",
+	"Num7",
+	"Num8",
+	"Num9",
+	"Escape",
+	"LControl",
+	"LShift",
+	"LAlt",
+	"LSystem",
+	"RControl",
+	"RShift",
+	"RAlt",
+	"RSystem",
+	"Menu",
+	"LBracket",
+	"RBracket",
+	"SemiColon",
+	"Comma",
+	"Period",
+	"Quote",
+	"Slash",
+	"BackSlash",
+	"Tilde",
+	"Equal",
+	"Dash",
+	"Space",
+	"Return",
+	"BackSpace",
+	"Tab",
+	"PageUp",
+	"PageDown",
+	"End",
+	"Home",
+	"Insert",
+	"Delete",
+	"Add",
+	"Subtract",
+	"Multiply",
+	"Divide",
+	"Left",
+	"Right",
+	"Up",
+	"Down",
+	"Numpad0",
+	"Numpad1",
+	"Numpad2",
+	"Numpad3",
+	"Numpad4",
+	"Numpad5",
+	"Numpad6",
+	"Numpad7",
+	"Numpad8",
+	"Numpad9",
+	"F1" ,
+	"F2" ,
+	"F3" ,
+	"F4" ,
+	"F5" ,
+	"F6" ,
+	"F7" ,
+	"F8" ,
+	"F9" ,
+	"F10",
+	"F11",
+	"F12",
+	"F13",
+	"F14",
+	"F15",
+	"Pause"
+};
+
 

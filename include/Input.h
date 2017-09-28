@@ -4,9 +4,11 @@
 #include "Event.hpp"
 #include <memory>
 #include "Pub_Sub.h"
+#include "Gui.h"
+#include <string>
 
 
-class Input : public VrEventPublisher {
+class Input : public VrEventPublisher, private Gui{
 public:
 	
 	Input();
@@ -21,6 +23,10 @@ public:
 	void handle_held_keys();
 	void dispatch_events();
 	
+
+	virtual void render_gui() override;
+	virtual void update_gui() override;
+
 private:
 
 	void transpose_sf_events(std::list<sf::Event> event_queue);
@@ -33,6 +39,8 @@ private:
 
 private:
 	
+	static const std::vector<std::string> key_strings;
+
 	std::list<std::unique_ptr<vr::Event>> event_queue;
 };
 

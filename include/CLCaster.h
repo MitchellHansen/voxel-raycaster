@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include "Logger.h"
 #include "map/Map.h"
+#include "Gui.h"
 
 #ifdef linux
 #include <CL/cl.h>
@@ -86,7 +87,7 @@ struct device_info {
 
 struct PackedData;
 
-class CLCaster {
+class CLCaster : private Gui {
 
 public:
 
@@ -151,6 +152,11 @@ public:
 	// Modify the viewport matrix
 	void test_edit_viewport(int width, int height, float v_fov, float h_fov);
 
+
+	// ============= GUI ==============
+	virtual void render_gui() override;
+	virtual void update_gui() override;
+	// ================================
 
 private:
 

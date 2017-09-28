@@ -335,6 +335,25 @@ bool CLCaster::debug_quick_recompile() {
 
 }
 
+
+void CLCaster::render_gui() {
+	
+	ImGui::Begin("CLCaster");
+
+	if (ImGui::Button("Recompile Kernel")) {
+		while (!debug_quick_recompile()) {
+			std::cin.get();
+		};
+	}
+
+	ImGui::End();
+}
+
+
+void CLCaster::update_gui() {
+	rendering = true;
+}
+
 bool CLCaster::aquire_hardware() {
 
 	Logger::log("Acquiring OpenCL Hardware", Logger::LogLevel::INFO);

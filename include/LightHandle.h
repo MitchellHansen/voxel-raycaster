@@ -4,13 +4,14 @@
 #include <memory>
 #include "Pub_Sub.h"
 #include "Vector4.hpp"
+#include "Gui.h"
 
 
 struct LightPrototype;
 class LightController;
 struct PackedData;
 
-class LightHandle : public VrEventSubscriber{
+class LightHandle : public VrEventSubscriber, private Gui{
 
 public:
 
@@ -34,6 +35,10 @@ public:
 	virtual void recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Event> event) override;
 
 	void update(double delta_time);
+
+
+	virtual void render_gui() override;
+	virtual void update_gui() override;
 
 private:
 

@@ -145,40 +145,23 @@ bool Application::game_loop() {
 		fps.frame(delta_time);
 		fps.draw();
 
+		Gui::do_render();
+
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar;
 		bool window_show = true;
-		ImGui::Begin("Camera", &window_show, window_flags);
+		
 
 		if (ImGui::BeginMenuBar())
 		{
 			if (ImGui::BeginMenu("Menu"))
 			{
+				ImGui::Button("asdoifjasodif");
 				ImGui::EndMenu();
 			}
 			ImGui::EndMenuBar();
 		}
 
-		ImGui::Columns(2);
-
-		ImGui::Text("Camera Inclination");
-		ImGui::Text("Camera Azimuth");
-		ImGui::Text("Camera Pos_X");
-		ImGui::Text("Camera Poz_Y");
-		ImGui::Text("Camera Poz_Z");
-
-		ImGui::NextColumn();
-
-		sf::Vector2f dir = camera->get_direction();
-		sf::Vector3f pos = camera->get_position();
-
-		ImGui::Text("%f", dir.x);
-		ImGui::Text("%f", dir.y);
-		ImGui::Text("%f", pos.x);
-		ImGui::Text("%f", pos.y);
-		ImGui::Text("%f", pos.z);
-
-		ImGui::NextColumn();
-
+		ImGui::Begin("Window");
 		ImGui::InputText("filename", screenshot_buf, 128);
 		if (ImGui::Button("Take Screen shot")) {
 
@@ -197,9 +180,6 @@ bool Application::game_loop() {
 
 		ImGui::NextColumn();
 
-		if (ImGui::Button("Recompile kernel")) {
-			while (!raycaster->debug_quick_recompile());
-		}
 		if (ImGui::Button("Pause")) {
 
 			paused = !paused;
@@ -210,35 +190,8 @@ bool Application::game_loop() {
 				Logger::log("Unpausing", Logger::LogLevel::INFO);
 
 		}
-
 		ImGui::End();
 
-		ImGui::Begin("Lights");
-
-		if (ImGui::SliderFloat4("Color", light_color, 0, 1)) {
-			sf::Vector4f light(light_color[0], light_color[1], light_color[2], light_color[3]);
-			light_handle->set_rgbi(light);
-		}
-
-		if (ImGui::SliderFloat("Camera Speed", &camera_speed, 0, 4)) {
-			camera->setSpeed(camera_speed);
-		}
-
-		if (ImGui::SliderFloat3("Position", light_pos, 0, MAP_X)) {
-			sf::Vector3f light(light_pos[0], light_pos[1], light_pos[2]);
-			light_handle->set_position(light);
-		}
-
-		if (ImGui::CollapsingHeader("Window options"))
-		{
-			if (ImGui::TreeNode("Style"))
-			{
-				ImGui::ShowStyleEditor();
-				ImGui::TreePop();
-			}
-		}
-
-		ImGui::End();
 
 		ImGui::Begin("Controller debugger");
 

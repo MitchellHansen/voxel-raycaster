@@ -95,3 +95,20 @@ void LightHandle::update(double delta_time) {
 
 }
 
+void LightHandle::render_gui() {
+	ImGui::Begin("Lights");
+
+	// Well I'm noooot reaallly supposed to do this. But I've been doing with the caster for
+	// a wile with no problems....
+	ImGui::SliderFloat4("Color", reinterpret_cast<float*>(&data_reference->rgbi), 0, 1);
+	ImGui::SliderFloat3("Position", reinterpret_cast<float*>(&data_reference->position), 0, 256);
+
+	ImGui::Separator();
+	
+	ImGui::End();
+}
+
+void LightHandle::update_gui() {
+	rendering = true;
+}
+

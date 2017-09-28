@@ -197,6 +197,39 @@ void Camera::recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Even
 
 }
 
+void Camera::render_gui() {
+	
+	ImGui::Begin("Camera");
+	
+	ImGui::Columns(2);
+
+	ImGui::Text("Camera Inclination");
+	ImGui::Text("Camera Azimuth");
+	ImGui::Text("Camera Pos_X");
+	ImGui::Text("Camera Poz_Y");
+	ImGui::Text("Camera Poz_Z");
+
+	ImGui::NextColumn();
+
+	ImGui::Text("%f", direction.x);
+	ImGui::Text("%f", direction.y);
+	ImGui::Text("%f", position.x);
+	ImGui::Text("%f", position.y);
+	ImGui::Text("%f", position.z);
+
+	ImGui::Separator();
+
+	ImGui::Columns(1);
+
+	ImGui::SliderFloat("Camera Speed", &default_impulse, 0, 4);
+
+	ImGui::End();
+}
+
+void Camera::update_gui() {
+	rendering = true;
+}
+
 void Camera::look_at_center() {
 
 	direction = CartToNormalizedSphere(sf::Vector3f(60, 60, 35) - position);

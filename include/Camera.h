@@ -1,11 +1,12 @@
 #pragma once
 #include <SFML/System/Vector3.hpp>
-#include <SFML/System/Vector2.hpp> 
+#include <SFML/System/Vector2.hpp>
 #include "util.hpp"
 #include "Pub_Sub.h"
 #include <cmath>
+#include "Gui.h"
 
-class Camera : public VrEventSubscriber{
+class Camera : public VrEventSubscriber, private Gui{
 public:
 
 	enum DIRECTION { FORWARD, REARWARD, LEFT, RIGHT, UP, DOWN };
@@ -39,6 +40,10 @@ public:
 	float getSpeed();
 
 	void recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Event> event) override;
+
+
+	virtual void render_gui() override;
+	virtual void update_gui() override;
 
 private:
 
