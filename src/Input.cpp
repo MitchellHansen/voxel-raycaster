@@ -160,9 +160,9 @@ void Input::render_gui() {
 		ImGui::NextColumn();
 	}
 
-	ImGui::Text("Pressed Keyboard Keys");
-	
 	ImGui::Separator();
+
+	ImGui::Text("Pressed Keyboard Keys");
 	
 	ImGui::Columns(6);
 
