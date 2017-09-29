@@ -34,8 +34,9 @@
 // Srsly people who macro error codes are the devil
 #undef ERROR
 #include "Logger.h"
+#include "FrameWatcher.h"
 
-class Application {
+class Application: private Gui {
 
 public:	
 	const int WINDOW_X = 1536;
@@ -71,6 +72,8 @@ private:
 	Input input_handler;
 	std::shared_ptr<WindowHandler> window_handler;
 
+	FrameWatcher frame_watcher;
+
 	// The sfml imgui wrapper I'm using requires Update be called with sf::Time
 	// Might modify it to also accept seconds
 	sf::Clock sf_delta_clock;
@@ -90,4 +93,9 @@ private:
 		delta_time = 0.0,
 		accumulator_time = 0.0,
 		current_time = 0.0;
+public:
+
+	virtual void render_gui() override;
+	virtual void update_gui() override;
+
 };
