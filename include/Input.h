@@ -21,9 +21,7 @@ public:
 	void consume_vr_events();
 	
 	void handle_held_keys();
-	void dispatch_events();
 	
-
 	virtual void render_gui() override;
 	virtual void update_gui() override;
 
@@ -42,6 +40,10 @@ private:
 	static const std::vector<std::string> key_strings;
 
 	std::list<std::unique_ptr<vr::Event>> event_queue;
+
+protected:
+	virtual void generate_events() override;
+
 };
 
 class WindowHandler : public VrEventSubscriber {

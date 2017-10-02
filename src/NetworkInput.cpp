@@ -26,14 +26,6 @@ void NetworkInput::recieve_from_clients()
 
 }
 
-void NetworkInput::dispatch_events()
-{
-	while (event_queue.size() != 0) {
-		notify_subscribers(std::move(event_queue.front()));
-		event_queue.pop_front();
-	}
-}
-
 void NetworkInput::threaded_client_listener(int port) {
 
 	listener.listen(port);

@@ -57,6 +57,12 @@ namespace vr {
 			NetworkJoystickMoved,
 			NetworkJoystickConnected,
 			NetworkJoystickDisconnected,
+			Tick120Seconds,
+			Tick60Seconds,
+			Tick30Seconds,
+			Tick20Seconds,
+			Tick10Seconds,
+			Tick5Seconds,
 			Count
 		};
 
@@ -71,8 +77,6 @@ namespace vr {
 	private:
 		
 	};
-
-	
 
 	class Closed : public Event {
 	public:

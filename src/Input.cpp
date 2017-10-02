@@ -112,16 +112,6 @@ void Input::handle_held_keys() {
 
 }
 
-void Input::dispatch_events() {
-
-	while (event_queue.size() != 0) {
-		notify_subscribers(std::move(event_queue.front()));
-		event_queue.pop_front();
-	}
-
-}
-
-
 void Input::render_gui() {
 
 	ImGui::Begin("Input Debugger");
@@ -395,5 +385,8 @@ const std::vector<std::string> Input::key_strings = {
 	"F15",
 	"Pause"
 };
+
+void Input::generate_events() {
+}
 
 

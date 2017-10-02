@@ -3,6 +3,7 @@
 #include <iostream>
 #include "Event.hpp"
 #include <memory>
+#include <list>
 
 
 class VrEventPublisher;
@@ -22,12 +23,19 @@ class VrEventPublisher {
 public:
 
 	virtual ~VrEventPublisher() {};
-	virtual void subscribe(VrEventSubscriber *subscriber, vr::Event::EventType type);
-	virtual void subscribe(VrEventSubscriber *subscriber, std::vector<vr::Event::EventType> type);
-	virtual void unsubscribe(VrEventSubscriber *s, vr::Event::EventType c);
-	virtual void notify_subscribers(std::unique_ptr<vr::Event> event);
+	virtual void subscribe(VrEventSubscriber *subscriber, vr::Event::EventType type) final;
+	virtual void subscribe(VrEventSubscriber *subscriber, std::vector<vr::Event::EventType> type) final;
+	virtual void unsubscribe(VrEventSubscriber *s, vr::Event::EventType c) final;
+	
 private:
+	
 	std::map<vr::Event::EventType, std::vector<VrEventSubscriber*>> subscribers;
+	
+protected:
+	virtual void notify_subscribers(std::unique_ptr<vr::Event> event) final;
+	virtual void dispatch_events() final;
+	virtual void generate_events() = 0; 
+	std::list<std::unique_ptr<vr::Event>> event_queue;
 
 };
 

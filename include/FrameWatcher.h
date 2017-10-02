@@ -1,6 +1,7 @@
+#pragma once
+#include "Pub_Sub.h"
 
-
-class FrameWatcher {
+class FrameWatcher : public VrEventPublisher{
 	
 
 

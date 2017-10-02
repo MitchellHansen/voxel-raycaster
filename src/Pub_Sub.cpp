@@ -42,3 +42,10 @@ void VrEventPublisher::notify_subscribers(std::unique_ptr<vr::Event> event) {
 	}
 
 }
+
+void VrEventPublisher::dispatch_events() {
+	while (event_queue.size() != 0) {
+		notify_subscribers(std::move(event_queue.front()));
+		event_queue.pop_front();
+	}
+}
