@@ -110,43 +110,17 @@ bool Application::game_loop() {
 
 		// Time keeping
 		elapsed_time = elap_time();
-
-		// time between this and the last frame
 		delta_time = elapsed_time - current_time;
-
-		// Setup the time for the next tick
 		current_time = elapsed_time;
-		
-		// If the delta exceeded 0.2f, then limit the max lag we'll allow
-		// 1 / float is how you get the fps. 0.2f == 5fps
 		if (delta_time > 0.2f)
 			delta_time = 0.2f;
-
-		// Add the the physics accumulator our delta
 		accumulator_time += delta_time;
-
-		// We want to keep our physics at a constant step size but we have a variable frame rate.
-		// 0.016 == physics preferred timestep
-		// 0.030 == average 30 fps frame rate
-		// we must run the physics step ~twice every render frame to keep consistency
-		
-		int count = 0;
 		while ((accumulator_time - step_size) >= step_size) {
-			
-			
-			count++;
 			accumulator_time -= step_size;
 
-			// do physics at step size rate
-			
-			for (int i = 0; i < 1000; i++) {
-				int x = 9;
-				int r = i + x * 4;
-				current_time = elapsed_time;
-			}
 			// ==== DELTA TIME LOCKED ====
 		}
-		std::cout << count << "\n";
+
 		// ==== FPS LOCKED ====
 
 		window->clear(sf::Color::Black);
@@ -172,6 +146,94 @@ bool Application::game_loop() {
 		fps.draw();
 
 		Gui::do_render();
+
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar;
+		bool window_show = true;
+		
+
+		if (ImGui::BeginMenuBar())
+		{
+			if (ImGui::BeginMenu("Menu"))
+			{
+				ImGui::Button("asdoifjasodif");
+				ImGui::EndMenu();
+			}
+			ImGui::EndMenuBar();
+		}
+
+		ImGui::Begin("Window");
+		ImGui::InputText("filename", screenshot_buf, 128);
+		if (ImGui::Button("Take Screen shot")) {
+
+			std::string path = "../assets/";
+			std::string filename(screenshot_buf);
+			filename += ".png";
+
+			sf::Texture window_texture;
+			window_texture.create(window->getSize().x, window->getSize().y);
+			window_texture.update(*window);
+
+			sf::Image image = window_texture.copyToImage();
+			image.saveToFile(path + filename);
+
+		}
+
+		ImGui::NextColumn();
+
+		if (ImGui::Button("Pause")) {
+
+			paused = !paused;
+
+			if (paused)
+				Logger::log("Pausing", Logger::LogLevel::INFO);
+			else
+				Logger::log("Unpausing", Logger::LogLevel::INFO);
+
+		}
+		ImGui::End();
+
+
+		ImGui::Begin("Controller debugger");
+
+		ImDrawList* draw_list = ImGui::GetWindowDrawList();
+		static ImVec4 col = ImVec4(1.0f, 0.0f, 1.0f, 1.0f);
+		const ImVec2 p = ImGui::GetCursorScreenPos();
+		const ImU32 col32 = ImColor(col);
+
+		std::vector<float> axis_values = {
+			 sf::Joystick::getAxisPosition(0, sf::Joystick::Axis::X) / 2,
+			 sf::Joystick::getAxisPosition(0, sf::Joystick::Axis::Y) / 2,
+			 sf::Joystick::getAxisPosition(0, sf::Joystick::Axis::U) / 2,
+			 sf::Joystick::getAxisPosition(0, sf::Joystick::Axis::R) / 2,
+			 sf::Joystick::getAxisPosition(0, sf::Joystick::Axis::Z) / 2,
+			 sf::Joystick::getAxisPosition(0, sf::Joystick::Axis::V) / 2
+		};
+		
+		ImGui::Columns(3, "Axis's"); // 4-ways, with border
+		ImGui::Separator();
+		ImGui::Text("X Y"); ImGui::NextColumn();
+		ImGui::Text("U R"); ImGui::NextColumn();
+		ImGui::Text("Z V"); ImGui::NextColumn();
+		ImGui::Separator();
+
+		for (int i = 0; i < 3; i++) {
+			
+
+			float offset = ImGui::GetColumnWidth(i);
+			
+			draw_list->AddLine(ImVec2(p.x + 0 + offset * i, p.y + 50), ImVec2(p.x + 100 + offset * i, p.y + 50), col32, 1.0);
+			draw_list->AddLine(ImVec2(p.x + 50 + offset * i, p.y + 0), ImVec2(p.x + 50 + offset * i, p.y + 100), col32, 1.0);
+			draw_list->AddCircleFilled(ImVec2(p.x + axis_values[2 * i] + 50 + offset * i, p.y + axis_values[2 * i + 1] + 50), 6, col32, 32);
+			
+			ImGui::Dummy(ImVec2(100, 100));
+			ImGui::NextColumn();
+		}
+
+		
+		ImGui::End();
+
+		//ImGui::ShowTestWindow();
+
 		ImGui::Render();
 
 		// ImGUI messes up somthing in the SFML GL state, so we need a single draw call to right things
@@ -193,42 +255,5 @@ float Application::elap_time() {
 	std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
 	std::chrono::duration<double> elapsed_time = now - start;
 	return static_cast<float>(elapsed_time.count());
-}
-
-void Application::render_gui() {
-
-	ImGui::Begin("Window");
-	ImGui::InputText("filename", screenshot_buf, 128);
-	if (ImGui::Button("Take Screen shot")) {
-
-		std::string path = "../assets/";
-		std::string filename(screenshot_buf);
-		filename += ".png";
-
-		sf::Texture window_texture;
-		window_texture.create(window->getSize().x, window->getSize().y);
-		window_texture.update(*window);
-
-		sf::Image image = window_texture.copyToImage();
-		image.saveToFile(path + filename);
-
-	}
-
-	ImGui::NextColumn();
-
-	if (ImGui::Button("Pause")) {
-
-		paused = !paused;
-
-		if (paused)
-			Logger::log("Pausing", Logger::LogLevel::INFO);
-		else
-			Logger::log("Unpausing", Logger::LogLevel::INFO);
-
-	}
-	ImGui::End();
-}
-
-void Application::update_gui() {
 }
 

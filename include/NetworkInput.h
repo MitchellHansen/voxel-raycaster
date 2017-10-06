@@ -23,8 +23,12 @@ public:
 	void stop_recieving_from_clients();
 
 	void generate_events();
+	void dispatch_events();
 
+	
 private:
+
+	std::list<std::unique_ptr<vr::Event>> event_queue;
 
 	std::vector<sf::TcpSocket*> client_sockets;
 	sf::SocketSelector socket_selector;

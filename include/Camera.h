@@ -26,7 +26,7 @@ public:
 
 	int update(double delta_time);
 
-	void look_at(sf::Vector3f position);
+	void look_at_center();
 
 	sf::Vector2f* get_direction_pointer();
 	sf::Vector3f* get_position_pointer();

@@ -215,7 +215,7 @@ void Old_Map::generate_terrain() {
 
 	for (int x = dimensions.x / 2; x < dimensions.x / 2 + dimensions.x / 64; x++) {
 		for (int y = dimensions.x / 2; y < dimensions.y / 2 + dimensions.x / 64; y++) {
-			for (int z = 5; z < 15; z++) {
+			for (int z = 0; z < 5; z++) {
 
 				voxel_data[x + dimensions.x * (y + dimensions.z * z)] = 6;
 			}
@@ -249,63 +249,63 @@ void Old_Map::generate_terrain() {
 
 	// Hand code in some constructions
 
-	//std::vector<std::vector<int>> maze = 
-	//	generate_maze(sf::Vector2i(8, 8), sf::Vector2i(0, 0));
+	std::vector<std::vector<int>> maze = 
+		generate_maze(sf::Vector2i(8, 8), sf::Vector2i(0, 0));
 
-	//for (int x = 0; x < maze.size(); x++) {
-	//	for (int y = 0; y < maze.at(0).size(); y++) {
-	//		
-	//		switch(maze.at(x).at(y)) {
-	//			
-	//		case 1: { // North
-	//			voxel_data[x * 3 + 1 + dimensions.x * (y * 3     + dimensions.z * 1)] = 6;
-	//			voxel_data[x * 3 + 1 + dimensions.x * (y * 3 + 1 + dimensions.z * 1)] = 6;
-	//			voxel_data[x * 3 + 1 + dimensions.x * (y * 3 + 2 + dimensions.z * 1)] = 5;
-	//			//voxel_data[x * 3     + dimensions.x * (y * 3 + 2 + dimensions.z * 1)] = 6;
-	//			//voxel_data[x * 3 + 2 + dimensions.x * (y * 3 + 2 + dimensions.z * 1)] = 6;
-	//			break;
-	//		}
-	//		case 2: { // South
-	//			voxel_data[x * 3 + 1 + dimensions.x * (y * 3     + dimensions.z * 1)] = 5;
-	//			voxel_data[x * 3 + 1 + dimensions.x * (y * 3 + 1 + dimensions.z * 1)] = 6;
-	//			voxel_data[x * 3 + 1 + dimensions.x * (y * 3 + 2 + dimensions.z * 1)] = 6;
-	//			//voxel_data[x * 3     + dimensions.x * (y * 3     + dimensions.z * 1)] = 6;
-	//			//voxel_data[x * 3 + 2 + dimensions.x * (y * 3     + dimensions.z * 1)] = 6;
-	//			break;
-	//		}
-	//		case 3: { // East
-	//			voxel_data[x * 3     + dimensions.x * (y * 3 + 1 + dimensions.z * 1)] = 6;
-	//			voxel_data[x * 3 + 1 + dimensions.x * (y * 3 + 1 + dimensions.z * 1)] = 6;
-	//			voxel_data[x * 3 + 2 + dimensions.x * (y * 3 + 1 + dimensions.z * 1)] = 5;
-	//			//voxel_data[x * 3 + 2 + dimensions.x * (y * 3     + dimensions.z * 1)] = 6;
-	//			//voxel_data[x * 3 + 2 + dimensions.x * (y * 3 + 2 + dimensions.z * 1)] = 6;
-	//			break;
-	//		}
-	//		case 4: { // West
-	//			voxel_data[x * 3     + dimensions.x * (y * 3 + 1 + dimensions.z * 1)] = 5;
-	//			voxel_data[x * 3 + 1 + dimensions.x * (y * 3 + 1 + dimensions.z * 1)] = 6;
-	//			voxel_data[x * 3 + 2 + dimensions.x * (y * 3 + 1 + dimensions.z * 1)] = 6;
-	//			//voxel_data[x * 3     + dimensions.x * (y * 3     + dimensions.z * 1)] = 6;
-	//			//voxel_data[x * 3     + dimensions.x * (y * 3 + 2 + dimensions.z * 1)] = 6;
-	//			break;
-	//		}
-	//				
-	//		}
-	//		
-	//		
+	for (int x = 0; x < maze.size(); x++) {
+		for (int y = 0; y < maze.at(0).size(); y++) {
+			
+			switch(maze.at(x).at(y)) {
+				
+			case 1: { // North
+				voxel_data[x * 3 + 1 + dimensions.x * (y * 3     + dimensions.z * 1)] = 6;
+				voxel_data[x * 3 + 1 + dimensions.x * (y * 3 + 1 + dimensions.z * 1)] = 6;
+				voxel_data[x * 3 + 1 + dimensions.x * (y * 3 + 2 + dimensions.z * 1)] = 5;
+				//voxel_data[x * 3     + dimensions.x * (y * 3 + 2 + dimensions.z * 1)] = 6;
+				//voxel_data[x * 3 + 2 + dimensions.x * (y * 3 + 2 + dimensions.z * 1)] = 6;
+				break;
+			}
+			case 2: { // South
+				voxel_data[x * 3 + 1 + dimensions.x * (y * 3     + dimensions.z * 1)] = 5;
+				voxel_data[x * 3 + 1 + dimensions.x * (y * 3 + 1 + dimensions.z * 1)] = 6;
+				voxel_data[x * 3 + 1 + dimensions.x * (y * 3 + 2 + dimensions.z * 1)] = 6;
+				//voxel_data[x * 3     + dimensions.x * (y * 3     + dimensions.z * 1)] = 6;
+				//voxel_data[x * 3 + 2 + dimensions.x * (y * 3     + dimensions.z * 1)] = 6;
+				break;
+			}
+			case 3: { // East
+				voxel_data[x * 3     + dimensions.x * (y * 3 + 1 + dimensions.z * 1)] = 6;
+				voxel_data[x * 3 + 1 + dimensions.x * (y * 3 + 1 + dimensions.z * 1)] = 6;
+				voxel_data[x * 3 + 2 + dimensions.x * (y * 3 + 1 + dimensions.z * 1)] = 5;
+				//voxel_data[x * 3 + 2 + dimensions.x * (y * 3     + dimensions.z * 1)] = 6;
+				//voxel_data[x * 3 + 2 + dimensions.x * (y * 3 + 2 + dimensions.z * 1)] = 6;
+				break;
+			}
+			case 4: { // West
+				voxel_data[x * 3     + dimensions.x * (y * 3 + 1 + dimensions.z * 1)] = 5;
+				voxel_data[x * 3 + 1 + dimensions.x * (y * 3 + 1 + dimensions.z * 1)] = 6;
+				voxel_data[x * 3 + 2 + dimensions.x * (y * 3 + 1 + dimensions.z * 1)] = 6;
+				//voxel_data[x * 3     + dimensions.x * (y * 3     + dimensions.z * 1)] = 6;
+				//voxel_data[x * 3     + dimensions.x * (y * 3 + 2 + dimensions.z * 1)] = 6;
+				break;
+			}
+					
+			}
+			
+			
+		}
+	}
+
+
+	//for (int x = 0; x < dimensions.x; x++) {
+	//	for (int y = 0; y < dimensions.y; y++) {
+	//		voxel_data[x + dimensions.x * (y + dimensions.z * 1)] = 6;
 	//	}
 	//}
 
-
-	////for (int x = 0; x < dimensions.x; x++) {
-	////	for (int y = 0; y < dimensions.y; y++) {
-	////		voxel_data[x + dimensions.x * (y + dimensions.z * 1)] = 6;
-	////	}
-	////}
-
-	//set_voxel(sf::Vector3i(45, 70, 6), 6);
-	//set_voxel(sf::Vector3i(47, 70, 6), 6);
-	//set_voxel(sf::Vector3i(100, 100, 50), 1);
+	set_voxel(sf::Vector3i(45, 70, 6), 6);
+	set_voxel(sf::Vector3i(47, 70, 6), 6);
+	set_voxel(sf::Vector3i(100, 100, 50), 1);
 
 }
 

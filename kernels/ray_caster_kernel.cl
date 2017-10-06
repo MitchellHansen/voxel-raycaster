@@ -375,7 +375,7 @@ __kernel void raycaster(
 	bool shadow_ray = false;
 
 	// Andrew Woo's raycasting algo
-    while (distance_traveled < max_distance && bounce_count < 4) {
+    while (distance_traveled < max_distance && bounce_count < 2) {
 
 		// Fancy no branch version of the logic step
 		face_mask = intersection_t.xyz <= min(intersection_t.yzx, intersection_t.zxy);
@@ -387,7 +387,6 @@ __kernel void raycaster(
 			voxel_data = 5;
 			voxel.xyz -= voxel_step.xyz * face_mask.xyz;
 			first_strike = mix(fog_color, voxel_color, 1.0 - max(distance_traveled / 700.0f, (float)0));
-			break;
 		}
 
 
@@ -538,10 +537,10 @@ __kernel void raycaster(
 						 texture_atlas,
 						 convert_int2(tile_face_position * convert_float2(*atlas_dim / *tile_dim)) +
 						 convert_int2((float2)(3, 4) * convert_float2(*atlas_dim / *tile_dim))
-				).xyz/4;
+				).xyz/2;
 
-				voxel_color -= 0.3f;
-				max_distance = 700;
+				voxel_color.w += 0.3f;
+				max_distance = 500;
 				distance_traveled = 0;
 
 				float3 hit_pos = convert_float3(voxel) + face_position;

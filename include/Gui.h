@@ -42,7 +42,7 @@ private:
 	static std::list<Gui*> renderable_container;
 
 protected:
-	bool rendering = true;
+	bool rendering = false;
 	// Derived class will handle imgui calls
 	
 };
