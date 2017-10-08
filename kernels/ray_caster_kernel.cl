@@ -481,6 +481,7 @@ __kernel void raycaster(
 
 			// SHADOW RAY HIT
 			} else {
+				color_accumulator /= 5;
 				break;
 			}
 		}
