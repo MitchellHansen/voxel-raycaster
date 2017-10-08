@@ -87,7 +87,7 @@ struct device_info {
 
 struct PackedData;
 
-class CLCaster : private Gui {
+class CLCaster : private Gui, public VrEventSubscriber {
 
 public:
 
@@ -156,6 +156,9 @@ public:
 	// ============= GUI ==============
 	virtual void render_gui() override;
 	virtual void update_gui() override;
+
+	virtual void recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Event> event) override;
+
 	// ================================
 
 private:

@@ -117,9 +117,6 @@ void Camera::recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Even
 		else if (held_event->code == sf::Keyboard::D) {
 			add_relative_impulse(Camera::DIRECTION::RIGHT, default_impulse);
 		}
-		else if (held_event->code == sf::Keyboard::T) {
-			set_position(sf::Vector3f(50, 50, 50));
-		}
 	}
 
 	else if (event->type == vr::Event::KeyPressed) {
@@ -232,7 +229,7 @@ void Camera::update_gui() {
 
 void Camera::look_at_center() {
 
-	direction = CartToNormalizedSphere(sf::Vector3f(60, 60, 35) - position);
+	direction = CartToNormalizedSphere(sf::Vector3f(143, 158, 33) - position);
 }
 
 sf::Vector2f* Camera::get_direction_pointer() {

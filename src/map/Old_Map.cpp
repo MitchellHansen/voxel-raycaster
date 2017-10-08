@@ -75,8 +75,6 @@ std::vector<std::vector<int>> generate_maze(sf::Vector2i dimensions, sf::Vector2
 }
 
 
-
-
 void Old_Map::generate_terrain() {
 	std::mt19937 gen;
 	std::uniform_real_distribution<double> dis(-1.0, 1.0);
@@ -101,7 +99,7 @@ void Old_Map::generate_terrain() {
 	int DATA_SIZE = dimensions.x + 1;
 	//an initial seed value for the corners of the data
 	//srand(f_rand());
-	double SEED = rand() % 10 + 30;
+	double SEED = rand() % 10 + 55;
 
 	//seed the data
 	set_sample(0, 0, SEED);
@@ -215,15 +213,25 @@ void Old_Map::generate_terrain() {
 
 	for (int x = dimensions.x / 2; x < dimensions.x / 2 + dimensions.x / 64; x++) {
 		for (int y = dimensions.x / 2; y < dimensions.y / 2 + dimensions.x / 64; y++) {
-			for (int z = 0; z < 5; z++) {
+			for (int z = 2; z < 7; z++) {
 
 				voxel_data[x + dimensions.x * (y + dimensions.z * z)] = 6;
 			}
 		}
 	}
 
-	for (int x = 60; x < 65; x++) {
-		for (int y = 60; y < 65; y++) {
+	for (int x = dimensions.x / 2 - 3; x < dimensions.x / 2 + dimensions.x / 64 + 3; x++) {
+		for (int y = dimensions.x / 2 - 3; y < dimensions.y / 2 + dimensions.x / 64 + 3; y++) {
+			for (int z = 0; z < 1; z++) {
+
+				voxel_data[x + dimensions.x * (y + dimensions.z * z)] = 5;
+			}
+		}
+	}
+
+
+	for (int x = 140; x < 145; x++) {
+		for (int y = 155; y < 160; y++) {
 			for (int z = 30; z < 35; z++) {
 				voxel_data[x + dimensions.x * (y + dimensions.z * z)] = 6;
 			}

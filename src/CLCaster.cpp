@@ -354,6 +354,19 @@ void CLCaster::update_gui() {
 	rendering = true;
 }
 
+
+void CLCaster::recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Event> event) {
+
+	if (event->type == vr::Event::KeyPressed) {
+
+		vr::KeyPressed *key_event = static_cast<vr::KeyPressed*>(event.get());
+
+		if (key_event->code == sf::Keyboard::T) {
+			debug_quick_recompile();
+		}
+}
+}
+
 bool CLCaster::aquire_hardware() {
 
 	Logger::log("Acquiring OpenCL Hardware", Logger::LogLevel::INFO);

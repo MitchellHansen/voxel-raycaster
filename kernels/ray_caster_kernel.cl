@@ -67,7 +67,7 @@ float4 view_light(float4 in_color, float3 light, float4 light_color, float3 view
 	if (all(light == zeroed_float3))
 		return zeroed_float4;
 
-	float d = Distance(light) / 100.0f;
+	float d = Distance(light) / 140.0f;
 	d *= d;
 
 	float diffuse = max(dot(normalize(convert_float3(mask)), normalize(light)), 0.0f);
@@ -146,7 +146,6 @@ bool get_oct_vox(
 		// Adding 1 for X, 2 for Y, and 4 for Z
 		int mask_index = 0;
 
-
 		// Do the logic steps to find which sub oct we step down into
 		if (position.x >= (dimension / 2) + quad_position.x) {
 
@@ -163,23 +162,15 @@ bool get_oct_vox(
 		if (position.y >= (dimension / 2) + quad_position.y) {
 
 			quad_position.y |= (dimension / 2);
-
 			mask_index += 2;
-
-			// TODO What is up with the binary operator on this one?
-			// Alright, I switched it over and seems not to have done anything?
-			// idx_stack[scale] ^= idx_set_y_mask;
 			idx_stack[scale] |= idx_set_y_mask;
 
 		}
 		if (position.z >= (dimension / 2) + quad_position.z) {
 
 			quad_position.z += (dimension / 2);
-
 			mask_index += 4;
-
 			idx_stack[scale] |= idx_set_z_mask;
-
 		}
 
 		// Check to see if we are on a valid oct
@@ -320,6 +311,7 @@ __kernel void raycaster(
 		if (any(voxel >= *map_dim) || any(voxel < 0)){
 			voxel.xyz -= voxel_step.xyz * face_mask.xyz;
 			color_accumulator = mix(fog_color, voxel_color, 1.0f - max(distance_traveled / 700.0f, 0.0f));
+			color_accumulator.w *= 4;
 			break;
 		}
 
@@ -440,10 +432,7 @@ __kernel void raycaster(
 					return;
 
 				voxel -= voxel_step * face_mask;
-				voxel_step = ( 1, 1, 1 );
-				voxel_step *= (ray_dir > 0) - (ray_dir < 0);
-
-				//voxel = convert_int3(hit_pos);
+				voxel_step = ( 1, 1, 1 ) * ((ray_dir > 0) - (ray_dir < 0));
 
 				delta_t = fabs(1.0f / ray_dir);
 				intersection_t = delta_t * ((hit_pos)-floor(hit_pos)) * convert_float3(voxel_step);
@@ -456,9 +445,9 @@ __kernel void raycaster(
 						 texture_atlas,
 						 convert_int2(tile_face_position * convert_float2(*atlas_dim / *tile_dim)) +
 						 convert_int2((float2)(3, 4) * convert_float2(*atlas_dim / *tile_dim))
-				).xyz/2;
+				).xyz/4;
 
-				voxel_color.w -= 0.3f;
+				voxel_color.w -= 0.0f;
 				max_distance = 700;
 				distance_traveled = 0;
 
@@ -481,7 +470,7 @@ __kernel void raycaster(
 
 			// SHADOW RAY HIT
 			} else {
-				color_accumulator /= 5;
+				color_accumulator = 0;
 				break;
 			}
 		}

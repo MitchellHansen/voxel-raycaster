@@ -53,6 +53,11 @@ void LightHandle::set_position(sf::Vector3f position)
 	data_reference->position = position;
 }
 
+
+sf::Vector3f LightHandle::get_position() {
+	return data_reference->position;
+}
+
 void LightHandle::set_direction(sf::Vector3f direction)
 {
 

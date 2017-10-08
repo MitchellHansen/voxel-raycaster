@@ -59,9 +59,9 @@ bool Application::init_clcaster() {
 
 	// Create a light prototype, send it to the controller, and get the handle back
 	LightPrototype prototype(
-		sf::Vector3f(100.0f, 100.0f, 75.0f),
+		sf::Vector3f(100.0f, 156.0f, 58.0f),
 		sf::Vector3f(-1.0f, -1.0f, -1.5f),
-		sf::Vector4f(0.4f, 0.4f, 0.4f, 1.0f)
+		sf::Vector4f(0.1f, 0.1f, 0.1f, 0.8f)
 	);
 	light_handle = light_controller->create_light(prototype);
 
@@ -93,6 +93,7 @@ bool Application::init_events() {
 	window_handler->subscribe_to_publisher(&input_handler, vr::Event::EventType::Closed);
 	window_handler->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyPressed);
 
+	raycaster->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyPressed);
 	//camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::JoystickMoved);
 	
 	return true;
@@ -116,6 +117,14 @@ bool Application::game_loop() {
 		accumulator_time += delta_time;
 		while ((accumulator_time - step_size) >= step_size) {
 			accumulator_time -= step_size;
+			
+			sf::Vector3f light_pos = light_handle->get_position();
+			light_pos.x = sin(elapsed_time / 2) * 100 + 100;
+			light_handle->set_position(light_pos);
+
+			sf::Vector3f cam_pos = camera->get_position();
+			cam_pos.x = sin(elapsed_time / 2 + 3.141f) * 50 + 125;
+			camera->set_position(cam_pos);
 
 			// ==== DELTA TIME LOCKED ====
 		}

@@ -28,6 +28,7 @@ public:
 
 	// Functions modifying the pointed to data
 	void set_position(sf::Vector3f position);
+	sf::Vector3f get_position();
 	void set_direction(sf::Vector3f direction);
 	void set_rgbi(sf::Vector4f rgbi);
 
