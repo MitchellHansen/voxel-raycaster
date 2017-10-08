@@ -1,4 +1,7 @@
 
+// =========================================================================
+// ======================== INITIALIZER CONSTANTS ==========================
+
 __constant float4 zeroed_float4 = {0.0f, 0.0f, 0.0f, 0.0f};
 __constant float3 zeroed_float3 = {0.0f, 0.0f, 0.0f};
 __constant float2 zeroed_float2 = {0.0f, 0.0f};
@@ -6,31 +9,54 @@ __constant int4 zeroed_int4     = {0, 0, 0, 0};
 __constant int3 zeroed_int3     = {0, 0, 0};
 __constant int2 zeroed_int2     = {0, 0};
 
+// =========================================================================
+// ============================ OCTREE CONSTANTS ===========================
+
+// (X, Y, Z) mask for the idx
+__constant const uchar idx_set_x_mask = 0x1;
+__constant const uchar idx_set_y_mask = 0x2;
+__constant const uchar idx_set_z_mask = 0x4;
+
+__constant const uchar mask_8[8] = {
+	0x1,  0x2,  0x4,  0x8,
+	0x10, 0x20, 0x40, 0x80
+};
+
+// Mask for counting the previous valid bits
+__constant const uchar count_mask_8[8] = {
+	0x1,  0x3,  0x7,  0xF,
+	0x1F, 0x3F, 0x7F, 0xFF
+};
+
+// uint64_t manipulation masks
+__constant const ulong child_pointer_mask = 0x0000000000007fff;
+__constant const ulong far_bit_mask = 0x8000;
+__constant const ulong valid_mask = 0xFF0000;
+__constant const ulong leaf_mask = 0xFF000000;
+__constant const ulong contour_pointer_mask = 0xFFFFFF00000000;
+__constant const ulong contour_mask = 0xFF00000000000000;
+
+// =========================================================================
+// ========================= RAYCASTER CONSTANTS ===========================
+
+constant float4 fog_color = { 0.73f, 0.81f, 0.89f, 0.8f };
+constant float4 overshoot_color = { 0.00f, 0.00f, 0.00f, 0.00f };
+constant float4 overshoot_color_2 = { 0.00f, 0.00f, 0.00f, 0.00f };
+
+// =========================================================================
+// =========================================================================
+
+// =========================================================================
+// ========================= HELPER FUNCTIONS ==============================
+
 float DistanceBetweenPoints(float3 a, float3 b) {
 	return fast_distance(a, b);
-	//return sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2) + pow(a.z - b.z, 2));
 }
 
 float Distance(float3 a) {
 	return fast_length(a);
-	//return sqrt(pow(a.x, 2) + pow(a.y, 2) + pow(a.z, 2));
 }
 
-// Naive incident ray light
-float4 white_light(float4 input, float3 light, int3 mask) {
-
-	input.w = input.w + acos(
-		dot(
-			normalize(light),
-			normalize(convert_float3(mask * (-mask)))
-			)
-		) / 32;
-
-	input.w += 0.25f;
-
-	return input;
-
-}
 
 // Phong + diffuse lighting function for g
 //  0  1  2  3  4  5  6  7   8   9
@@ -72,29 +98,8 @@ int rand(int* seed) // 1 <= *seed < m
 	return(*seed);
 }
 
-	// (X, Y, Z) mask for the idx
-__constant const uchar idx_set_x_mask = 0x1;
-__constant const uchar idx_set_y_mask = 0x2;
-__constant const uchar idx_set_z_mask = 0x4;
-
-__constant const uchar mask_8[8] = {
-	0x1,  0x2,  0x4,  0x8,
-	0x10, 0x20, 0x40, 0x80
-};
-
-// Mask for counting the previous valid bits
-__constant const uchar count_mask_8[8] = {
-	0x1,  0x3,  0x7,  0xF,
-	0x1F, 0x3F, 0x7F, 0xFF
-};
-
-// uint64_t manipulation masks
-__constant const ulong child_pointer_mask = 0x0000000000007fff;
-__constant const ulong far_bit_mask = 0x8000;
-__constant const ulong valid_mask = 0xFF0000;
-__constant const ulong leaf_mask = 0xFF000000;
-__constant const ulong contour_pointer_mask = 0xFFFFFF00000000;
-__constant const ulong contour_mask = 0xFF00000000000000;
+// =========================================================================
+// ========================= OCTREE TRAVERSAL ==============================
 
 bool get_oct_vox(
 	int3 position,
@@ -223,106 +228,27 @@ bool get_oct_vox(
 	return found;
 }
 
-// =================================== Boolean ray intersection ============================
-// =========================================================================================
-
-bool cast_light_intersection_ray(
-	global char* map,
-	global int3* map_dim,
-	float3 ray_dir,
-    float3 ray_pos,
-	global float* lights,
-	global int* light_count
-
-	){
-
-	float distance_to_light = DistanceBetweenPoints(ray_pos, (float3)(lights[4], lights[5], lights[6]));
-	//if (distance_to_light > 200.0f){
-	//	return false;
-	//}
-
-	// Setup the voxel step based on what direction the ray is pointing
-	int3 voxel_step = { 1, 1, 1 };
-	voxel_step *= (ray_dir > 0) - (ray_dir < 0);
-
-	if (any(ray_dir == zeroed_float3))
-		return false;
-
-	// Setup the voxel coords from the camera origin
-	int3 voxel = convert_int3(ray_pos);
-
-	// Delta T is the units a ray must travel along an axis in order to traverse an integer split
-	float3 delta_t = fabs(1.0f / ray_dir);
-
-	// Compute intersection_t and add in the offset
-	float3 intersection_t = delta_t * ((ray_pos)-floor(ray_pos)) * convert_float3(voxel_step);
-
-	// for negative values, wrap around the delta_t
-	intersection_t += delta_t * -convert_float3(isless(intersection_t, 0));
-
-	int3 face_mask =zeroed_int3;
-	int length_cutoff = 0;
-
-	// Andrew Woo's raycasting algo
-	do {
-
-		// Fancy no branch version of the logic step
-		face_mask = intersection_t.xyz <= min(intersection_t.yzx, intersection_t.zxy);
-		intersection_t += delta_t * fabs(convert_float3(face_mask.xyz));
-		voxel.xyz += voxel_step.xyz * face_mask.xyz;
-
-		if (any(voxel >= *map_dim) ||
-			any(voxel < 0)) {
-			return false;
-		}
-
-		// If we hit a voxel
-		int voxel_data = map[voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z))];
-
-		if (voxel_data != 0)
-			return true;
-
-		if (++length_cutoff > 300)
-			return false;
-
-	} while (any(isless(intersection_t, (float3)(distance_to_light - 1))));
-
-	return false;
-}
-
-
-// ====================================== Raycaster entry point =====================================
-// ==================================================================================================
-
-constant float4 fog_color = { 0.73f, 0.81f, 0.89f, 0.8f };
-constant float4 overshoot_color = { 0.00f, 0.00f, 0.00f, 0.00f };
-constant float4 overshoot_color_2 = { 0.00f, 0.00f, 0.00f, 0.00f };
+// =========================================================================
+// ========================= RAYCASTER ENTRY ===============================
 
 __kernel void raycaster(
 	global char* map,
-	global int3* map_dim,
-	global int2* resolution,
+	constant int3* map_dim,
+	constant int2* resolution,
 	global float3* projection_matrix,
 	global float2* cam_dir,
 	global float3* cam_pos,
 	global float* lights,
 	global int* light_count,
 	__write_only image2d_t image,
-	//global int* seed_memory,
 	__read_only image2d_t texture_atlas,
-	global int2 *atlas_dim,
-	global int2 *tile_dim,
+	constant int2 *atlas_dim,
+	constant int2 *tile_dim,
 	global ulong *octree_descriptor_buffer,
 	global uint *octree_attachment_lookup_buffer,
 	global ulong *octree_attachment_buffer,
 	global ulong *settings_buffer
 ){
-	//	int global_id = x * y;
-
-	// Get and set the random seed from seed memory
-	//int seed = seed_memory[global_id];
-	//int random_number = rand(&seed);
-	//seed_memory[global_id] = seed;
 
 	// Get the pixel on the viewport, and find the view matrix ray that matches it
 	int2 pixel = (int2)(get_global_id(0), get_global_id(1));
@@ -342,6 +268,8 @@ __kernel void raycaster(
         ray_dir.z
     );
 
+	if (any(ray_dir == zeroed_float3))
+		return;
 
 	// Setup the voxel step based on what direction the ray is pointing
     int3 voxel_step = {1, 1, 1};
@@ -352,8 +280,6 @@ __kernel void raycaster(
 
     // Delta T is the units a ray must travel along an axis in order to
     // traverse an integer split
-	if (any(ray_dir == zeroed_float3))
-		return;
 	float3 delta_t = fabs(1.0f / ray_dir);
 
 	// Intersection T is the collection of the next intersection points
@@ -378,12 +304,12 @@ __kernel void raycaster(
 	float4 voxel_color= zeroed_float4;
 	float2 tile_face_position = zeroed_float2;
 	float3 sign = zeroed_float3;
-	float4 first_strike = zeroed_float4;
+	float4 color_accumulator = zeroed_float4;
 
 	bool shadow_ray = false;
 
 	// Andrew Woo's raycasting algo
-    while (distance_traveled < max_distance && bounce_count < 2) {
+    while (distance_traveled < max_distance && bounce_count < 4) {
 
 		// Fancy no branch version of the logic step
 		face_mask = intersection_t.xyz <= min(intersection_t.yzx, intersection_t.zxy);
@@ -392,12 +318,10 @@ __kernel void raycaster(
 
 		// Test for out of bounds contions, add fog
 		if (any(voxel >= *map_dim) || any(voxel < 0)){
-			voxel_data = 5;
 			voxel.xyz -= voxel_step.xyz * face_mask.xyz;
-			first_strike = mix(fog_color, voxel_color, 1.0f - max(distance_traveled / 700.0f, 0.0f));
+			color_accumulator = mix(fog_color, voxel_color, 1.0f - max(distance_traveled / 700.0f, 0.0f));
+			break;
 		}
-
-
 
         // If we hit a voxel
 		if (voxel.x < 64 && voxel.y < 64 && voxel.z < 64){
@@ -419,11 +343,10 @@ __kernel void raycaster(
 
 		if (voxel_data != 0) {
 
-
 			// Determine where on the 2d plane the ray intersected
 			face_position = zeroed_float3;
 			tile_face_position = zeroed_float2;
-			sign = (float3)(1.0f, 1.0f, 1.0f);
+			sign = (1.0f, 1.0f, 1.0f);
 
 			// First determine the percent of the way the ray is towards the next intersection_t
 			// in relation to the xyz position on the plane
@@ -440,16 +363,15 @@ __kernel void raycaster(
 				// I think the 1.001f rendering bug is the ray thinking it's within the voxel
 				// even though it's sitting on the very edge
 				face_position = (float3)(1.0001f, y_percent, z_percent);
-				tile_face_position = (float2)(y_percent, z_percent);
+				tile_face_position = face_position.yz;
 			}
 			else if (face_mask.y == -1) {
 
 				sign.y *= -1.0;
 				float x_percent = (intersection_t.x - (intersection_t.y - delta_t.y)) / delta_t.x;
 				float z_percent = (intersection_t.z - (intersection_t.y - delta_t.y)) / delta_t.z;
-
 				face_position = (float3)(x_percent, 1.0001f, z_percent);
-				tile_face_position = (float2)(x_percent, z_percent);
+				tile_face_position = face_position.xz;
 			}
 
 			else if (face_mask.z == -1) {
@@ -457,9 +379,8 @@ __kernel void raycaster(
 				sign.z *= -1.0;
 				float x_percent = (intersection_t.x - (intersection_t.z - delta_t.z)) / delta_t.x;
 				float y_percent = (intersection_t.y - (intersection_t.z - delta_t.z)) / delta_t.y;
-
 				face_position = (float3)(x_percent, y_percent, 1.0001f);
-				tile_face_position = (float2)(x_percent, y_percent);
+				tile_face_position = face_position.xy;
 
 			}
 
@@ -469,36 +390,27 @@ __kernel void raycaster(
 			// and will just "copy" the quadrant. This includes shadows as they use the face_position
 			// in order to cast the intersection ray!!
 
-			face_position.x = select((float)(face_position.x), (float)(-face_position.x + 1.0f), (int)(ray_dir.x > 0));
-			tile_face_position.x = select((float)(tile_face_position.x), (float)(-tile_face_position.x + 1.0f), (int)(ray_dir.x < 0));
+			face_position.x = select((face_position.x), (-face_position.x + 1.0f), (int)(ray_dir.x > 0));
+			tile_face_position.x = select((tile_face_position.x), (-tile_face_position.x + 1.0f), (int)(ray_dir.x < 0));
 
 			if (ray_dir.y > 0){
-				face_position.y =  - face_position.y + 1;
+				face_position.y =  -face_position.y + 1;
 			} else {
 				tile_face_position.x = 1.0 - tile_face_position.x;
 
 				// We run into the Hairy ball problem, so we need to define
 				// a special case for the zmask
 				if (face_mask.z == -1) {
-					tile_face_position.x = 1.0 - tile_face_position.x;
-					tile_face_position.y = 1.0 - tile_face_position.y;
+					tile_face_position.x = 1.0f - tile_face_position.x;
+					tile_face_position.y = 1.0f - tile_face_position.y;
 				}
 			}
 
-			face_position.z = select((float)(face_position.z), (float)(-face_position.z + 1.0f), (int)(ray_dir.z > 0));
-			tile_face_position.y = select((float)(tile_face_position.y), (float)(-tile_face_position.y + 1.0f), (int)(ray_dir.z < 0));
+			face_position.z = select((face_position.z), (-face_position.z + 1.0f), (int)(ray_dir.z > 0));
+			tile_face_position.y = select((tile_face_position.y), (-tile_face_position.y + 1.0f), (int)(ray_dir.z < 0));
 
-			// Now either use the face position to retrieve a texture sample, or
-			// just a plain color for the voxel color. Notice the JANK -1 after the
-			// conditionals in the select statement. That's because select works on negs
-			// and pos's. So a false equality will still eval as true as it is technically
-			// a positive result (0)
-			// voxel_color = select(
-			// 	(float4)(0.25f, 0.64f, 0.87f, 0.0f),
-			// 	(float4)voxel_color,
-			//  	(int4)((voxel_data == 5) - 1)
-			// );
-
+			// Now we detect what type of of voxel we intersected and decide whether
+			// to bend the ray, send out a light intersection ray, or add texture color
 
 			// SHADOWING
 			if (voxel_data == 5 && !shadow_ray){
@@ -510,8 +422,7 @@ __kernel void raycaster(
 						 convert_int2((float2)(3, 0) * convert_float2(*atlas_dim / *tile_dim))
 				).xyz/2;
 
-				//voxel_color.w = 0.0f;
-				first_strike = view_light(
+				color_accumulator = view_light(
 							voxel_color,
 							(convert_float3(voxel) + face_position) - (float3)(lights[4], lights[5], lights[6]),
 							(float4)(lights[0], lights[1], lights[2], lights[3]),
@@ -570,16 +481,17 @@ __kernel void raycaster(
 
 			// SHADOW RAY HIT
 			} else {
-				max_distance = 0;
-				distance_traveled = 1;
+				break;
 			}
 		}
+
+		// At the bottom of the while loop, add one to the distance ticker
 		distance_traveled++;
     }
 	write_imagef(
 		image,
 		pixel,
-		first_strike
+		color_accumulator
 	);
 
     return;
