@@ -23,9 +23,6 @@ Application::~Application() {
 
 bool Application::init_clcaster() {
 
-	//Map _map(32);
-	//return 0;
-
 	// Start up the raycaster
 	raycaster = std::make_shared<CLCaster>();
 	if (!raycaster->init())
@@ -38,7 +35,9 @@ bool Application::init_clcaster() {
 	// Send the data to the GPU
 	raycaster->assign_map(map);
 
-	octree = std::make_shared<Map>(128, map.get());
+	// Init the raycaster with a specified dimension and a pointer to the source
+	// array style data
+	octree = std::make_shared<Map>(64, map.get());
 	raycaster->assign_octree(octree);
 
 

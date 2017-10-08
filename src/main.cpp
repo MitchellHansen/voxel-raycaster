@@ -26,7 +26,7 @@
  * - Octree, Map interface with the GPU
  * - Octree, Map refactoring
  * - Separate Application stages into areas that make sense
- * - 
+ * - Saving, loading of RLE voxel data and raw oct data
  */
 
 #include "Application.h"

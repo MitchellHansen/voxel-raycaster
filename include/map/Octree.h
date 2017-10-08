@@ -4,8 +4,6 @@
 #include "util.hpp"
 #include <tuple>
 
-#define OCT_DIM 128
-
 struct OctState {
 
 	int parent_stack_position = 0;
@@ -69,7 +67,10 @@ public:
 
     bool Validate(char* data, sf::Vector3i dimensions); 
 
+	unsigned int getDimensions();
 private:
+
+	unsigned int oct_dimensions = 1;
 
 	std::tuple<uint64_t, uint64_t> GenerationRecursion(
 		char* data,					// raw octree data

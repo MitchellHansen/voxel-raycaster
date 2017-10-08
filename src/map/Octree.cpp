@@ -11,13 +11,15 @@ Octree::Octree() {
 
 void Octree::Generate(char* data, sf::Vector3i dimensions) {
 
+	oct_dimensions = dimensions.x;
+
 	// Launch the recursive generator at (0,0,0) as the first point
 	// and the octree dimension as the initial block size
-	std::tuple<uint64_t, uint64_t> root_node = GenerationRecursion(data, dimensions, sf::Vector3i(0, 0, 0), OCT_DIM/2);
+	std::tuple<uint64_t, uint64_t> root_node = GenerationRecursion(data, dimensions, sf::Vector3i(0, 0, 0), oct_dimensions/2);
 
 	// ========= DEBUG ==============
 	PrettyPrintUINT64(std::get<0>(root_node), &output_stream);
-	output_stream << "    " << OCT_DIM << "    " << counter++ << std::endl;
+	output_stream << "    " << oct_dimensions << "    " << counter++ << std::endl;
 	// ==============================
 
     // set the root nodes relative pointer to 1 because the next element will be the top of the tree, and push to the stack
@@ -51,7 +53,7 @@ OctState Octree::GetVoxel(sf::Vector3i position) {
 	state.parent_stack[state.parent_stack_position] = head;
 
 	// Set our initial dimension and the position at the corner of the oct to keep track of our position
-	int dimension = OCT_DIM;
+	int dimension = oct_dimensions;
 	sf::Vector3i quad_position(0, 0, 0);
 
 	// While we are not at the required resolution
@@ -313,7 +315,7 @@ std::tuple<uint64_t, uint64_t> Octree::GenerationRecursion(char* data, sf::Vecto
 }
 
 char Octree::get1DIndexedVoxel(char* data, sf::Vector3i dimensions, sf::Vector3i position) {	
-	return data[position.x + OCT_DIM * (position.y + OCT_DIM * position.z)];
+	return data[position.x + oct_dimensions * (position.y + oct_dimensions * position.z)];
 }
 
 bool Octree::Validate(char* data, sf::Vector3i dimensions){
@@ -342,4 +344,8 @@ bool Octree::Validate(char* data, sf::Vector3i dimensions){
 	}
 
 	return true;
+}
+
+unsigned int Octree::getDimensions() {
+	return oct_dimensions;
 }

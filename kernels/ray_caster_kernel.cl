@@ -1,4 +1,11 @@
 
+__constant float4 zeroed_float4 = {0.0f, 0.0f, 0.0f, 0.0f};
+__constant float3 zeroed_float3 = {0.0f, 0.0f, 0.0f};
+__constant float2 zeroed_float2 = {0.0f, 0.0f};
+__constant int4 zeroed_int4     = {0, 0, 0, 0};
+__constant int3 zeroed_int3     = {0, 0, 0};
+__constant int2 zeroed_int2     = {0, 0};
+
 float DistanceBetweenPoints(float3 a, float3 b) {
 	return fast_distance(a, b);
 	//return sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2) + pow(a.z - b.z, 2));
@@ -31,8 +38,8 @@ float4 white_light(float4 input, float3 light, int3 mask) {
 
 float4 view_light(float4 in_color, float3 light, float4 light_color, float3 view, int3 mask) {
 
-	if (all(light == (0.0f,0.0f,0.0f)))
-		return (0,0,0,0);
+	if (all(light == zeroed_float3))
+		return zeroed_float4;
 
 	float d = Distance(light) / 100.0f;
 	d *= d;
@@ -65,6 +72,30 @@ int rand(int* seed) // 1 <= *seed < m
 	return(*seed);
 }
 
+	// (X, Y, Z) mask for the idx
+__constant const uchar idx_set_x_mask = 0x1;
+__constant const uchar idx_set_y_mask = 0x2;
+__constant const uchar idx_set_z_mask = 0x4;
+
+__constant const uchar mask_8[8] = {
+	0x1,  0x2,  0x4,  0x8,
+	0x10, 0x20, 0x40, 0x80
+};
+
+// Mask for counting the previous valid bits
+__constant const uchar count_mask_8[8] = {
+	0x1,  0x3,  0x7,  0xF,
+	0x1F, 0x3F, 0x7F, 0xFF
+};
+
+// uint64_t manipulation masks
+__constant const ulong child_pointer_mask = 0x0000000000007fff;
+__constant const ulong far_bit_mask = 0x8000;
+__constant const ulong valid_mask = 0xFF0000;
+__constant const ulong leaf_mask = 0xFF000000;
+__constant const ulong contour_pointer_mask = 0xFFFFFF00000000;
+__constant const ulong contour_mask = 0xFF00000000000000;
+
 bool get_oct_vox(
 	int3 position,
 	global ulong *octree_descriptor_buffer,
@@ -72,31 +103,6 @@ bool get_oct_vox(
 	global ulong *octree_attachment_buffer,
 	global ulong *settings_buffer
 ){
-
-	// (X, Y, Z) mask for the idx
-	const uchar idx_set_x_mask = 0x1;
-	const uchar idx_set_y_mask = 0x2;
-	const uchar idx_set_z_mask = 0x4;
-
-	const uchar mask_8[8] = {
-		0x1,  0x2,  0x4,  0x8,
-		0x10, 0x20, 0x40, 0x80
-	};
-
-	// Mask for counting the previous valid bits
-	const uchar count_mask_8[8] = {
-		0x1,  0x3,  0x7,  0xF,
-		0x1F, 0x3F, 0x7F, 0xFF
-	};
-
-		// uint64_t manipulation masks
-	const ulong child_pointer_mask = 0x0000000000007fff;
-	const ulong far_bit_mask = 0x8000;
-	const ulong valid_mask = 0xFF0000;
-	const ulong leaf_mask = 0xFF000000;
-	const ulong contour_pointer_mask = 0xFFFFFF00000000;
-	const ulong contour_mask = 0xFF00000000000000;
-
 
 	// push the root node to the parent stack
 	ulong current_index = *settings_buffer;
@@ -115,8 +121,8 @@ bool get_oct_vox(
 	parent_stack[parent_stack_position] = head;
 
 	// Set our initial dimension and the position at the corner of the oct to keep track of our position
-	int dimension = 128;
-	int3 quad_position = (0, 0, 0);
+	int dimension = 64;
+	int3 quad_position = zeroed_int3;
 
 	// While we are not at the required resolution
 	//		Traverse down by setting the valid/leaf mask to the subvoxel
@@ -156,7 +162,9 @@ bool get_oct_vox(
 			mask_index += 2;
 
 			// TODO What is up with the binary operator on this one?
-			idx_stack[scale] ^= idx_set_y_mask;
+			// Alright, I switched it over and seems not to have done anything?
+			// idx_stack[scale] ^= idx_set_y_mask;
+			idx_stack[scale] |= idx_set_y_mask;
 
 		}
 		if (position.z >= (dimension / 2) + quad_position.z) {
@@ -237,7 +245,7 @@ bool cast_light_intersection_ray(
 	int3 voxel_step = { 1, 1, 1 };
 	voxel_step *= (ray_dir > 0) - (ray_dir < 0);
 
-	if (any(ray_dir == (0.0f,0.0f,0.0f)))
+	if (any(ray_dir == zeroed_float3))
 		return false;
 
 	// Setup the voxel coords from the camera origin
@@ -252,7 +260,7 @@ bool cast_light_intersection_ray(
 	// for negative values, wrap around the delta_t
 	intersection_t += delta_t * -convert_float3(isless(intersection_t, 0));
 
-	int3 face_mask = { 0, 0, 0 };
+	int3 face_mask =zeroed_int3;
 	int length_cutoff = 0;
 
 	// Andrew Woo's raycasting algo
@@ -344,7 +352,7 @@ __kernel void raycaster(
 
     // Delta T is the units a ray must travel along an axis in order to
     // traverse an integer split
-	if (any(ray_dir == (0.0f,0.0f,0.0f)))
+	if (any(ray_dir == zeroed_float3))
 		return;
 	float3 delta_t = fabs(1.0f / ray_dir);
 
@@ -366,11 +374,11 @@ __kernel void raycaster(
 	uint bounce_count = 0;
 	int3 face_mask = { 0, 0, 0 };
 	int voxel_data = 0;
-	float3 face_position = (0,0,0);
-	float4 voxel_color= (0,0,0,0);
-	float2 tile_face_position = (0,0);
-	float3 sign = (0,0,0);
-	float4 first_strike = (0,0,0,0);
+	float3 face_position = zeroed_float3;
+	float4 voxel_color= zeroed_float4;
+	float2 tile_face_position = zeroed_float2;
+	float3 sign = zeroed_float3;
+	float4 first_strike = zeroed_float4;
 
 	bool shadow_ray = false;
 
@@ -386,35 +394,35 @@ __kernel void raycaster(
 		if (any(voxel >= *map_dim) || any(voxel < 0)){
 			voxel_data = 5;
 			voxel.xyz -= voxel_step.xyz * face_mask.xyz;
-			first_strike = mix(fog_color, voxel_color, 1.0 - max(distance_traveled / 700.0f, (float)0));
+			first_strike = mix(fog_color, voxel_color, 1.0f - max(distance_traveled / 700.0f, 0.0f));
 		}
 
 
 
         // If we hit a voxel
-		// if (voxel.x < 128 && voxel.y < 128 && voxel.z < 128){
-		// 	if (get_oct_vox(
-		// 		voxel,
-		// 		octree_descriptor_buffer,
-		// 		octree_attachment_lookup_buffer,
-		// 		octree_attachment_buffer,
-		// 		settings_buffer
-		// 		)){
-		// 			voxel_data = 1;
-		// 		} else {
-		// 			voxel_data = 0;
-		// 		}
-		// } else {
+		if (voxel.x < 64 && voxel.y < 64 && voxel.z < 64){
+		 	if (get_oct_vox(
+		 		voxel,
+		 		octree_descriptor_buffer,
+		 		octree_attachment_lookup_buffer,
+		 		octree_attachment_buffer,
+		 		settings_buffer
+		 		)){
+		 			voxel_data = 5;
+		 		} else {
+		 			voxel_data = 0;
+		 		}
+		} else {
 			voxel_data = map[voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z))];
-		//}
+		}
 
 
 		if (voxel_data != 0) {
 
 
 			// Determine where on the 2d plane the ray intersected
-			face_position = (float3)(0);
-			tile_face_position = (float2)(0);
+			face_position = zeroed_float3;
+			tile_face_position = zeroed_float2;
 			sign = (float3)(1.0f, 1.0f, 1.0f);
 
 			// First determine the percent of the way the ray is towards the next intersection_t
@@ -517,7 +525,7 @@ __kernel void raycaster(
 
 				float3 hit_pos = convert_float3(voxel) + face_position;
 				ray_dir = normalize((float3)(lights[4], lights[5], lights[6]) - hit_pos);
-				if (any(ray_dir == (0.0f,0.0f,0.0f)))
+				if (any(ray_dir == zeroed_float3))
 					return;
 
 				voxel -= voxel_step * face_mask;
@@ -539,13 +547,13 @@ __kernel void raycaster(
 						 convert_int2((float2)(3, 4) * convert_float2(*atlas_dim / *tile_dim))
 				).xyz/2;
 
-				voxel_color.w += 0.3f;
-				max_distance = 500;
+				voxel_color.w -= 0.3f;
+				max_distance = 700;
 				distance_traveled = 0;
 
 				float3 hit_pos = convert_float3(voxel) + face_position;
 				ray_dir *= sign;
-				if (any(ray_dir == (0.0f,0.0f,0.0f)))
+				if (any(ray_dir == zeroed_float3))
 					return;
 
 				voxel -= voxel_step * face_mask;
