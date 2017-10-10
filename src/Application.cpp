@@ -93,7 +93,7 @@ bool Application::init_events() {
 	window_handler->subscribe_to_publisher(&input_handler, vr::Event::EventType::Closed);
 	window_handler->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyPressed);
 
-	raycaster->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyPressed);
+	//raycaster->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyPressed);
 	//camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::JoystickMoved);
 	
 	return true;
@@ -118,14 +118,6 @@ bool Application::game_loop() {
 		while ((accumulator_time - step_size) >= step_size) {
 			accumulator_time -= step_size;
 			
-			sf::Vector3f light_pos = light_handle->get_position();
-			light_pos.x = sin(elapsed_time / 2) * 100 + 100;
-			light_handle->set_position(light_pos);
-
-			sf::Vector3f cam_pos = camera->get_position();
-			cam_pos.x = sin(elapsed_time / 2 + 3.141f) * 50 + 125;
-			camera->set_position(cam_pos);
-
 			// ==== DELTA TIME LOCKED ====
 		}
 
@@ -154,20 +146,6 @@ bool Application::game_loop() {
 		fps.draw();
 
 		Gui::do_render();
-
-		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar;
-		bool window_show = true;
-		
-
-		if (ImGui::BeginMenuBar())
-		{
-			if (ImGui::BeginMenu("Menu"))
-			{
-				ImGui::Button("asdoifjasodif");
-				ImGui::EndMenu();
-			}
-			ImGui::EndMenuBar();
-		}
 
 		ImGui::Begin("Window");
 		ImGui::InputText("filename", screenshot_buf, 128);
@@ -200,45 +178,6 @@ bool Application::game_loop() {
 		}
 		ImGui::End();
 
-
-		ImGui::Begin("Controller debugger");
-
-		ImDrawList* draw_list = ImGui::GetWindowDrawList();
-		static ImVec4 col = ImVec4(1.0f, 0.0f, 1.0f, 1.0f);
-		const ImVec2 p = ImGui::GetCursorScreenPos();
-		const ImU32 col32 = ImColor(col);
-
-		std::vector<float> axis_values = {
-			 sf::Joystick::getAxisPosition(0, sf::Joystick::Axis::X) / 2,
-			 sf::Joystick::getAxisPosition(0, sf::Joystick::Axis::Y) / 2,
-			 sf::Joystick::getAxisPosition(0, sf::Joystick::Axis::U) / 2,
-			 sf::Joystick::getAxisPosition(0, sf::Joystick::Axis::R) / 2,
-			 sf::Joystick::getAxisPosition(0, sf::Joystick::Axis::Z) / 2,
-			 sf::Joystick::getAxisPosition(0, sf::Joystick::Axis::V) / 2
-		};
-		
-		ImGui::Columns(3, "Axis's"); // 4-ways, with border
-		ImGui::Separator();
-		ImGui::Text("X Y"); ImGui::NextColumn();
-		ImGui::Text("U R"); ImGui::NextColumn();
-		ImGui::Text("Z V"); ImGui::NextColumn();
-		ImGui::Separator();
-
-		for (int i = 0; i < 3; i++) {
-			
-
-			float offset = ImGui::GetColumnWidth(i);
-			
-			draw_list->AddLine(ImVec2(p.x + 0 + offset * i, p.y + 50), ImVec2(p.x + 100 + offset * i, p.y + 50), col32, 1.0);
-			draw_list->AddLine(ImVec2(p.x + 50 + offset * i, p.y + 0), ImVec2(p.x + 50 + offset * i, p.y + 100), col32, 1.0);
-			draw_list->AddCircleFilled(ImVec2(p.x + axis_values[2 * i] + 50 + offset * i, p.y + axis_values[2 * i + 1] + 50), 6, col32, 32);
-			
-			ImGui::Dummy(ImVec2(100, 100));
-			ImGui::NextColumn();
-		}
-
-		
-		ImGui::End();
 
 		//ImGui::ShowTestWindow();
 

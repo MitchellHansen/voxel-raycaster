@@ -38,8 +38,8 @@
 class Application {
 
 public:	
-	const int WINDOW_X = 1536;
-	const int WINDOW_Y = 1024;
+	const int WINDOW_X = 1600;
+	const int WINDOW_Y = 900;
 
 	const int MAP_X = 256;
 	const int MAP_Y = 256;

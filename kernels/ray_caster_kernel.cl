@@ -39,7 +39,7 @@ __constant const ulong contour_mask = 0xFF00000000000000;
 // =========================================================================
 // ========================= RAYCASTER CONSTANTS ===========================
 
-constant float4 fog_color = { 0.73f, 0.81f, 0.89f, 0.8f };
+constant float4 fog_color = { 0.0f, 0.0f, 0.0f, 0.0f };
 constant float4 overshoot_color = { 0.00f, 0.00f, 0.00f, 0.00f };
 constant float4 overshoot_color_2 = { 0.00f, 0.00f, 0.00f, 0.00f };
 
@@ -67,7 +67,7 @@ float4 view_light(float4 in_color, float3 light, float4 light_color, float3 view
 	if (all(light == zeroed_float3))
 		return zeroed_float4;
 
-	float d = Distance(light) / 140.0f;
+	float d = Distance(light) / 280.0f;
 	d *= d;
 
 	float diffuse = max(dot(normalize(convert_float3(mask)), normalize(light)), 0.0f);
@@ -296,6 +296,7 @@ __kernel void raycaster(
 	float2 tile_face_position = zeroed_float2;
 	float3 sign = zeroed_float3;
 	float4 color_accumulator = zeroed_float4;
+	float fog_distance = 0.0f;
 
 	bool shadow_ray = false;
 
@@ -404,7 +405,7 @@ __kernel void raycaster(
 			// Now we detect what type of of voxel we intersected and decide whether
 			// to bend the ray, send out a light intersection ray, or add texture color
 
-			// SHADOWING
+			// TEXTURE HIT + SHADOW REDIRECTION
 			if (voxel_data == 5 && !shadow_ray){
 
 				shadow_ray = true;
@@ -422,9 +423,9 @@ __kernel void raycaster(
 							face_mask * voxel_step
 				);
 
+				fog_distance = distance_traveled;
+				max_distance = distance_traveled + DistanceBetweenPoints(convert_float3(voxel), (float3)(lights[4], lights[5], lights[6]));
 
-				max_distance = DistanceBetweenPoints(convert_float3(voxel), (float3)(lights[4], lights[5], lights[6]));
-				distance_traveled = 0;
 
 				float3 hit_pos = convert_float3(voxel) + face_position;
 				ray_dir = normalize((float3)(lights[4], lights[5], lights[6]) - hit_pos);
@@ -448,8 +449,8 @@ __kernel void raycaster(
 				).xyz/4;
 
 				voxel_color.w -= 0.0f;
-				max_distance = 700;
-				distance_traveled = 0;
+				//max_distance += 200;
+
 
 				float3 hit_pos = convert_float3(voxel) + face_position;
 				ray_dir *= sign;
@@ -478,6 +479,7 @@ __kernel void raycaster(
 		// At the bottom of the while loop, add one to the distance ticker
 		distance_traveled++;
     }
+	color_accumulator = mix(fog_color, color_accumulator, 1.0f - max(fog_distance / 700.0f, 0.0f));
 	write_imagef(
 		image,
 		pixel,
