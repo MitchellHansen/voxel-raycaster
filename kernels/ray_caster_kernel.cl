@@ -126,7 +126,7 @@ bool get_oct_vox(
 	parent_stack[parent_stack_position] = head;
 
 	// Set our initial dimension and the position at the corner of the oct to keep track of our position
-	int dimension = 64;
+	int dimension = 128;
 	int3 quad_position = zeroed_int3;
 
 	// While we are not at the required resolution
@@ -192,9 +192,16 @@ bool get_oct_vox(
 			// Negate it by one as it counts itself
 			int count = popcount((uchar)(head >> 16) & count_mask_8[mask_index]) - 1;
 
+			//bool jumping = false;
+			//if (far_bit_mask & descriptor_buffer[current_index])
+			//	jumping = true;
 			// access the element at which head points to and then add the specified number of indices
 			// to get to the correct child descriptor
 			current_index = current_index + (head & child_pointer_mask) + count;
+
+			//if (jumping == true)
+			//	current_index = descriptor_buffer[current_index];
+
 			head = octree_descriptor_buffer[current_index];
 
 			// Increment the parent stack position and put the new oct node as the parent
@@ -316,8 +323,10 @@ __kernel void raycaster(
 			break;
 		}
 
+		constant int vox_dim = 128;
+
         // If we hit a voxel
-		if (voxel.x < 64 && voxel.y < 64 && voxel.z < 64){
+		if (voxel.x < vox_dim && voxel.y < vox_dim && voxel.z < vox_dim){
 		 	if (get_oct_vox(
 		 		voxel,
 		 		octree_descriptor_buffer,

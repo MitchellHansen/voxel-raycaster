@@ -128,7 +128,15 @@ OctState Octree::GetVoxel(sf::Vector3i position) {
 
 			// access the element at which head points to and then add the specified number of indices
 			// to get to the correct child descriptor
-            current_index = current_index + (head & child_pointer_mask) + count;
+			bool jumping = false;
+			if (far_bit_mask & descriptor_buffer[current_index])
+				jumping = true;
+            
+			current_index = current_index + (head & child_pointer_mask) + count;
+			
+			if (jumping == true)
+				current_index = descriptor_buffer[current_index];
+
 			head = descriptor_buffer[current_index];
 
 			// Increment the parent stack position and put the new oct node as the parent
@@ -205,6 +213,7 @@ std::tuple<uint64_t, uint64_t> Octree::GenerationRecursion(char* data, sf::Vecto
 
 	}
 
+	// Array of <descriptors, position>
 	std::vector<std::tuple<uint64_t, uint64_t>> descriptor_position_array;
 
 	// Generate down the recursion, returning the descriptor of the current node
@@ -255,6 +264,10 @@ std::tuple<uint64_t, uint64_t> Octree::GenerationRecursion(char* data, sf::Vecto
 
 	} 
 
+	for (int i = 0; i < descriptor_position_array.size(); i++) {
+		std::get<1>(descriptor_position_array.at(i)) = descriptor_buffer_position - i;
+	}
+
 	unsigned int far_pointer_count = 0;
 	uint64_t far_pointer_block_position = descriptor_buffer_position;
 
@@ -263,7 +276,6 @@ std::tuple<uint64_t, uint64_t> Octree::GenerationRecursion(char* data, sf::Vecto
 	
 		// this is not the actual relative distance write, so we pessimistically guess that we will have
 		// the worst relative distance via the insertion size
-
 		int relative_distance = std::get<1>(descriptor_position_array.at(i)) - (descriptor_buffer_position - worst_case_insertion_size);
 
 		// check to see if we tripped the far pointer
