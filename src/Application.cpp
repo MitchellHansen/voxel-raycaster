@@ -37,7 +37,7 @@ bool Application::init_clcaster() {
 
 	// Init the raycaster with a specified dimension and a pointer to the source
 	// array style data
-	octree = std::make_shared<Map>(128, map.get());
+	octree = std::make_shared<Map>(256, map.get());
 	raycaster->assign_octree(octree);
 
 

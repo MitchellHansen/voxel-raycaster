@@ -245,9 +245,6 @@ std::tuple<uint64_t, uint64_t> Octree::GenerationRecursion(char* data, sf::Vecto
 			descriptor_position_array.push_back(child);
 		}
 	}
-
-	if (voxel_scale == 64)
-		std::cout << "WHoA";
 	
 	// We are working bottom up so we need to subtract from the stack position
 	// the amount of elements we want to use. In the worst case this will be 
