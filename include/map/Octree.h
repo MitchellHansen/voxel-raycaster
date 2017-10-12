@@ -22,7 +22,7 @@ struct OctState {
 class Octree {
 public:
 
-	static const int buffer_size = 100000;
+	static const int buffer_size = 300000;
 
 	Octree();
 	~Octree() {};
