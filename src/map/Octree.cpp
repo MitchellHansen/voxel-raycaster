@@ -126,16 +126,17 @@ OctState Octree::GetVoxel(sf::Vector3i position) {
 			// Negate it by one as it counts itself
 			int count = count_bits((uint8_t)(head >> 16) & count_mask_8[mask_index]) - 1;
 
+			// access the far point at which the head points too. Determine it's value, and add
+			// a count of the valid bits to the index
+			if (far_bit_mask & descriptor_buffer[current_index]) {
+				int far_pointer_index = current_index + (head & child_pointer_mask);
+				current_index = descriptor_buffer[far_pointer_index] + count;
+			} 
 			// access the element at which head points to and then add the specified number of indices
 			// to get to the correct child descriptor
-			bool jumping = false;
-			if (far_bit_mask & descriptor_buffer[current_index])
-				jumping = true;
-            
-			current_index = current_index + (head & child_pointer_mask) + count;
-			
-			if (jumping == true)
-				current_index = descriptor_buffer[current_index];
+			else {
+				current_index = current_index + (head & child_pointer_mask) + count;
+			}
 
 			head = descriptor_buffer[current_index];
 
@@ -192,6 +193,7 @@ std::tuple<uint64_t, uint64_t> Octree::GenerationRecursion(char* data, sf::Vecto
 	// absolute position of it within the descriptor buffer
 	std::tuple<uint64_t, uint64_t> descriptor_and_position(0, 0);
 
+
 	// If we hit the 1th voxel scale then we need to query the 3D grid
 	// and get the voxel at that position. I assume in the future when I
 	// want to do chunking / loading of raw data I can edit the voxel access
@@ -243,6 +245,9 @@ std::tuple<uint64_t, uint64_t> Octree::GenerationRecursion(char* data, sf::Vecto
 			descriptor_position_array.push_back(child);
 		}
 	}
+
+	if (voxel_scale == 64)
+		std::cout << "WHoA";
 	
 	// We are working bottom up so we need to subtract from the stack position
 	// the amount of elements we want to use. In the worst case this will be 
@@ -254,7 +259,7 @@ std::tuple<uint64_t, uint64_t> Octree::GenerationRecursion(char* data, sf::Vecto
 	if (page_header_counter - worst_case_insertion_size <= 0) {
 		
 		// Jump to the page headers position and reset the counter
-		descriptor_buffer_position -= 0x8000 - page_header_counter;
+		descriptor_buffer_position -= page_header_counter;
 		page_header_counter = 0x8000;
 
 		// Fill the space with blank
@@ -264,11 +269,13 @@ std::tuple<uint64_t, uint64_t> Octree::GenerationRecursion(char* data, sf::Vecto
 
 	} 
 
-	for (int i = 0; i < descriptor_position_array.size(); i++) {
-		std::get<1>(descriptor_position_array.at(i)) = descriptor_buffer_position - i;
-	}
+	//for (int i = 0; i < descriptor_position_array.size(); i++) {
+	//	std::get<1>(descriptor_position_array.at(i)) = descriptor_buffer_position - i;
+	//}
 
 	unsigned int far_pointer_count = 0;
+
+	// If looking "up" to zero, the far ptr is entered first before the cp block. Get it's position
 	uint64_t far_pointer_block_position = descriptor_buffer_position;
 
 	// Count the far pointers we need to allocate 
@@ -302,7 +309,8 @@ std::tuple<uint64_t, uint64_t> Octree::GenerationRecursion(char* data, sf::Vecto
 		if (relative_distance > 0x8000) {
 
 			descriptor |= far_bit_mask;
-			descriptor |= far_pointer_block_position;
+			// The distance from this cp to the far ptr
+			descriptor |= far_pointer_block_position - descriptor_buffer_position;
 
 			far_pointer_block_position--;
 		
