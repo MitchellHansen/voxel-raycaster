@@ -77,16 +77,10 @@ public:
 	static const uint8_t idx_set_z_mask = 0x4;
 
 	// Mask for checking if valid or leaf
-	const uint8_t mask_8[8] = {
-		0x1,  0x2,  0x4,  0x8,
-		0x10, 0x20, 0x40, 0x80
-	};
+	static const uint8_t mask_8[8];
 
 	// Mask for counting the previous valid bits
-	const uint8_t count_mask_8[8] = {
-		0x1,  0x3,  0x7,  0xF,
-		0x1F, 0x3F, 0x7F, 0xFF
-	};
+	static const uint8_t count_mask_8[8];
 
 
 	// uint64_t manipulation masks

@@ -69,20 +69,11 @@ OctState Octree::GetVoxel(sf::Vector3i position) {
 	//				Break
 	while (dimension > 1) {
 
-		// So we can be a little bit tricky here and increment our
-		// array index that holds our masks as we build the idx. 
-		// Adding 1 for X, 2 for Y, and 4 for Z
-		int mask_index = 0;
-
-
 		// Do the logic steps to find which sub oct we step down into
 		if (position.x >= (dimension / 2) + state.oct_pos.x) {
 
 			// Set our voxel position to the (0,0) of the correct oct
 			state.oct_pos.x += (dimension / 2);
-
-			// increment the mask index and mentioned above
-			mask_index += 1;
 
 			// Set the idx to represent the move
 			state.idx_stack[state.scale] |= idx_set_x_mask;
@@ -90,9 +81,8 @@ OctState Octree::GetVoxel(sf::Vector3i position) {
 		}
 		if (position.y >= (dimension / 2) + state.oct_pos.y) {
 
-			state.oct_pos.y |= (dimension / 2);
-
-			mask_index += 2;
+			// TODO What the hell is going on with the or operator on this one!??!?!?!
+			state.oct_pos.y += (dimension / 2);
 
             // TODO What is up with the XOR operator that was on this one?
 			state.idx_stack[state.scale] |= idx_set_y_mask;
@@ -102,11 +92,13 @@ OctState Octree::GetVoxel(sf::Vector3i position) {
 
 			state.oct_pos.z += (dimension / 2);
 
-			mask_index += 4;
-
 			state.idx_stack[state.scale] |= idx_set_z_mask;
 
 		}
+
+		// Our count mask matches the way we index our idx so we can just 
+		// copy it over
+		int mask_index = state.idx_stack[state.scale];
 
 		// Check to see if we are on a valid oct
 		if ((head >> 16) & mask_8[mask_index]) {
@@ -367,3 +359,13 @@ bool Octree::Validate(char* data, sf::Vector3i dimensions){
 unsigned int Octree::getDimensions() {
 	return oct_dimensions;
 }
+
+const uint8_t Octree::mask_8[8] = {
+	0x1,  0x2,  0x4,  0x8,
+	0x10, 0x20, 0x40, 0x80
+};
+
+const uint8_t Octree::count_mask_8[8] = {
+	0x1,  0x3,  0x7,  0xF,
+	0x1F, 0x3F, 0x7F, 0xFF
+};

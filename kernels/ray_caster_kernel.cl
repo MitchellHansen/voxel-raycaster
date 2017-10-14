@@ -16,6 +16,7 @@ __constant int2 zeroed_int2     = {0, 0};
 __constant const uchar idx_set_x_mask = 0x1;
 __constant const uchar idx_set_y_mask = 0x2;
 __constant const uchar idx_set_z_mask = 0x4;
+__constant const uchar idx_set_mask = {0x1, 0x2, 0x4};
 
 __constant const uchar mask_8[8] = {
 	0x1,  0x2,  0x4,  0x8,
@@ -113,7 +114,6 @@ bool get_oct_vox(
 	ulong current_index = *settings_buffer;
 	ulong head = octree_descriptor_buffer[current_index];
 
-	uint parent_stack_position = 0;
 	ulong parent_stack[32];
 
 	uchar scale = 0;
@@ -123,7 +123,7 @@ bool get_oct_vox(
 
 	bool found = false;
 
-	parent_stack[parent_stack_position] = head;
+	parent_stack[scale] = head;
 
 	// Set our initial dimension and the position at the corner of the oct to keep track of our position
 	int dimension = OCTDIM;
@@ -139,21 +139,18 @@ bool get_oct_vox(
 	//
 	//			No?
 	//				Break
-	while (dimension > 1) {
+	while (dimension > 64) {
 
 		// So we can be a little bit tricky here and increment our
 		// array index that holds our masks as we build the idx.
 		// Adding 1 for X, 2 for Y, and 4 for Z
-		int mask_index = 0;
+		idx_stack[scale] = 0;
 
-		// Do the logic steps to find which sub oct we step down into
+		//	Do the logic steps to find which sub oct we step down into
 		if (position.x >= (dimension / 2) + quad_position.x) {
 
 			// Set our voxel position to the (0,0) of the correct oct
 			quad_position.x += (dimension / 2);
-
-			// increment the mask index and mentioned above
-			mask_index += 1;
 
 			// Set the idx to represent the move
 			idx_stack[scale] |= idx_set_x_mask;
@@ -161,17 +158,17 @@ bool get_oct_vox(
 		}
 		if (position.y >= (dimension / 2) + quad_position.y) {
 
-			quad_position.y |= (dimension / 2);
-			mask_index += 2;
+			quad_position.y += (dimension / 2);
 			idx_stack[scale] |= idx_set_y_mask;
 
 		}
 		if (position.z >= (dimension / 2) + quad_position.z) {
 
 			quad_position.z += (dimension / 2);
-			mask_index += 4;
 			idx_stack[scale] |= idx_set_z_mask;
 		}
+
+		int mask_index = idx_stack[scale];
 
 		// Check to see if we are on a valid oct
 		if ((head >> 16) & mask_8[mask_index]) {
@@ -205,9 +202,8 @@ bool get_oct_vox(
 			}
 			head = octree_descriptor_buffer[current_index];
 
-			// Increment the parent stack position and put the new oct node as the parent
-			parent_stack_position++;
-			parent_stack[parent_stack_position] = head;
+
+			parent_stack[scale] = head;
 
 		}
 		else {
@@ -285,7 +281,13 @@ __kernel void raycaster(
 	// for all 3 axis XYZ. We take the full positive cardinality when
 	// subtracting the floor, so we must transfer the sign over from
 	// the voxel step
-	float3 intersection_t = delta_t * ((*cam_pos) - ceil(*cam_pos)) * convert_float3(voxel_step);
+
+	// handle the case where we're smack on 0 for the camera position
+	float modifier = 0.0f;
+	if (any(((*cam_pos) - ceil(*cam_pos) == 0.0f)))
+		modifier = 0.000001f;
+
+	float3 intersection_t = delta_t * ((*cam_pos) - ceil(*cam_pos) + modifier) * convert_float3(voxel_step);
 
 	// When we transfer the sign over, we get the correct direction of
 	// the offset, but we merely transposed over the value instead of mirroring
@@ -309,7 +311,7 @@ __kernel void raycaster(
 	bool shadow_ray = false;
 
 	// Andrew Woo's raycasting algo
-    while (distance_traveled < max_distance && bounce_count < 4) {
+    while (distance_traveled < max_distance && bounce_count < 2) {
 
 		// Fancy no branch version of the logic step
 		face_mask = intersection_t.xyz <= min(intersection_t.yzx, intersection_t.zxy);
@@ -326,26 +328,26 @@ __kernel void raycaster(
 
 		constant int vox_dim = OCTDIM;
 
-        // If we hit a voxel
-		if (voxel.x < vox_dim && voxel.y < vox_dim && voxel.z < vox_dim){
-		 	if (get_oct_vox(
-		 		voxel,
-		 		octree_descriptor_buffer,
-		 		octree_attachment_lookup_buffer,
-		 		octree_attachment_buffer,
-		 		settings_buffer
-		 		)){
-		 			voxel_data = 5;
-		 		} else {
-		 			voxel_data = 0;
-		 		}
-		} else {
+        // // If we hit a voxel
+		// if (voxel.x < vox_dim && voxel.y < vox_dim && voxel.z < vox_dim){
+		//  	if (get_oct_vox(
+		//  		voxel,
+		//  		octree_descriptor_buffer,
+		//  		octree_attachment_lookup_buffer,
+		//  		octree_attachment_buffer,
+		//  		settings_buffer
+		//  		)){
+		//  			voxel_data = 5;
+		//  		} else {
+		//  			voxel_data = 0;
+		//  		}
+		// } else {
 			voxel_data = map[voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z))];
-		}
+		//}
 
 
-		if (voxel_data != 0) {
 
+		if (voxel_data == 5 || voxel_data == 6) {
 			// Determine where on the 2d plane the ray intersected
 			face_position = zeroed_float3;
 			tile_face_position = zeroed_float2;
@@ -415,7 +417,7 @@ __kernel void raycaster(
 			// Now we detect what type of of voxel we intersected and decide whether
 			// to bend the ray, send out a light intersection ray, or add texture color
 
-			// TEXTURE HIT + SHADOW REDIRECTION
+			// TEXTURE HIT + SHADOW RAY REDIRECTION
 			if (voxel_data == 5 && !shadow_ray){
 
 				shadow_ray = true;
@@ -435,7 +437,6 @@ __kernel void raycaster(
 
 				fog_distance = distance_traveled;
 				max_distance = distance_traveled + DistanceBetweenPoints(convert_float3(voxel), (float3)(lights[4], lights[5], lights[6]));
-
 
 				float3 hit_pos = convert_float3(voxel) + face_position;
 				ray_dir = normalize((float3)(lights[4], lights[5], lights[6]) - hit_pos);
@@ -459,8 +460,6 @@ __kernel void raycaster(
 				).xyz/4;
 
 				voxel_color.w -= 0.0f;
-				//max_distance += 200;
-
 
 				float3 hit_pos = convert_float3(voxel) + face_position;
 				ray_dir *= sign;
@@ -470,8 +469,6 @@ __kernel void raycaster(
 				voxel -= voxel_step * face_mask;
 				voxel_step = ( 1, 1, 1 );
 				voxel_step *= (ray_dir > 0) - (ray_dir < 0);
-
-				//voxel = convert_int3(hit_pos);
 
 				delta_t = fabs(1.0f / ray_dir);
 				intersection_t = delta_t * ((hit_pos)-floor(hit_pos)) * convert_float3(voxel_step);

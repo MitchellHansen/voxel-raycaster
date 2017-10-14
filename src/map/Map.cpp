@@ -52,17 +52,19 @@ Map::Map(uint32_t dimensions, Old_Map* array_map) {
 
 bool Map::test_oct_arr_traversal(sf::Vector3i dimensions) {
 
-	sf::Vector2f cam_dir(0.95, 0.81);
-	sf::Vector3f cam_pos(10.5, 10.5, 10.5);
-	std::vector<std::tuple<sf::Vector3i, char>> list1 = CastRayCharArray(voxel_data, &dimensions, &cam_dir, &cam_pos);
-	std::vector<std::tuple<sf::Vector3i, char>> list2 = CastRayOctree(&octree, &dimensions, &cam_dir, &cam_pos);
+	//sf::Vector2f cam_dir(0.95, 0.81);
+	//sf::Vector3f cam_pos(10.5, 10.5, 10.5);
+	//std::vector<std::tuple<sf::Vector3i, char>> list1 = CastRayCharArray(voxel_data, &dimensions, &cam_dir, &cam_pos);
+	//std::vector<std::tuple<sf::Vector3i, char>> list2 = CastRayOctree(&octree, &dimensions, &cam_dir, &cam_pos);
 
-	if (list1 != list2) {
-		return false;
-	} else {
-		return true;
-	}
+	//if (list1 != list2) {
+	//	return false;
+	//} else {
+	//	return true;
+	//}
 
+
+	return false;
 }
 
 void Map::setVoxel(sf::Vector3i pos, int val) {
@@ -115,12 +117,6 @@ std::vector<std::tuple<sf::Vector3i, char>>  Map::CastRayCharArray(
 	voxel_step.x *= (ray_dir.x > 0) - (ray_dir.x < 0);
 	voxel_step.y *= (ray_dir.y > 0) - (ray_dir.y < 0);
 	voxel_step.z *= (ray_dir.z > 0) - (ray_dir.z < 0);
-
-
-	// =================================================================================================
-	// =================================================================================================
-	// =================================================================================================
-	// =================================================================================================
 
 
 	// Delta T is the units a ray must travel along an axis in order to
@@ -196,7 +192,7 @@ std::vector<std::tuple<sf::Vector3i, char>> Map::CastRayOctree(
 ) {
 
 	// Setup the voxel coords from the camera origin
-	sf::Vector3i voxel(*cam_pos);
+	sf::Vector3i voxel(0,0,0);
 
 	// THIS DOES NOT HAVE TO RETURN TRUE ON FOUND
 	// This function when passed an "air" voxel will return as far down
@@ -238,9 +234,8 @@ std::vector<std::tuple<sf::Vector3i, char>> Map::CastRayOctree(
 	voxel_step.z *= (ray_dir.z > 0) - (ray_dir.z < 0);
 	
 	// set the jump multiplier based on the traversal state vs the log base 2 of the maps dimensions
-	int jump_power = 1;
-	if (log2(map_dim->x) != traversal_state.scale)
-		jump_power = pow(2, traversal_state.scale);
+	int jump_power = log2(map_dim->x) - traversal_state.scale;
+
 
 	// Delta T is the units a ray must travel along an axis in order to
 	// traverse an integer split
@@ -316,17 +311,21 @@ std::vector<std::tuple<sf::Vector3i, char>> Map::CastRayOctree(
 		}
 
 		traversal_state.idx_stack[traversal_state.scale] ^= this_face_mask;
+		int mask_index = traversal_state.idx_stack[traversal_state.scale];
 
 		// Check to see if the idx increased or decreased	
 		// If it decreased
-		//		Pop up the stack until the oct that the ray is within is valid.
-		while (traversal_state.idx_stack[traversal_state.scale] < prev_val) {
+		//		Pop up the stack until the oct that the idx flip is valid and we landed on a valid oct
+		while (traversal_state.idx_stack[traversal_state.scale] < prev_val ||
+			!((traversal_state.parent_stack[traversal_state.parent_stack_position] >> 16) & Octree::mask_8[mask_index])
+			) {
 			
 			jump_power *= 2;
 			
-			traversal_state.oct_pos.x;
-			traversal_state.oct_pos.y;
-			traversal_state.oct_pos.z;
+			// Keep track of the 0th edge of out current oct
+			traversal_state.oct_pos.x = floor(voxel.x / 2) * jump_power;
+			traversal_state.oct_pos.y = floor(voxel.x / 2) * jump_power;
+			traversal_state.oct_pos.z = floor(voxel.x / 2) * jump_power;
 
 			// Clear and pop the idx stack
 			traversal_state.idx_stack[traversal_state.scale] = 0;
@@ -345,10 +344,21 @@ std::vector<std::tuple<sf::Vector3i, char>> Map::CastRayOctree(
 			
 			// Apply the face mask to the new idx for the while check
 			traversal_state.idx_stack[traversal_state.scale] ^= this_face_mask;
-
+			mask_index = traversal_state.idx_stack[traversal_state.scale];
 		}
 		
-		
+
+		// Check to see if we are on a valid oct
+		//if ((traversal_state.parent_stack[traversal_state.parent_stack_position] >> 16) & Octree::mask_8[mask_index]) {
+
+		//	// Check to see if it is a leaf
+		//	if ((traversal_state.parent_stack[traversal_state.parent_stack_position] >> 24) & Octree::mask_8[mask_index]) {
+
+		//		// If it is, then we cannot traverse further as CP's won't have been generated
+		//		state.found = 1;
+		//		return state;
+		//	}
+		//}
 		//	Check to see if we are on top of a valid branch
 		//	Traverse down to the lowest valid oct that the ray is within
 
