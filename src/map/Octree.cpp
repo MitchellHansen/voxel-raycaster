@@ -45,6 +45,8 @@ OctState Octree::GetVoxel(sf::Vector3i position) {
 	// Struct that holds the state necessary to continue the traversal from the found voxel
 	OctState state;
 
+	state.oct_pos = sf::Vector3i(0,0,0);
+
 	// push the root node to the parent stack
     uint64_t current_index = root_index;
     uint64_t head = descriptor_buffer[current_index];
@@ -54,7 +56,6 @@ OctState Octree::GetVoxel(sf::Vector3i position) {
 
 	// Set our initial dimension and the position at the corner of the oct to keep track of our position
 	int dimension = oct_dimensions;
-	sf::Vector3i quad_position(0, 0, 0);
 
 	// While we are not at the required resolution
 	//		Traverse down by setting the valid/leaf mask to the subvoxel
@@ -75,10 +76,10 @@ OctState Octree::GetVoxel(sf::Vector3i position) {
 
 
 		// Do the logic steps to find which sub oct we step down into
-		if (position.x >= (dimension / 2) + quad_position.x) {
+		if (position.x >= (dimension / 2) + state.oct_pos.x) {
 
 			// Set our voxel position to the (0,0) of the correct oct
-			quad_position.x += (dimension / 2);
+			state.oct_pos.x += (dimension / 2);
 
 			// increment the mask index and mentioned above
 			mask_index += 1;
@@ -87,19 +88,19 @@ OctState Octree::GetVoxel(sf::Vector3i position) {
 			state.idx_stack[state.scale] |= idx_set_x_mask;
 
 		}
-		if (position.y >= (dimension / 2) + quad_position.y) {
+		if (position.y >= (dimension / 2) + state.oct_pos.y) {
 
-			quad_position.y |= (dimension / 2);
+			state.oct_pos.y |= (dimension / 2);
 
 			mask_index += 2;
 
-            // TODO What is up with the binary operator on this one? 
-			state.idx_stack[state.scale] ^= idx_set_y_mask;
+            // TODO What is up with the XOR operator that was on this one?
+			state.idx_stack[state.scale] |= idx_set_y_mask;
 
 		}
-		if (position.z >= (dimension / 2) + quad_position.z) {
+		if (position.z >= (dimension / 2) + state.oct_pos.z) {
 
-			quad_position.z += (dimension / 2);
+			state.oct_pos.z += (dimension / 2);
 
 			mask_index += 4;
 

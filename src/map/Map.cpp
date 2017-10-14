@@ -80,6 +80,8 @@ std::vector<std::tuple<sf::Vector3i, char>>  Map::CastRayCharArray(
 	sf::Vector2f* cam_dir,
 	sf::Vector3f* cam_pos
 ) {
+	// Setup the voxel coords from the camera origin
+	sf::Vector3i voxel(*cam_pos);
 
 	std::vector<std::tuple<sf::Vector3i, char>> travel_path;
 
@@ -99,6 +101,13 @@ std::vector<std::tuple<sf::Vector3i, char>>  Map::CastRayCharArray(
 		ray_dir.z
 	);
 
+	// correct for the base ray pointing to (1, 0, 0) as (0, 0). Should equal (1.57, 0)
+	ray_dir = sf::Vector3f(
+		static_cast<float>(ray_dir.z * sin(-1.57) + ray_dir.x * cos(-1.57)),
+		static_cast<float>(ray_dir.y),
+		static_cast<float>(ray_dir.z * cos(-1.57) - ray_dir.x * sin(-1.57))
+	);
+
 
 	// Setup the voxel step based on what direction the ray is pointing
 	sf::Vector3i voxel_step(1, 1, 1);
@@ -107,8 +116,12 @@ std::vector<std::tuple<sf::Vector3i, char>>  Map::CastRayCharArray(
 	voxel_step.y *= (ray_dir.y > 0) - (ray_dir.y < 0);
 	voxel_step.z *= (ray_dir.z > 0) - (ray_dir.z < 0);
 
-	// Setup the voxel coords from the camera origin
-	sf::Vector3i voxel(*cam_pos);
+
+	// =================================================================================================
+	// =================================================================================================
+	// =================================================================================================
+	// =================================================================================================
+
 
 	// Delta T is the units a ray must travel along an axis in order to
 	// traverse an integer split
@@ -223,7 +236,7 @@ std::vector<std::tuple<sf::Vector3i, char>> Map::CastRayOctree(
 	voxel_step.x *= (ray_dir.x > 0) - (ray_dir.x < 0);
 	voxel_step.y *= (ray_dir.y > 0) - (ray_dir.y < 0);
 	voxel_step.z *= (ray_dir.z > 0) - (ray_dir.z < 0);
-
+	
 	// set the jump multiplier based on the traversal state vs the log base 2 of the maps dimensions
 	int jump_power = 1;
 	if (log2(map_dim->x) != traversal_state.scale)
@@ -287,17 +300,73 @@ std::vector<std::tuple<sf::Vector3i, char>> Map::CastRayOctree(
 		voxel.y += voxel_step.y * face_mask.y * jump_power;
 		voxel.z += voxel_step.z * face_mask.z * jump_power;
 
+		uint8_t prev_val = traversal_state.idx_stack[traversal_state.scale];
+		uint8_t this_face_mask = 0;
 
-		if (face_mask.x != 0) {
+		// Check the voxel face that we traversed
+		// and increment the idx in the idx stack
+		if (face_mask.x) {
+			this_face_mask = Octree::idx_set_x_mask;
+		}
+		else if (face_mask.y) {
+			this_face_mask = Octree::idx_set_y_mask;
+		}
+		else if (face_mask.z) {
+			this_face_mask = Octree::idx_set_z_mask;
+		}
+
+		traversal_state.idx_stack[traversal_state.scale] ^= this_face_mask;
+
+		// Check to see if the idx increased or decreased	
+		// If it decreased
+		//		Pop up the stack until the oct that the ray is within is valid.
+		while (traversal_state.idx_stack[traversal_state.scale] < prev_val) {
 			
-		}
-		if (face_mask.y != 0) {
+			jump_power *= 2;
+			
+			traversal_state.oct_pos.x;
+			traversal_state.oct_pos.y;
+			traversal_state.oct_pos.z;
+
+			// Clear and pop the idx stack
+			traversal_state.idx_stack[traversal_state.scale] = 0;
+			traversal_state.scale--;
+			
+			// Update the prev_val for our new idx
+			prev_val = traversal_state.idx_stack[traversal_state.scale];
+			
+			// Clear and pop the parent stack, maybe off by one error?
+			traversal_state.parent_stack[traversal_state.parent_stack_position] = 0;
+			traversal_state.parent_stack_position--;
+
+			// Set the current CD to the one on top of the stack
+			traversal_state.current_descriptor =
+				traversal_state.parent_stack[traversal_state.parent_stack_position];
+			
+			// Apply the face mask to the new idx for the while check
+			traversal_state.idx_stack[traversal_state.scale] ^= this_face_mask;
 
 		}
-		if (face_mask.z != 0) {
+		
+		
+		//	Check to see if we are on top of a valid branch
+		//	Traverse down to the lowest valid oct that the ray is within
 
-		}
+		// When we pass a split, then that means that we traversed SCALE number of voxels in that direction
 
+
+		// while the bit is valid and we are not bottomed out
+		//		get the cp of the valid branch
+		//		
+		//
+		//
+		//
+
+
+
+	
+	
+	
 		if (voxel.x >= map_dim->x || voxel.y >= map_dim->y || voxel.z >= map_dim->z) {
 			return travel_path;
 		}

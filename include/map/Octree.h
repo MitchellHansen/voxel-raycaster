@@ -14,6 +14,8 @@ struct OctState {
 
 	uint64_t current_descriptor;
 
+	sf::Vector3i oct_pos;
+
 	// ====== DEBUG =======
 	char found = 1;
 };
@@ -68,6 +70,33 @@ public:
     bool Validate(char* data, sf::Vector3i dimensions); 
 
 	unsigned int getDimensions();
+
+	// (X, Y, Z) mask for the idx
+	static const uint8_t idx_set_x_mask = 0x1;
+	static const uint8_t idx_set_y_mask = 0x2;
+	static const uint8_t idx_set_z_mask = 0x4;
+
+	// Mask for checking if valid or leaf
+	const uint8_t mask_8[8] = {
+		0x1,  0x2,  0x4,  0x8,
+		0x10, 0x20, 0x40, 0x80
+	};
+
+	// Mask for counting the previous valid bits
+	const uint8_t count_mask_8[8] = {
+		0x1,  0x3,  0x7,  0xF,
+		0x1F, 0x3F, 0x7F, 0xFF
+	};
+
+
+	// uint64_t manipulation masks
+	static const uint64_t child_pointer_mask = 0x0000000000007fff;
+	static const uint64_t far_bit_mask = 0x8000;
+	static const uint64_t valid_mask = 0xFF0000;
+	static const uint64_t leaf_mask = 0xFF000000;
+	static const uint64_t contour_pointer_mask = 0xFFFFFF00000000;
+	static const uint64_t contour_mask = 0xFF00000000000000;
+
 private:
 
 	unsigned int oct_dimensions = 1;
@@ -84,31 +113,7 @@ private:
 	std::vector<uint64_t> anchor_stack;
 	unsigned int octree_voxel_dimension = 32;
 
-	// (X, Y, Z) mask for the idx
-	const uint8_t idx_set_x_mask = 0x1;
-	const uint8_t idx_set_y_mask = 0x2;
-	const uint8_t idx_set_z_mask = 0x4;
 
-	// Mask for checking if valid or leaf
-	const uint8_t mask_8[8] = {
-		0x1,  0x2,  0x4,  0x8,
-		0x10, 0x20, 0x40, 0x80
-	};
-
-	// Mask for counting the previous valid bits
-	const uint8_t count_mask_8[8] = {
-		0x1,  0x3,  0x7,  0xF,
-		0x1F, 0x3F, 0x7F, 0xFF
-	};
-
-
-	// uint64_t manipulation masks
-	const uint64_t child_pointer_mask = 0x0000000000007fff;
-	const uint64_t far_bit_mask = 0x8000;
-	const uint64_t valid_mask = 0xFF0000;
-	const uint64_t leaf_mask = 0xFF000000;
-	const uint64_t contour_pointer_mask = 0xFFFFFF00000000;
-	const uint64_t contour_mask = 0xFF00000000000000;
 
 
 	// ======= DEBUG ===========
