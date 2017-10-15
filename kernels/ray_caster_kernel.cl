@@ -68,24 +68,28 @@ float4 view_light(float4 in_color, float3 light, float4 light_color, float3 view
 	if (all(light == zeroed_float3))
 		return zeroed_float4;
 
-	float d = Distance(light) / 280.0f;
+	float d = Distance(light) / 120.0f;
 	d *= d;
 
-	float diffuse = max(dot(normalize(convert_float3(mask)), normalize(light)), 0.0f);
-	in_color += diffuse * light_color * 0.5f / d;
+	float diffuse = max(dot(normalize(convert_float3(mask)), normalize(light)), 0.1f);
+	float specular = 0.0f;
 
-	if (dot(light, normalize(convert_float3(mask))) > 0.0f)
+	if (diffuse > 0.0f)
 	{
 		// Small dots of light are caused by floating point error
 		// flipping bits on the face mask and screwing up this calculation
 		float3 halfwayVector = normalize(normalize(light) + normalize(view));
 		float specTmp = max(dot(normalize(convert_float3(mask)), halfwayVector), 0.0f);
-		in_color += pow(specTmp, 8.0f) * light_color * 0.5f / d;
-	}
-	if (in_color.w > 1.0f){
-		in_color.xyz *= in_color.w;
+		specular = pow(specTmp, 1.0f);
 	}
 
+	in_color += diffuse * light_color + specular * light_color / d;
+
+	//in_color = pow(in_color, (float4)(1.0/2.2));
+	// This creates that blown out color look
+	//in_color.xyz += in_color.w * 0.002f;
+
+	//in_color.w += 0.8f;
 	return in_color;
 }
 
@@ -367,7 +371,7 @@ __kernel void raycaster(
 				// Since we intersected face x, we know that we are at the face (1.0)
 				// I think the 1.001f rendering bug is the ray thinking it's within the voxel
 				// even though it's sitting on the very edge
-				face_position = (float3)(1.0001f, y_percent, z_percent);
+				face_position = (float3)(1.00001f, y_percent, z_percent);
 				tile_face_position = face_position.yz;
 			}
 			else if (face_mask.y == -1) {
@@ -375,7 +379,7 @@ __kernel void raycaster(
 				sign.y *= -1.0;
 				float x_percent = (intersection_t.x - (intersection_t.y - delta_t.y)) / delta_t.x;
 				float z_percent = (intersection_t.z - (intersection_t.y - delta_t.y)) / delta_t.z;
-				face_position = (float3)(x_percent, 1.0001f, z_percent);
+				face_position = (float3)(x_percent, 1.00001f, z_percent);
 				tile_face_position = face_position.xz;
 			}
 
@@ -384,7 +388,7 @@ __kernel void raycaster(
 				sign.z *= -1.0;
 				float x_percent = (intersection_t.x - (intersection_t.z - delta_t.z)) / delta_t.x;
 				float y_percent = (intersection_t.y - (intersection_t.z - delta_t.z)) / delta_t.y;
-				face_position = (float3)(x_percent, y_percent, 1.0001f);
+				face_position = (float3)(x_percent, y_percent, 1.00001f);
 				tile_face_position = face_position.xy;
 
 			}
@@ -478,7 +482,7 @@ __kernel void raycaster(
 
 			// SHADOW RAY HIT
 			} else {
-				color_accumulator = 0;
+				color_accumulator.w = 0.1f;
 				break;
 			}
 		}
