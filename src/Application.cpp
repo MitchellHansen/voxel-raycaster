@@ -1,9 +1,7 @@
 #include "Application.h"
-#include <chrono>
-#include "imgui/imgui-SFML.h"
+
 
 Application::Application() {
-	//srand(time(nullptr));
 
 	window = std::make_shared<sf::RenderWindow>(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
 	window->setMouseCursorVisible(false);
@@ -28,23 +26,17 @@ bool Application::init_clcaster() {
 	if (!raycaster->init())
 		abort();
 
-	// Create and generate the old 3d array style map
-	map = std::make_shared<Old_Map>(sf::Vector3i(MAP_X, MAP_Y, MAP_Z));
-	map->generate_terrain();
+	map = std::make_shared<Map>(MAP_X);
+	sf::Image bitmap = map->GenerateHeightBitmap(sf::Vector3i(MAP_X, MAP_Y, MAP_Z));
+	map->ApplyHeightmap(bitmap);
 
-	// Send the data to the GPU
+	raycaster->assign_octree(map);
 	raycaster->assign_map(map);
-
-	// Init the raycaster with a specified dimension and a pointer to the source
-	// array style data
-	octree = std::make_shared<Map>(256, map.get());
-	raycaster->assign_octree(octree);
-
 
 	// Create a new camera with (starting position, direction)
 	camera = std::make_shared<Camera>(
-		sf::Vector3f(50, 50, 50),
-		sf::Vector2f(1.5f, 0.0f),
+		sf::Vector3f(50, 60, 10),
+		sf::Vector2f(1.5f, -2.0f),
 		window.get()
 	);
 
@@ -59,9 +51,9 @@ bool Application::init_clcaster() {
 
 	// Create a light prototype, send it to the controller, and get the handle back
 	LightPrototype prototype(
-		sf::Vector3f(100.0f, 156.0f, 58.0f),
+		sf::Vector3f(30, 30.0f, 30.0f),
 		sf::Vector3f(-1.0f, -1.0f, -1.5f),
-		sf::Vector4f(0.1f, 0.1f, 0.1f, 0.8f)
+		sf::Vector4f(0.01f, 0.01f, 0.01f, 0.2f)
 	);
 	light_handle = light_controller->create_light(prototype);
 

@@ -66,12 +66,12 @@ bool CLCaster::init() {
 
 }
 
-bool CLCaster::assign_map(std::shared_ptr<Old_Map> map) {
+bool CLCaster::assign_map(std::shared_ptr<Map> map) {
 	
 	this->map = map;
-	auto dimensions = map->getDimensions();
+	auto dimensions = map->array_map.getDimensions();
 
-	if (!create_buffer("map", sizeof(char) * dimensions.x * dimensions.y * dimensions.z, map->get_voxel_data()))
+	if (!create_buffer("map", sizeof(char) * dimensions.x * dimensions.y * dimensions.z, map->array_map.getDataPtr()))
 		return false;
 	if (!create_buffer("map_dimensions", sizeof(int) * 3, &dimensions))
 		return false;
@@ -92,17 +92,17 @@ bool CLCaster::release_map() {
 }
 
 
-bool CLCaster::assign_octree(std::shared_ptr<Map> octree) {
+bool CLCaster::assign_octree(std::shared_ptr<Map> map) {
 
-	this->octree = octree;
+	this->map = map;
 
-	if (!create_buffer("octree_descriptor_buffer", octree->octree.buffer_size * sizeof(uint64_t), octree->octree.descriptor_buffer))
+	if (!create_buffer("octree_descriptor_buffer", map->octree.buffer_size * sizeof(uint64_t), map->octree.descriptor_buffer))
 		return false;
-	if (!create_buffer("octree_attachment_lookup_buffer", octree->octree.buffer_size * sizeof(uint32_t), octree->octree.attachment_lookup))
+	if (!create_buffer("octree_attachment_lookup_buffer", map->octree.buffer_size * sizeof(uint32_t), map->octree.attachment_lookup))
 		return false;
-	if (!create_buffer("octree_attachment_buffer", octree->octree.buffer_size * sizeof(uint64_t), octree->octree.attachment_buffer))
+	if (!create_buffer("octree_attachment_buffer", map->octree.buffer_size * sizeof(uint64_t), map->octree.attachment_buffer))
 		return false;
-	if (!create_buffer("settings_buffer", sizeof(uint64_t), &octree->octree.root_index))
+	if (!create_buffer("settings_buffer", sizeof(uint64_t), &map->octree.root_index))
 		return false;
 
 	return true;
@@ -111,7 +111,7 @@ bool CLCaster::assign_octree(std::shared_ptr<Map> octree) {
 
 bool CLCaster::release_octree()
 {
-	this->octree = nullptr;
+	this->map = nullptr;
 
 	if (!release_buffer("octree_descriptor_buffer"))
 		return false;

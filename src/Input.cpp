@@ -9,13 +9,11 @@
 
 Input::Input() :
 	keyboard_flags(sf::Keyboard::Key::KeyCount, false),
-	mouse_flags(sf::Mouse::Button::ButtonCount, false)
-{
+	mouse_flags(sf::Mouse::Button::ButtonCount, false){
 
 }
 
-Input::~Input()
-{
+Input::~Input() {
 
 }
 
@@ -218,7 +216,7 @@ void Input::transpose_sf_events(std::list<sf::Event> sf_event_queue) {
 				break;
 			};
 
-			// Mouse wheel moved will generate a MouseWheelScrolled event with the defaul vertical wheel
+			// Mouse wheel moved will generate a MouseWheelScrolled event with the default vertical wheel
 			case sf::Event::MouseWheelMoved: {
 				event_queue.emplace_back(std::make_unique<vr::MouseWheelScrolled>(vr::MouseWheelScrolled(sf::Mouse::VerticalWheel, sf_event.mouseWheelScroll.delta, sf_event.mouseWheelScroll.x, sf_event.mouseWheelScroll.y)));
 				break;

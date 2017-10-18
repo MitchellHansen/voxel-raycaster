@@ -5,7 +5,6 @@
 #include <map>
 #include <string.h>
 #include "LightController.h"
-#include "map/Old_Map.h"
 #include "Camera.h"
 #include <GL/glew.h>
 #include <unordered_map>
@@ -115,11 +114,11 @@ public:
 	bool assign_lights(std::vector<PackedData> *data) ;
 
 	// We take a ptr to the map and create the map, and map_dimensions buffer for the GPU
-	bool assign_map(std::shared_ptr<Old_Map> map);
+	bool assign_map(std::shared_ptr<Map> map);
 	bool release_map();
 
 	// We take a ptr to the map and create the map, and map_dimensions buffer for the GPU
-	bool assign_octree(std::shared_ptr<Map> octree);
+	bool assign_octree(std::shared_ptr<Map> map);
 	bool release_octree();
 
 	// We take a ptr to the camera and create a camera direction and position buffer
@@ -287,8 +286,7 @@ private:
 	sf::Vector2i viewport_resolution;
 
 	std::shared_ptr<Camera> camera;
-	std::shared_ptr<Old_Map> map;
-	std::shared_ptr<Map> octree;
+	std::shared_ptr<Map> map;
 
 	std::vector<PackedData> *lights;
 	int light_count = 0;

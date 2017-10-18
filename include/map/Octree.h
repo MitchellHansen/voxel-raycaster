@@ -91,6 +91,13 @@ public:
 	static const uint64_t contour_pointer_mask = 0xFFFFFF00000000;
 	static const uint64_t contour_mask = 0xFF00000000000000;
 
+	std::vector<std::tuple<sf::Vector3i, char>> Octree::CastRayOctree(
+		Octree *octree,
+		sf::Vector3i* map_dim,
+		sf::Vector2f* cam_dir,
+		sf::Vector3f* cam_pos
+	);
+
 private:
 
 	unsigned int oct_dimensions = 1;

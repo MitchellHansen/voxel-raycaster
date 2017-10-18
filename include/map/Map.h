@@ -7,16 +7,35 @@
 #include "util.hpp"
 #include "map/Octree.h"
 #include <time.h>
-#include "map/Old_Map.h"
+#include "map/ArrayMap.h"
 
 #define _USE_MATH_DEFINES
 #include <math.h>
+
+
+
+// MonolithicMap
+//		Octree
+//		Map
+
+// Player
+//		Camera
+//		Movement interface
+//		Subscription to joystick events?
+
+// Player needs to have some way to query the map
+//	Map could return collision result
+//		Could handle multiple collision types, aabb, ray
+//	player could query map and generate collision
+//		Wouldn't need to make map more complex
+
+
 
 class Map {
 public: 
 
 	// Currently takes a 
-	Map(uint32_t dimensions, Old_Map* array_map);
+	Map(uint32_t dimensions);
 
 	// Sets a voxel in the 3D char dataset
 	void setVoxel(sf::Vector3i position, int val);
@@ -24,36 +43,36 @@ public:
 	// Gets a voxel at the 3D position in the octree
 	char getVoxel(sf::Vector3i pos);
 
-	std::vector<std::tuple<sf::Vector3i, char>> CastRayOctree(
-		Octree *octree,
-		sf::Vector3i* map_dim,
-		sf::Vector2f* cam_dir,
-		sf::Vector3f* cam_pos
-	);
-
-	std::vector<std::tuple<sf::Vector3i, char>> CastRayCharArray(
-		char *map,
-		sf::Vector3i* map_dim,
-		sf::Vector2f* cam_dir,
-		sf::Vector3f* cam_pos
-	);
+	// Return the position at which a generalized ray hits a voxel
+	sf::Vector3f LongRayIntersection(sf::Vector3f origin, sf::Vector3f magnitude);
 	
+	// Return the voxels that a box intersects / contains
+	std::vector<sf::Vector3i> BoxIntersection(sf::Vector3f origin, sf::Vector3f magnitude);
+	
+	// Return a normalized ray opposite of the intersected normals
+	sf::Vector3f ShortRayIntersection(sf::Vector3f origin, sf::Vector3f magnitude);
+	
+	sf::Image GenerateHeightBitmap(sf::Vector3i dimensions);
+
+	void ApplyHeightmap(sf::Image bitmap);
+
 	// Octree handles all basic octree operations
     Octree octree;
+	ArrayMap array_map;
 
 private:
-
-	bool test_oct_arr_traversal(sf::Vector3i dimensions);
 
 	// ======= DEBUG ===========
 	int counter = 0;
 	std::stringstream output_stream;
 	
-	// The 3D char dataset that is generated at runtime. This will be replaced by two different interactions.
-	// The first a file loading function that loads binary octree data.
-	// The second being an import tool which will allow Any -> Octree transformation.
-	char* voxel_data;
+	sf::Vector3i dimensions;
 	// =========================
+
+	double Sample(int x, int y, double *height_map);
+	void SetSample(int x, int y, double value, double *height_map);
+	void SampleSquare(int x, int y, int size, double value, double *height_map);
+	void SampleDiamond(int x, int y, int size, double value, double *height_map);
 
 };
 

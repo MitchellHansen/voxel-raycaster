@@ -23,13 +23,14 @@
 
 #include "util.hpp"
 #include <SFML/Graphics.hpp>
-#include "map/Old_Map.h"
 #include "CLCaster.h"
 #include "Camera.h"
 #include "Input.h"
 #include "LightController.h"
 #include "LightHandle.h"
 #include "map/Map.h"
+#include <chrono>
+#include "imgui/imgui-SFML.h"
 
 // Srsly people who macro error codes are the devil
 #undef ERROR
@@ -41,9 +42,9 @@ public:
 	const int WINDOW_X = 1600;
 	const int WINDOW_Y = 900;
 
-	const int MAP_X = 256;
-	const int MAP_Y = 256;
-	const int MAP_Z = 256;
+	const int MAP_X = 64;
+	const int MAP_Y = 64;
+	const int MAP_Z = 64;
 
 	Application();
 	~Application();
@@ -62,8 +63,7 @@ private:
 	sf::Texture spritesheet;
 
 	std::shared_ptr<sf::RenderWindow> window;
-	std::shared_ptr<Old_Map> map;
-	std::shared_ptr<Map> octree;
+	std::shared_ptr<Map> map;
 	std::shared_ptr<Camera> camera;
 	std::shared_ptr<CLCaster> raycaster;
 	std::shared_ptr<LightHandle> light_handle;

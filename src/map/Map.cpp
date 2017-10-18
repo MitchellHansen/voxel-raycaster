@@ -2,104 +2,53 @@
 #include "Logger.h"
 
 
-Map::Map(uint32_t dimensions, Old_Map* array_map) {
-
+Map::Map(uint32_t dimensions) : array_map(sf::Vector3i(dimensions, dimensions, dimensions)) {
 
 	if ((int)pow(2, (int)log2(dimensions)) != dimensions)
 		Logger::log("Map dimensions not an even exponent of 2", Logger::LogLevel::ERROR, __LINE__, __FILE__);
 
-	voxel_data = new char[dimensions * dimensions * dimensions];
-
-	// randomly set the voxel data for testing
-	for (uint64_t i = 0; i < dimensions * dimensions * dimensions; i++) {
-		//if (rand() % 10000 < 3)
-		//	voxel_data[i] = 1;
-		//else
-			voxel_data[i] = 0;
-	}
-
-	char* char_array = array_map->get_voxel_data();
-	sf::Vector3i arr_dimensions = array_map->getDimensions();
-
-	for (int x = 0; x < dimensions; x++) {
-		for (int y = 0; y < dimensions; y++) {
-			for (int z = 0; z < dimensions; z++) {
-				
-				char v = char_array[x + arr_dimensions.x * (y + arr_dimensions.z * z)];
-				if (v)
-					voxel_data[x + dimensions * (y + dimensions * z)] = 1;
-			}
-		}
-	}
-
 	sf::Vector3i dim3(dimensions, dimensions, dimensions);
 
 	Logger::log("Generating Octree", Logger::LogLevel::INFO);
-	octree.Generate(voxel_data, dim3);
+	octree.Generate(array_map.getDataPtr(), dim3);
 
 	Logger::log("Validating Octree", Logger::LogLevel::INFO);
-	if (!octree.Validate(voxel_data, dim3)) {
+	if (!octree.Validate(array_map.getDataPtr(), dim3)) {
 		Logger::log("Octree validation failed", Logger::LogLevel::ERROR, __LINE__, __FILE__);
 	}
-
-	// TODO: Create test with mock octree data and defined test framework
-	Logger::log("Testing Array vs Octree ray traversal", Logger::LogLevel::INFO);
-	if (!test_oct_arr_traversal(dim3)) {
-		Logger::log("Array and Octree traversals DID NOT MATCH!!!", Logger::LogLevel::ERROR, __LINE__, __FILE__);
-	}
-	
-}
-
-bool Map::test_oct_arr_traversal(sf::Vector3i dimensions) {
-
-	//sf::Vector2f cam_dir(0.95, 0.81);
-	//sf::Vector3f cam_pos(10.5, 10.5, 10.5);
-	//std::vector<std::tuple<sf::Vector3i, char>> list1 = CastRayCharArray(voxel_data, &dimensions, &cam_dir, &cam_pos);
-	//std::vector<std::tuple<sf::Vector3i, char>> list2 = CastRayOctree(&octree, &dimensions, &cam_dir, &cam_pos);
-
-	//if (list1 != list2) {
-	//	return false;
-	//} else {
-	//	return true;
-	//}
-
-
-	return false;
 }
 
 void Map::setVoxel(sf::Vector3i pos, int val) {
-    voxel_data[pos.x + octree.getDimensions() * (pos.y + octree.getDimensions() * pos.z)] = val;
+	array_map.getDataPtr()[pos.x + array_map.getDimensions().x * (pos.y + array_map.getDimensions().z * pos.z)] = val;
 }
 
 char Map::getVoxel(sf::Vector3i pos){
+	
+	return array_map.getDataPtr()[pos.x + array_map.getDimensions().x * (pos.y + array_map.getDimensions().z * pos.z)];
 	return octree.GetVoxel(pos).found;
 }
 
-
-std::vector<std::tuple<sf::Vector3i, char>>  Map::CastRayCharArray(
-	char* map,
-	sf::Vector3i* map_dim,
-	sf::Vector2f* cam_dir,
-	sf::Vector3f* cam_pos
-) {
-	// Setup the voxel coords from the camera origin
-	sf::Vector3i voxel(*cam_pos);
+sf::Vector3f Map::LongRayIntersection(sf::Vector3f origin, sf::Vector3f magnitude) {
+	
+	sf::Vector3i voxel(origin);
 
 	std::vector<std::tuple<sf::Vector3i, char>> travel_path;
 
 	sf::Vector3f ray_dir(1, 0, 0);
 
+	sf::Vector3i map_dim = array_map.getDimensions();
+
 	// Pitch
 	ray_dir = sf::Vector3f(
-		ray_dir.z * sin((*cam_dir).x) + ray_dir.x * cos((*cam_dir).x),
+		ray_dir.z * sin(magnitude.x) + ray_dir.x * cos(magnitude.x),
 		ray_dir.y,
-		ray_dir.z * cos((*cam_dir).x) - ray_dir.x * sin((*cam_dir).x)
-		);
+		ray_dir.z * cos(magnitude.x) - ray_dir.x * sin(magnitude.x)
+	);
 
 	// Yaw
 	ray_dir = sf::Vector3f(
-		ray_dir.x * cos((*cam_dir).y) - ray_dir.y * sin((*cam_dir).y),
-		ray_dir.x * sin((*cam_dir).y) + ray_dir.y * cos((*cam_dir).y),
+		ray_dir.x * cos(magnitude.y) - ray_dir.y * sin(magnitude.y),
+		ray_dir.x * sin(magnitude.y) + ray_dir.y * cos(magnitude.y),
 		ray_dir.z
 	);
 
@@ -131,9 +80,9 @@ std::vector<std::tuple<sf::Vector3i, char>>  Map::CastRayCharArray(
 	// Intersection T is the collection of the next intersection points
 	// for all 3 axis XYZ.
 	sf::Vector3f intersection_t(
-		delta_t.x * (cam_pos->x - floor(cam_pos->x)) * voxel_step.x,
-		delta_t.y * (cam_pos->y - floor(cam_pos->y)) * voxel_step.y,
-		delta_t.z * (cam_pos->z - floor(cam_pos->z)) * voxel_step.z
+		delta_t.x * (origin.x - floor(origin.x)) * voxel_step.x,
+		delta_t.y * (origin.y - floor(origin.y)) * voxel_step.y,
+		delta_t.z * (origin.z - floor(origin.z)) * voxel_step.z
 	);
 
 	// for negative values, wrap around the delta_t
@@ -161,239 +110,185 @@ std::vector<std::tuple<sf::Vector3i, char>>  Map::CastRayCharArray(
 		voxel.y += voxel_step.y * face_mask.y;
 		voxel.z += voxel_step.z * face_mask.z;
 
-		if (voxel.x >= map_dim->x || voxel.y >= map_dim->y || voxel.z >= map_dim->z) {
-			return travel_path;
+		if (voxel.x >= map_dim.x || voxel.y >= map_dim.y || voxel.z >= map_dim.z) {
+			return intersection_t;
 		}
 		if (voxel.x < 0 || voxel.y < 0 || voxel.z < 0) {
-			return travel_path;
+			return intersection_t;
 		}
 
 		// If we hit a voxel
-		voxel_data = map[voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z))];
-
-		travel_path.push_back(std::make_tuple(voxel, voxel_data));
+		voxel_data = array_map.getDataPtr()[voxel.x + map_dim.x * (voxel.y + map_dim.z * (voxel.z))];
 
 		if (voxel_data != 0)
-			return travel_path;
-		
+			return intersection_t;
+
 
 	} while (++dist < 700.0f);
 
-	return travel_path;
+	return intersection_t;
 }
 
-class Octree;
+std::vector<sf::Vector3i> Map::BoxIntersection(sf::Vector3f origin, sf::Vector3f magnitude) {
+	return std::vector<sf::Vector3i>();
+}
 
-std::vector<std::tuple<sf::Vector3i, char>> Map::CastRayOctree(
-	Octree *octree,
-	sf::Vector3i* map_dim,
-	sf::Vector2f* cam_dir,
-	sf::Vector3f* cam_pos
-) {
+sf::Vector3f Map::ShortRayIntersection(sf::Vector3f origin, sf::Vector3f magnitude) {
+	return sf::Vector3f(0,0,0);
+}
 
-	// Setup the voxel coords from the camera origin
-	sf::Vector3i voxel(0,0,0);
+void Map::ApplyHeightmap(sf::Image bitmap) {
 
-	// THIS DOES NOT HAVE TO RETURN TRUE ON FOUND
-	// This function when passed an "air" voxel will return as far down
-	// the IDX stack as it could go. We use this oct-level to determine
-	// our first position and jump. Updating it as we go
-	OctState traversal_state = octree->GetVoxel(voxel);
+}
 
-	std::vector<std::tuple<sf::Vector3i, char>> travel_path;
+sf::Image Map::GenerateHeightBitmap(sf::Vector3i dimensions) {
 
-	sf::Vector3f ray_dir(1, 0, 0);
+	std::mt19937 gen;
+	std::uniform_real_distribution<double> dis(-1.0, 1.0);
+	auto f_rand = std::bind(dis, std::ref(gen));
 
-	// Pitch
-	ray_dir = sf::Vector3f(
-		ray_dir.z * sin((*cam_dir).x) + ray_dir.x * cos((*cam_dir).x),
-		ray_dir.y,
-		ray_dir.z * cos((*cam_dir).x) - ray_dir.x * sin((*cam_dir).x)
-	);
+	double* height_map = new double[dimensions.x * dimensions.y];
+	for (int i = 0; i < dimensions.x * dimensions.y; i++) {
+		height_map[i] = 0;
+	}
 
-	// Yaw
-	ray_dir = sf::Vector3f(
-		ray_dir.x * cos((*cam_dir).y) - ray_dir.y * sin((*cam_dir).y),
-		ray_dir.x * sin((*cam_dir).y) + ray_dir.y * cos((*cam_dir).y),
-		ray_dir.z
-	);
+	//size of grid to generate, note this must be a
+	//value 2^n+1
+	int DATA_SIZE = dimensions.x + 1;
+	//an initial seed value for the corners of the data
+	//srand(f_rand());
+	double SEED = rand() % 10 + 55;
 
-	// correct for the base ray pointing to (1, 0, 0) as (0, 0). Should equal (1.57, 0)
-	ray_dir = sf::Vector3f(
-		static_cast<float>(ray_dir.z * sin(-1.57) + ray_dir.x * cos(-1.57)),
-		static_cast<float>(ray_dir.y),
-		static_cast<float>(ray_dir.z * cos(-1.57) - ray_dir.x * sin(-1.57))
-	);
+	//seed the data
+	SetSample(0, 0, SEED, height_map);
+	SetSample(0, dimensions.y, SEED, height_map);
+	SetSample(dimensions.x, 0, SEED, height_map);
+	SetSample(dimensions.x, dimensions.y, SEED, height_map);
 
+	double h = 20.0;//the range (-h -> +h) for the average offset
+					//for the new value in range of h
+					//side length is distance of a single square side
+					//or distance of diagonal in diamond
+	for (int sideLength = DATA_SIZE - 1;
+		//side length must be >= 2 so we always have
+		//a new value (if its 1 we overwrite existing values
+		//on the last iteration)
+		sideLength >= 2;
+		//each iteration we are looking at smaller squares
+		//diamonds, and we decrease the variation of the offset
+		sideLength /= 2, h /= 2.0) {
+		//half the length of the side of a square
+		//or distance from diamond center to one corner
+		//(just to make calcs below a little clearer)
+		int halfSide = sideLength / 2;
 
-	// Setup the voxel step based on what direction the ray is pointing
-	sf::Vector3i voxel_step(1, 1, 1);
+		//generate the new square values
+		for (int x = 0; x < DATA_SIZE - 1; x += sideLength) {
+			for (int y = 0; y < DATA_SIZE - 1; y += sideLength) {
+				//x, y is upper left corner of square
+				//calculate average of existing corners
+				double avg = Sample(x, y, height_map) + //top left
+					Sample(x + sideLength, y, height_map) +//top right
+					Sample(x, y + sideLength, height_map) + //lower left
+					Sample(x + sideLength, y + sideLength, height_map);//lower right
+				avg /= 4.0;
 
-	voxel_step.x *= (ray_dir.x > 0) - (ray_dir.x < 0);
-	voxel_step.y *= (ray_dir.y > 0) - (ray_dir.y < 0);
-	voxel_step.z *= (ray_dir.z > 0) - (ray_dir.z < 0);
-	
-	// set the jump multiplier based on the traversal state vs the log base 2 of the maps dimensions
-	int jump_power = log2(map_dim->x) - traversal_state.scale;
-
-
-	// Delta T is the units a ray must travel along an axis in order to
-	// traverse an integer split
-	sf::Vector3f delta_t(
-		fabs(1.0f / ray_dir.x),
-		fabs(1.0f / ray_dir.y),
-		fabs(1.0f / ray_dir.z)
-	);
-
-	delta_t *= static_cast<float>(jump_power);
-
-	// TODO: start here
-	// Whats the issue?
-	//		Using traversal_scale 
-	// set intersection t to the current hierarchy level each time we change levels
-	// and use that to step
-
-	
-	// Intersection T is the collection of the next intersection points
-	// for all 3 axis XYZ. We take the full positive cardinality when
-	// subtracting the floor, so we must transfer the sign over from
-	// the voxel step
-	sf::Vector3f intersection_t(
-		delta_t.x * (cam_pos->y - floor(cam_pos->x)) * voxel_step.x,
-		delta_t.y * (cam_pos->x - floor(cam_pos->y)) * voxel_step.y,
-		delta_t.z * (cam_pos->z - floor(cam_pos->z)) * voxel_step.z
-	);
-
-	// When we transfer the sign over, we get the correct direction of 
-	// the offset, but we merely transposed over the value instead of mirroring
-	// it over the axis like we want. So here, isless returns a boolean if intersection_t
-	// is less than 0 which dictates whether or not we subtract the delta which in effect
-	// mirrors the offset
-	intersection_t.x -= delta_t.x * (std::isless(intersection_t.x, 0.0f));
-	intersection_t.y -= delta_t.y * (std::isless(intersection_t.y, 0.0f));
-	intersection_t.z -= delta_t.z * (std::isless(intersection_t.z, 0.0f));
-
-	int dist = 0;
-	sf::Vector3i face_mask(0, 0, 0);
-	int voxel_data = 0;
-
-	// Andrew Woo's raycasting algo
-	do {
-
-		// check which direction we step in
-		face_mask.x = intersection_t.x <= std::min(intersection_t.y, intersection_t.z);
-		face_mask.y = intersection_t.y <= std::min(intersection_t.z, intersection_t.x);
-		face_mask.z = intersection_t.z <= std::min(intersection_t.x, intersection_t.y);
-
-		// Increment the selected directions intersection, abs the face_mask to stay within the algo constraints
-		intersection_t.x += delta_t.x * fabs(face_mask.x);
-		intersection_t.y += delta_t.y * fabs(face_mask.y);
-		intersection_t.z += delta_t.z * fabs(face_mask.z);
-
-		// step the voxel direction
-		voxel.x += voxel_step.x * face_mask.x * jump_power;
-		voxel.y += voxel_step.y * face_mask.y * jump_power;
-		voxel.z += voxel_step.z * face_mask.z * jump_power;
-
-		uint8_t prev_val = traversal_state.idx_stack[traversal_state.scale];
-		uint8_t this_face_mask = 0;
-
-		// Check the voxel face that we traversed
-		// and increment the idx in the idx stack
-		if (face_mask.x) {
-			this_face_mask = Octree::idx_set_x_mask;
-		}
-		else if (face_mask.y) {
-			this_face_mask = Octree::idx_set_y_mask;
-		}
-		else if (face_mask.z) {
-			this_face_mask = Octree::idx_set_z_mask;
+				//center is average plus random offset
+				SetSample(x + halfSide, y + halfSide,
+					//We calculate random value in range of 2h
+					//and then subtract h so the end value is
+					//in the range (-h, +h)
+					avg + (f_rand() * 2 * h) - h, height_map);
+			}
 		}
 
-		traversal_state.idx_stack[traversal_state.scale] ^= this_face_mask;
-		int mask_index = traversal_state.idx_stack[traversal_state.scale];
+		//generate the diamond values
+		//since the diamonds are staggered we only move x
+		//by half side
+		//NOTE: if the data shouldn't wrap then x < DATA_SIZE
+		//to generate the far edge values
+		for (int x = 0; x < DATA_SIZE - 1; x += halfSide) {
+			//and y is x offset by half a side, but moved by
+			//the full side length
+			//NOTE: if the data shouldn't wrap then y < DATA_SIZE
+			//to generate the far edge values
+			for (int y = (x + halfSide) % sideLength; y < DATA_SIZE - 1; y += sideLength) {
+				//x, y is center of diamond
+				//note we must use mod  and add DATA_SIZE for subtraction 
+				//so that we can wrap around the array to find the corners
+				double avg =
+					Sample((x - halfSide + DATA_SIZE) % DATA_SIZE, y, height_map) + //left of center
+					Sample((x + halfSide) % DATA_SIZE, y, height_map) + //right of center
+					Sample(x, (y + halfSide) % DATA_SIZE, height_map) + //below center
+					Sample(x, (y - halfSide + DATA_SIZE) % DATA_SIZE, height_map); //above center
+				avg /= 4.0;
 
-		// Check to see if the idx increased or decreased	
-		// If it decreased
-		//		Pop up the stack until the oct that the idx flip is valid and we landed on a valid oct
-		while (traversal_state.idx_stack[traversal_state.scale] < prev_val ||
-			!((traversal_state.parent_stack[traversal_state.parent_stack_position] >> 16) & Octree::mask_8[mask_index])
-			) {
-			
-			jump_power *= 2;
-			
-			// Keep track of the 0th edge of out current oct
-			traversal_state.oct_pos.x = floor(voxel.x / 2) * jump_power;
-			traversal_state.oct_pos.y = floor(voxel.x / 2) * jump_power;
-			traversal_state.oct_pos.z = floor(voxel.x / 2) * jump_power;
+				//new value = average plus random offset
+				//We calculate random value in range of 2h
+				//and then subtract h so the end value is
+				//in the range (-h, +h)
+				avg = avg + (f_rand() * 2 * h) - h;
+				//update value for center of diamond
+				SetSample(x, y, avg, height_map);
 
-			// Clear and pop the idx stack
-			traversal_state.idx_stack[traversal_state.scale] = 0;
-			traversal_state.scale--;
-			
-			// Update the prev_val for our new idx
-			prev_val = traversal_state.idx_stack[traversal_state.scale];
-			
-			// Clear and pop the parent stack, maybe off by one error?
-			traversal_state.parent_stack[traversal_state.parent_stack_position] = 0;
-			traversal_state.parent_stack_position--;
-
-			// Set the current CD to the one on top of the stack
-			traversal_state.current_descriptor =
-				traversal_state.parent_stack[traversal_state.parent_stack_position];
-			
-			// Apply the face mask to the new idx for the while check
-			traversal_state.idx_stack[traversal_state.scale] ^= this_face_mask;
-			mask_index = traversal_state.idx_stack[traversal_state.scale];
+				//wrap values on the edges, remove
+				//this and adjust loop condition above
+				//for non-wrapping values.
+				if (x == 0)  SetSample(DATA_SIZE - 1, y, avg, height_map);
+				if (y == 0)  SetSample(x, DATA_SIZE - 1, avg, height_map);
+			}
 		}
-		
+	}
 
-		// Check to see if we are on a valid oct
-		//if ((traversal_state.parent_stack[traversal_state.parent_stack_position] >> 16) & Octree::mask_8[mask_index]) {
+	sf::Uint8* pixels = new sf::Uint8[dimensions.x * dimensions.z * 4];
 
-		//	// Check to see if it is a leaf
-		//	if ((traversal_state.parent_stack[traversal_state.parent_stack_position] >> 24) & Octree::mask_8[mask_index]) {
+	for (int x = 0; x < dimensions.x; x++) {
+		for (int z = 0; z < dimensions.z; z++) {
 
-		//		// If it is, then we cannot traverse further as CP's won't have been generated
-		//		state.found = 1;
-		//		return state;
-		//	}
-		//}
-		//	Check to see if we are on top of a valid branch
-		//	Traverse down to the lowest valid oct that the ray is within
+			sf::Uint8 height = static_cast<sf::Uint8>(std::min(std::max(height_map[x + z * dimensions.x], 0.0), (double)dimensions.z));
 
-		// When we pass a split, then that means that we traversed SCALE number of voxels in that direction
+			pixels[x + z * dimensions.x * 4 + 0] = height;
+			pixels[x + z * dimensions.x * 4 + 1] = height;
+			pixels[x + z * dimensions.x * 4 + 2] = height;
+			pixels[x + z * dimensions.x * 4 + 3] = sf::Uint8(255);
 
-
-		// while the bit is valid and we are not bottomed out
-		//		get the cp of the valid branch
-		//		
-		//
-		//
-		//
-
-
-
-	
-	
-	
-		if (voxel.x >= map_dim->x || voxel.y >= map_dim->y || voxel.z >= map_dim->z) {
-			return travel_path;
 		}
-		if (voxel.x < 0 || voxel.y < 0 || voxel.z < 0) {
-			return travel_path;
-		}
+	}
 
-		// If we hit a voxel
-		//voxel_data = map[voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z))];
-//		voxel_data = getVoxel(voxel);
-		travel_path.push_back(std::make_tuple(voxel, voxel_data));
+	sf::Image bitmap_img;
+	bitmap_img.create(dimensions.x, dimensions.z, pixels);
 
-		if (voxel_data != 0)
-			return travel_path;
+	return bitmap_img;
+
+}
 
 
-	} while (++dist < 700.0f);
+double Map::Sample(int x, int y, double *height_map) {
+	return height_map[(x & (dimensions.x - 1)) + (y & (dimensions.y - 1)) * dimensions.x];
+}
 
-	return travel_path;
+void Map::SetSample(int x, int y, double value, double *height_map) {
+	height_map[(x & (dimensions.x - 1)) + (y & (dimensions.y - 1)) * dimensions.x] = value;
+}
+
+void Map::SampleSquare(int x, int y, int size, double value, double *height_map) {
+	int hs = size / 2;
+
+	double a = Sample(x - hs, y - hs, height_map);
+	double b = Sample(x + hs, y - hs, height_map);
+	double c = Sample(x - hs, y + hs, height_map);
+	double d = Sample(x + hs, y + hs, height_map);
+
+	SetSample(x, y, ((a + b + c + d) / 4.0) + value, height_map);
+}
+
+void Map::SampleDiamond(int x, int y, int size, double value, double *height_map) {
+	int hs = size / 2;
+
+	double a = Sample(x - hs, y, height_map);
+	double b = Sample(x + hs, y, height_map);
+	double c = Sample(x, y - hs, height_map);
+	double d = Sample(x, y + hs, height_map);
+
+	SetSample(x, y, ((a + b + c + d) / 4.0) + value, height_map);
 }
