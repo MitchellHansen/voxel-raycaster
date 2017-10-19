@@ -330,10 +330,6 @@ char Octree::get1DIndexedVoxel(char* data, sf::Vector3i dimensions, sf::Vector3i
 
 bool Octree::Validate(char* data, sf::Vector3i dimensions){
 
-//    std::cout << (int)get1DIndexedVoxel(data, dimensions, sf::Vector3i(16, 16, 16)) << std::endl;
-//    std::cout << (int)GetVoxel(sf::Vector3i(16, 16, 16)) << std::endl;
-
-
 	for (int x = 0; x < dimensions.x; x++) {
 		for (int y = 0; y < dimensions.y; y++) {
 			for (int z = 0; z < dimensions.z; z++) {
@@ -348,7 +344,6 @@ bool Octree::Validate(char* data, sf::Vector3i dimensions){
                     std::cout << (int)arr_val << "  :  " << (int)oct_val << std::endl;
 					return false;
 				}
-
 			}
 		}
 	}
@@ -362,10 +357,8 @@ unsigned int Octree::getDimensions() {
 
 
 std::vector<std::tuple<sf::Vector3i, char>> Octree::CastRayOctree(
-	Octree *octree,
-	sf::Vector3i* map_dim,
-	sf::Vector2f* cam_dir,
-	sf::Vector3f* cam_pos
+	sf::Vector2f cam_dir,
+	sf::Vector3f cam_pos
 ) {
 
 	// Setup the voxel coords from the camera origin
@@ -375,7 +368,7 @@ std::vector<std::tuple<sf::Vector3i, char>> Octree::CastRayOctree(
 	// This function when passed an "air" voxel will return as far down
 	// the IDX stack as it could go. We use this oct-level to determine
 	// our first position and jump. Updating it as we go
-	OctState traversal_state = octree->GetVoxel(voxel);
+	OctState traversal_state = GetVoxel(voxel);
 
 	std::vector<std::tuple<sf::Vector3i, char>> travel_path;
 
@@ -383,15 +376,15 @@ std::vector<std::tuple<sf::Vector3i, char>> Octree::CastRayOctree(
 
 	// Pitch
 	ray_dir = sf::Vector3f(
-		ray_dir.z * sin((*cam_dir).x) + ray_dir.x * cos((*cam_dir).x),
+		ray_dir.z * sin(cam_dir.x) + ray_dir.x * cos(cam_dir.x),
 		ray_dir.y,
-		ray_dir.z * cos((*cam_dir).x) - ray_dir.x * sin((*cam_dir).x)
+		ray_dir.z * cos(cam_dir.x) - ray_dir.x * sin(cam_dir.x)
 	);
 
 	// Yaw
 	ray_dir = sf::Vector3f(
-		ray_dir.x * cos((*cam_dir).y) - ray_dir.y * sin((*cam_dir).y),
-		ray_dir.x * sin((*cam_dir).y) + ray_dir.y * cos((*cam_dir).y),
+		ray_dir.x * cos(cam_dir.y) - ray_dir.y * sin(cam_dir.y),
+		ray_dir.x * sin(cam_dir.y) + ray_dir.y * cos(cam_dir.y),
 		ray_dir.z
 	);
 
@@ -411,7 +404,7 @@ std::vector<std::tuple<sf::Vector3i, char>> Octree::CastRayOctree(
 	voxel_step.z *= (ray_dir.z > 0) - (ray_dir.z < 0);
 
 	// set the jump multiplier based on the traversal state vs the log base 2 of the maps dimensions
-	int jump_power = log2(map_dim->x) - traversal_state.scale;
+	int jump_power = log2(oct_dimensions) - traversal_state.scale;
 
 
 	// Delta T is the units a ray must travel along an axis in order to
@@ -424,21 +417,14 @@ std::vector<std::tuple<sf::Vector3i, char>> Octree::CastRayOctree(
 
 	delta_t *= static_cast<float>(jump_power);
 
-	// TODO: start here
-	// Whats the issue?
-	//		Using traversal_scale 
-	// set intersection t to the current hierarchy level each time we change levels
-	// and use that to step
-
-
 	// Intersection T is the collection of the next intersection points
 	// for all 3 axis XYZ. We take the full positive cardinality when
 	// subtracting the floor, so we must transfer the sign over from
 	// the voxel step
 	sf::Vector3f intersection_t(
-		delta_t.x * (cam_pos->y - floor(cam_pos->x)) * voxel_step.x,
-		delta_t.y * (cam_pos->x - floor(cam_pos->y)) * voxel_step.y,
-		delta_t.z * (cam_pos->z - floor(cam_pos->z)) * voxel_step.z
+		delta_t.x * (cam_pos.y - floor(cam_pos.x)) * voxel_step.x,
+		delta_t.y * (cam_pos.x - floor(cam_pos.y)) * voxel_step.y,
+		delta_t.z * (cam_pos.z - floor(cam_pos.z)) * voxel_step.z
 	);
 
 	// When we transfer the sign over, we get the correct direction of 
@@ -494,6 +480,7 @@ std::vector<std::tuple<sf::Vector3i, char>> Octree::CastRayOctree(
 		// If it decreased
 		//		Pop up the stack until the oct that the idx flip is valid and we landed on a valid oct
 		while (traversal_state.idx_stack[traversal_state.scale] < prev_val ||
+			// This will endless loop if we hit the empty portion of an octree and cant find a leaf until the we go OOB
 			!((traversal_state.parent_stack[traversal_state.parent_stack_position] >> 16) & Octree::mask_8[mask_index])
 			) {
 
@@ -515,6 +502,11 @@ std::vector<std::tuple<sf::Vector3i, char>> Octree::CastRayOctree(
 			traversal_state.parent_stack[traversal_state.parent_stack_position] = 0;
 			traversal_state.parent_stack_position--;
 
+			// Compute the new (0,0,0) origin'd oct position
+			traversal_state.oct_pos.x = floor(traversal_state.oct_pos.x / pow(2, jump_power)) * pow(2, jump_power);
+			traversal_state.oct_pos.y = floor(traversal_state.oct_pos.y / pow(2, jump_power)) * pow(2, jump_power);
+			traversal_state.oct_pos.z = floor(traversal_state.oct_pos.z / pow(2, jump_power)) * pow(2, jump_power);
+
 			// Set the current CD to the one on top of the stack
 			traversal_state.current_descriptor =
 				traversal_state.parent_stack[traversal_state.parent_stack_position];
@@ -524,18 +516,100 @@ std::vector<std::tuple<sf::Vector3i, char>> Octree::CastRayOctree(
 			mask_index = traversal_state.idx_stack[traversal_state.scale];
 		}
 
+		// At this point we are at the CP of an oct with a valid oct at the leaf indicated by the current idx in the idx stack
+		
+		while (jump_power > 1) {
+
+			// Do the logic steps to find which sub oct we step down into
+			if (voxel.x >= (jump_power / 2) + traversal_state.oct_pos.x) {
+
+				// Set our voxel position to the (0,0) of the correct oct
+				traversal_state.oct_pos.x += (jump_power / 2);
+
+				// Set the idx to represent the move
+				traversal_state.idx_stack[traversal_state.scale] |= idx_set_x_mask;
+
+			}
+			if (voxel.y >= (jump_power / 2) + traversal_state.oct_pos.y) {
+
+				// TODO What the hell is going on with the or operator on this one!??!?!?!
+				traversal_state.oct_pos.y += (jump_power / 2);
+
+				// TODO What is up with the XOR operator that was on this one?
+				traversal_state.idx_stack[traversal_state.scale] |= idx_set_y_mask;
+
+			}
+			if (voxel.z >= (jump_power / 2) + traversal_state.oct_pos.z) {
+
+				traversal_state.oct_pos.z += (jump_power / 2);
+
+				traversal_state.idx_stack[traversal_state.scale] |= idx_set_z_mask;
+
+			}
+
+			// Our count mask matches the way we index our idx so we can just 
+			// copy it over
+			int mask_index = traversal_state.idx_stack[traversal_state.scale];
+
+			// Check to see if we are on a valid oct
+			if ((traversal_state.parent_stack[traversal_state.parent_stack_position] >> 16) & mask_8[mask_index]) {
+
+				// Check to see if it is a leaf
+				if ((traversal_state.parent_stack[traversal_state.parent_stack_position] >> 24) & mask_8[mask_index]) {
+
+					// If it is, then we cannot traverse further as CP's won't have been generated
+					traversal_state.found = 1;
+					return;
+				}
+
+				// If all went well and we found a valid non-leaf oct then we will traverse further down the hierarchy
+				traversal_state.scale++;
+				jump_power /= 2;
+
+				// Count the number of valid octs that come before and add it to the index to get the position
+				// Negate it by one as it counts itself
+				int count = count_bits((uint8_t)(traversal_state.parent_stack[traversal_state.parent_stack_position] >> 16) & count_mask_8[mask_index]) - 1;
+
+				// access the far point at which the head points too. Determine it's value, and add
+				// a count of the valid bits to the index
+				if (far_bit_mask & descriptor_buffer[current_index]) {
+					int far_pointer_index = current_index + (traversal_state.parent_stack[traversal_state.parent_stack_position] & child_pointer_mask);
+					current_index = descriptor_buffer[far_pointer_index] + count;
+				}
+				// access the element at which head points to and then add the specified number of indices
+				// to get to the correct child descriptor
+				else {
+					current_index = current_index + (traversal_state.parent_stack[traversal_state.parent_stack_position] & child_pointer_mask) + count;
+				}
+
+				traversal_state.parent_stack[traversal_state.parent_stack_position] = descriptor_buffer[current_index];
+
+				// Increment the parent stack position and put the new oct node as the parent
+				traversal_state.parent_stack_position++;
+				traversal_state.parent_stack[traversal_state.parent_stack_position] = traversal_state.parent_stack[traversal_state.parent_stack_position];
+
+			}
+			else {
+				// If the oct was not valid, then no CP's exists any further
+				// This implicitly says that if it's non-valid then it must be a leaf!!
+
+				// It appears that the traversal is now working but I need
+				// to focus on how to now take care of the end condition.
+				// Currently it adds the last parent on the second to lowest
+				// oct CP. Not sure if thats correct
+				traversal_state.found = 0;
+				return;
+			}
+		}
+
 
 		// Check to see if we are on a valid oct
-		//if ((traversal_state.parent_stack[traversal_state.parent_stack_position] >> 16) & Octree::mask_8[mask_index]) {
+		if ((traversal_state.parent_stack[traversal_state.parent_stack_position] >> 16) & Octree::mask_8[mask_index]) {
 
-		//	// Check to see if it is a leaf
-		//	if ((traversal_state.parent_stack[traversal_state.parent_stack_position] >> 24) & Octree::mask_8[mask_index]) {
 
-		//		// If it is, then we cannot traverse further as CP's won't have been generated
-		//		state.found = 1;
-		//		return state;
-		//	}
-		//}
+			
+
+		}
 		//	Check to see if we are on top of a valid branch
 		//	Traverse down to the lowest valid oct that the ray is within
 

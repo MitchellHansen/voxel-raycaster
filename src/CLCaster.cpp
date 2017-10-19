@@ -218,7 +218,8 @@ bool CLCaster::compute() {
 
 // There is a possibility that I would want to move this over to be all inside it's own
 // container to make it so it can be changed via CL_MEM_USE_HOST_PTR. But I doubt it
-// would ever be called enough to warrent that
+// would ever be called enough to warrant that
+// TODO : Move CL interaction into the CLCaster?
 bool CLCaster::create_viewport(int width, int height, float v_fov, float h_fov) {
 	
 	// CL needs the screen resolution
