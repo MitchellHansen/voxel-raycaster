@@ -30,7 +30,7 @@ bool Application::init_clcaster() {
 	sf::Image bitmap = map->GenerateHeightBitmap(sf::Vector3i(MAP_X, MAP_Y, MAP_Z));
 	map->ApplyHeightmap(bitmap);
 	
-	map->octree.CastRayOctree(sf::Vector2f(1.5f, -2.0f), sf::Vector3f(5.0f, 5.0f, 5.0f));
+	map->octree.CastRayOctree(sf::Vector2f(1.5f, -2.0f), sf::Vector3f(5.1f, 5.1f, 5.1f));
 
 	raycaster->assign_octree(map);
 	raycaster->assign_map(map);

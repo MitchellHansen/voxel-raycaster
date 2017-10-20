@@ -8,6 +8,7 @@ ArrayMap::ArrayMap(sf::Vector3i dimensions) {
 
 	voxel_data = new char[dimensions.x * dimensions.y * dimensions.z];
 	for (int i = 0; i < dimensions.x * dimensions.y * dimensions.z; i++) {
+		voxel_data[i] = 0;
 		voxel_data[i] = 1;
 	}
 

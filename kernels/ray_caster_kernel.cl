@@ -74,8 +74,7 @@ float4 view_light(float4 in_color, float3 light, float4 light_color, float3 view
 	float diffuse = max(dot(normalize(convert_float3(mask)), normalize(light)), 0.1f);
 	float specular = 0.0f;
 
-	if (diffuse > 0.0f)
-	{
+	if (diffuse > 0.0f)	{
 		// Small dots of light are caused by floating point error
 		// flipping bits on the face mask and screwing up this calculation
 		float3 halfwayVector = normalize(normalize(light) + normalize(view));
@@ -84,12 +83,6 @@ float4 view_light(float4 in_color, float3 light, float4 light_color, float3 view
 	}
 
 	in_color += diffuse * light_color + specular * light_color / d;
-
-	//in_color = pow(in_color, (float4)(1.0/2.2));
-	// This creates that blown out color look
-	//in_color.xyz += in_color.w * 0.002f;
-
-	//in_color.w += 0.8f;
 	return in_color;
 }
 
@@ -298,7 +291,7 @@ __kernel void raycaster(
 	// it over the axis like we want. So here, isless returns a boolean if intersection_t
 	// is less than 0 which dictates whether or not we subtract the delta which in effect
 	// mirrors the offset
-	intersection_t -= delta_t * convert_float3(isless(intersection_t, 0));
+	intersection_t += delta_t * convert_float3(isless(intersection_t, 0));
 
 	int distance_traveled = 0;
 	int max_distance = 700;

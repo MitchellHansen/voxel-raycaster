@@ -358,7 +358,7 @@ std::vector<std::tuple<sf::Vector3i, char>> Octree::CastRayOctree(
 ) {
 
 	// Setup the voxel coords from the camera origin
-	sf::Vector3i voxel(0, 0, 0);
+	sf::Vector3i voxel(cam_pos);
 
 	// THIS DOES NOT HAVE TO RETURN TRUE ON FOUND
 	// This function when passed an "air" voxel will return as far down
@@ -417,10 +417,11 @@ std::vector<std::tuple<sf::Vector3i, char>> Octree::CastRayOctree(
 	// for all 3 axis XYZ. We take the full positive cardinality when
 	// subtracting the floor, so we must transfer the sign over from
 	// the voxel step
+	
 	sf::Vector3f intersection_t(
-		delta_t.x * (cam_pos.y - floor(cam_pos.x)) * voxel_step.x,
-		delta_t.y * (cam_pos.x - floor(cam_pos.y)) * voxel_step.y,
-		delta_t.z * (cam_pos.z - floor(cam_pos.z)) * voxel_step.z
+		delta_t.x * (cam_pos.y - ceil(cam_pos.x)) * voxel_step.x,
+		delta_t.y * (cam_pos.x - ceil(cam_pos.y)) * voxel_step.y,
+		delta_t.z * (cam_pos.z - ceil(cam_pos.z)) * voxel_step.z
 	);
 
 	// When we transfer the sign over, we get the correct direction of 
@@ -475,7 +476,11 @@ std::vector<std::tuple<sf::Vector3i, char>> Octree::CastRayOctree(
 		int mask_index = traversal_state.idx_stack[traversal_state.scale];
 
 		// Whether or not the next oct we want to enter in the current CD's valid mask is 1 or 0
-		bool is_valid = (traversal_state.parent_stack[traversal_state.parent_stack_position] >> 16) & mask_8[mask_index];
+		bool is_valid = false;
+		
+		// TODO: Rework this logic so we don't have this bodgy if
+		if (mask_index > prev_val)
+			is_valid = (traversal_state.parent_stack[traversal_state.parent_stack_position] >> 16) & mask_8[mask_index];
 		
 		// Check to see if the idx increased or decreased	
 		// If it decreased
@@ -486,8 +491,8 @@ std::vector<std::tuple<sf::Vector3i, char>> Octree::CastRayOctree(
 
 			// Keep track of the 0th edge of out current oct
 			traversal_state.oct_pos.x = floor(voxel.x / 2) * jump_power;
-			traversal_state.oct_pos.y = floor(voxel.x / 2) * jump_power;
-			traversal_state.oct_pos.z = floor(voxel.x / 2) * jump_power;
+			traversal_state.oct_pos.y = floor(voxel.y / 2) * jump_power;
+			traversal_state.oct_pos.z = floor(voxel.z / 2) * jump_power;
 
 			// Clear and pop the idx stack
 			traversal_state.idx_stack[traversal_state.scale] = 0;
@@ -590,12 +595,12 @@ std::vector<std::tuple<sf::Vector3i, char>> Octree::CastRayOctree(
 
 
 
-		if (voxel.x >= map_dim->x || voxel.y >= map_dim->y || voxel.z >= map_dim->z) {
-			return travel_path;
-		}
-		if (voxel.x < 0 || voxel.y < 0 || voxel.z < 0) {
-			return travel_path;
-		}
+		//if (voxel.x >= map_dim->x || voxel.y >= map_dim->y || voxel.z >= map_dim->z) {
+		//	return travel_path;
+		//}
+		//if (voxel.x < 0 || voxel.y < 0 || voxel.z < 0) {
+		//	return travel_path;
+		//}
 
 		// If we hit a voxel
 		//voxel_data = map[voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z))];
