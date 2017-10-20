@@ -8,6 +8,7 @@ struct OctState {
 
 	int parent_stack_position = 0;
 	uint64_t parent_stack[32] = { 0 };
+	uint64_t parent_stack_index[32] = { 0 };
 
 	uint8_t scale = 0;
 	uint8_t idx_stack[32] = { 0 };
