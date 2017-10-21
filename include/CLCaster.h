@@ -7,6 +7,7 @@
 #include "LightController.h"
 #include "Camera.h"
 #include <GL/glew.h>
+#include <Application.h>
 #include <unordered_map>
 #include "Logger.h"
 #include "map/Map.h"

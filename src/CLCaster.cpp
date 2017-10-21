@@ -710,7 +710,8 @@ bool CLCaster::compile_kernel(std::string kernel_source, bool is_path, std::stri
 	
 	// need a ref to the oct dimensions
 	//std::string oct_dimensions = std::to_string(map->getDimensions().x);
-	std::string build_string =  "-DOCTDIM=256 -cl-finite-math-only -cl-fast-relaxed-math -cl-unsafe-math-optimizations";
+	
+	std::string build_string =  "-DOCTDIM=" + std::to_string(Application::MAP_X) + " -cl-finite-math-only -cl-fast-relaxed-math -cl-unsafe-math-optimizations";
 	error = clBuildProgram(program, 1, &device_id, build_string.c_str(), NULL, NULL);
 
 	// Check to see if it error'd out

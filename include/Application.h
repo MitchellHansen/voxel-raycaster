@@ -23,7 +23,7 @@
 
 #include "util.hpp"
 #include <SFML/Graphics.hpp>
-#include "CLCaster.h"
+//#include "CLCaster.h"
 #include "Camera.h"
 #include "Input.h"
 #include "LightController.h"
@@ -36,15 +36,17 @@
 #undef ERROR
 #include "Logger.h"
 
+class CLCaster;
+
 class Application {
 
 public:	
-	const int WINDOW_X = 1600;
-	const int WINDOW_Y = 900;
+	static const int WINDOW_X = 1600;
+	static const int WINDOW_Y = 900;
 
-	const int MAP_X = 64;
-	const int MAP_Y = 64;
-	const int MAP_Z = 64;
+	static const int MAP_X = 32;
+	static const int MAP_Y = 32;
+	static const int MAP_Z = 32;
 
 	Application();
 	~Application();

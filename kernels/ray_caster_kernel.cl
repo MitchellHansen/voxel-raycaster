@@ -136,7 +136,7 @@ bool get_oct_vox(
 	//
 	//			No?
 	//				Break
-	while (dimension > 64) {
+	while (dimension > 1) {
 
 		// So we can be a little bit tricky here and increment our
 		// array index that holds our masks as we build the idx.
@@ -268,8 +268,9 @@ __kernel void raycaster(
 	voxel_step *= (ray_dir > 0) - (ray_dir < 0);
 
     // Setup the voxel coords from the camera origin
-	int3 voxel = convert_int3(*cam_pos);
+	int3 voxel = convert_int3_rtn(*cam_pos);
 
+	//voxel = voxel + convert_int3(*cam_pos < 0.0f);
     // Delta T is the units a ray must travel along an axis in order to
     // traverse an integer split
 	float3 delta_t = fabs(1.0f / ray_dir);
@@ -291,7 +292,7 @@ __kernel void raycaster(
 	// it over the axis like we want. So here, isless returns a boolean if intersection_t
 	// is less than 0 which dictates whether or not we subtract the delta which in effect
 	// mirrors the offset
-	intersection_t += delta_t * convert_float3(isless(intersection_t, 0));
+	intersection_t -= delta_t * convert_float3(isless(intersection_t, 0));
 
 	int distance_traveled = 0;
 	int max_distance = 700;
@@ -325,22 +326,22 @@ __kernel void raycaster(
 
 		constant int vox_dim = OCTDIM;
 
-        // // If we hit a voxel
-		// if (voxel.x < vox_dim && voxel.y < vox_dim && voxel.z < vox_dim){
-		//  	if (get_oct_vox(
-		//  		voxel,
-		//  		octree_descriptor_buffer,
-		//  		octree_attachment_lookup_buffer,
-		//  		octree_attachment_buffer,
-		//  		settings_buffer
-		//  		)){
-		//  			voxel_data = 5;
-		//  		} else {
-		//  			voxel_data = 0;
-		//  		}
-		// } else {
+        // If we hit a voxel
+		if (voxel.x < vox_dim && voxel.y < vox_dim && voxel.z < vox_dim){
+		 	if (get_oct_vox(
+		 		voxel,
+		 		octree_descriptor_buffer,
+		 		octree_attachment_lookup_buffer,
+		 		octree_attachment_buffer,
+		 		settings_buffer
+		 		)){
+		 			voxel_data = 5;
+		 		} else {
+		 			voxel_data = 0;
+		 		}
+		} else {
 			voxel_data = map[voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z))];
-		//}
+		}
 
 
 

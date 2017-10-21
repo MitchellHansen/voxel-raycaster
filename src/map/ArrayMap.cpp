@@ -9,14 +9,14 @@ ArrayMap::ArrayMap(sf::Vector3i dimensions) {
 	voxel_data = new char[dimensions.x * dimensions.y * dimensions.z];
 	for (int i = 0; i < dimensions.x * dimensions.y * dimensions.z; i++) {
 		voxel_data[i] = 0;
-		voxel_data[i] = 1;
+		//voxel_data[i] = 1;
 	}
 
-	//for (int x = 0; x < dimensions.x; x++) {
-	//	for (int y = 0; y < dimensions.y; y++) {
-	//		setVoxel(sf::Vector3i(x, y, 1), 5);
-	//	}
-	//}
+	for (int x = 0; x < dimensions.x; x++) {
+		for (int y = 0; y < dimensions.y; y++) {
+			setVoxel(sf::Vector3i(x, y, 0), 1);
+		}
+	}
 }
 
 

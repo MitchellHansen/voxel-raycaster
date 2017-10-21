@@ -25,7 +25,7 @@ struct OctState {
 class Octree {
 public:
 
-	static const int buffer_size = 300000;
+	static const int buffer_size = 100000;
 
 	Octree();
 	~Octree() {};
@@ -42,13 +42,13 @@ public:
 	// know when to switch buffers
 
 	uint64_t *descriptor_buffer;
-	uint64_t descriptor_buffer_position = buffer_size;
+	uint64_t descriptor_buffer_position = buffer_size - 1;
 
 	uint32_t *attachment_lookup;
-	uint64_t attachment_lookup_position = buffer_size;
+	uint64_t attachment_lookup_position = buffer_size - 1;
 
 	uint64_t *attachment_buffer;
-	uint64_t attachment_buffer_position = buffer_size;
+	uint64_t attachment_buffer_position = buffer_size - 1;
 
 	unsigned int trunk_cutoff = 3;
 	uint64_t root_index = 0;

@@ -34,6 +34,7 @@ void Octree::Generate(char* data, sf::Vector3i dimensions) {
 
 	for (int i = 0; i < buffer_size; i++) {
 		PrettyPrintUINT64(descriptor_buffer[i], &output_stream);
+		output_stream << std::endl;
 	}
 
 	DumpLog(&output_stream, "raw_data.txt");
@@ -321,6 +322,7 @@ std::tuple<uint64_t, uint64_t> Octree::GenerationRecursion(char* data, sf::Vecto
 }
 
 char Octree::get1DIndexedVoxel(char* data, sf::Vector3i dimensions, sf::Vector3i position) {	
+	std::cout << std::to_string((int)data[position.x + oct_dimensions * (position.y + oct_dimensions * position.z)]) << std::endl;
 	return data[position.x + oct_dimensions * (position.y + oct_dimensions * position.z)];
 }
 
@@ -338,7 +340,7 @@ bool Octree::Validate(char* data, sf::Vector3i dimensions){
 				if (arr_val != oct_val) {
 					std::cout << "X: " << pos.x << " Y: " << pos.y << " Z: " << pos.z << "   ";
                     std::cout << (int)arr_val << "  :  " << (int)oct_val << std::endl;
-					return false;
+					//return false;
 				}
 			}
 		}
