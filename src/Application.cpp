@@ -30,17 +30,15 @@ bool Application::init_clcaster() {
 	sf::Image bitmap = map->GenerateHeightBitmap(sf::Vector3i(MAP_X, MAP_Y, MAP_Z));
 	map->ApplyHeightmap(bitmap);
 	
-	//map->octree.CastRayOctree(sf::Vector2f(1.5f, -2.0f), sf::Vector3f(5.1f, 5.1f, 5.1f));
+	map->octree.CastRayOctree(sf::Vector2f(1.57f, 0.0001f), sf::Vector3f(0.5f, 0.5f, 0.5f));
 
 	raycaster->assign_octree(map);
 	raycaster->assign_map(map);
 
-	
-
 	// Create a new camera with (starting position, direction)
 	camera = std::make_shared<Camera>(
-		sf::Vector3f(50, 60, 10),
-		sf::Vector2f(1.5f, -2.0f),
+		sf::Vector3f(0.5f, 0.5f, 0.5f),
+		sf::Vector2f(1.45f, 0.3f),
 		window.get()
 	);
 

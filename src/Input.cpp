@@ -165,6 +165,8 @@ void Input::render_gui() {
 	ImGui::Columns(6);
 
 	for (auto i : held_keys) {
+		if (i < 0)
+			continue;
 		ImGui::Text(key_strings.at(i).c_str());
 		ImGui::NextColumn();
 	}

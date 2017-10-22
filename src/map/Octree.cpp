@@ -322,7 +322,6 @@ std::tuple<uint64_t, uint64_t> Octree::GenerationRecursion(char* data, sf::Vecto
 }
 
 char Octree::get1DIndexedVoxel(char* data, sf::Vector3i dimensions, sf::Vector3i position) {	
-	std::cout << std::to_string((int)data[position.x + oct_dimensions * (position.y + oct_dimensions * position.z)]) << std::endl;
 	return data[position.x + oct_dimensions * (position.y + oct_dimensions * position.z)];
 }
 
@@ -372,6 +371,13 @@ std::vector<std::tuple<sf::Vector3i, char>> Octree::CastRayOctree(
 
 	sf::Vector3f ray_dir(1, 0, 0);
 
+	// correct for the base ray pointing to (1, 0, 0) as (0, 0). Should equal (1.57, 0)
+	ray_dir = sf::Vector3f(
+		static_cast<float>(ray_dir.z * sin(-1.57) + ray_dir.x * cos(-1.57)),
+		static_cast<float>(ray_dir.y),
+		static_cast<float>(ray_dir.z * cos(-1.57) - ray_dir.x * sin(-1.57))
+	);
+
 	// Pitch
 	ray_dir = sf::Vector3f(
 		ray_dir.z * sin(cam_dir.x) + ray_dir.x * cos(cam_dir.x),
@@ -384,13 +390,6 @@ std::vector<std::tuple<sf::Vector3i, char>> Octree::CastRayOctree(
 		ray_dir.x * cos(cam_dir.y) - ray_dir.y * sin(cam_dir.y),
 		ray_dir.x * sin(cam_dir.y) + ray_dir.y * cos(cam_dir.y),
 		ray_dir.z
-	);
-
-	// correct for the base ray pointing to (1, 0, 0) as (0, 0). Should equal (1.57, 0)
-	ray_dir = sf::Vector3f(
-		static_cast<float>(ray_dir.z * sin(-1.57) + ray_dir.x * cos(-1.57)),
-		static_cast<float>(ray_dir.y),
-		static_cast<float>(ray_dir.z * cos(-1.57) - ray_dir.x * sin(-1.57))
 	);
 
 
@@ -438,7 +437,7 @@ std::vector<std::tuple<sf::Vector3i, char>> Octree::CastRayOctree(
 	int dist = 0;
 	sf::Vector3i face_mask(0, 0, 0);
 	int voxel_data = 0;
-
+	return travel_path;
 	// Andrew Woo's raycasting algo
 	do {
 

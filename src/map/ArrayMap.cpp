@@ -12,6 +12,8 @@ ArrayMap::ArrayMap(sf::Vector3i dimensions) {
 		//voxel_data[i] = 1;
 	}
 
+	setVoxel(sf::Vector3i(1, 1, 5), 1);
+
 	for (int x = 0; x < dimensions.x; x++) {
 		for (int y = 0; y < dimensions.y; y++) {
 			setVoxel(sf::Vector3i(x, y, 0), 1);
