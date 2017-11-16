@@ -14,6 +14,8 @@ if (WIN32)
     set(SFML_INCLUDE_DIR ${SFML_ROOT}/include)
 endif()
 
+set(OPENGL_LIBRARIES "/opt/amdgpu-pro/lib/x86_64-linux-gnu")
+
 set(SFML_COMPONENTS graphics window system network audio)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 find_package(SFML 2.1 COMPONENTS ${SFML_COMPONENTS} REQUIRED)
@@ -36,8 +38,8 @@ endif()
 
 # beignet only supports EGL and not GLX for the cl_khr_gl_sharing extension
 if (UNIX)
-    find_package(EGL REQUIRED)
-    message(STATUS "EGL found: ${EGL_FOUND}")
+#    find_package(EGL REQUIRED)
+#message(STATUS "EGL found: ${EGL_FOUND}")
 endif (UNIX)
 
 # Include the directories for the main program, GL, CL and SFML's headers
@@ -45,7 +47,7 @@ include_directories(${SFML_INCLUDE_DIR})
 include_directories(${OpenCL_INCLUDE_DIRS})
 include_directories(${OpenGL_INCLUDE_DIRS})
 if (UNIX)
-    include_directories(${EGL_INCLUDE_DIRS})
+    #    include_directories(${EGL_INCLUDE_DIRS})
 endif()
 include_directories(include)
 
@@ -127,7 +129,7 @@ target_link_libraries (${PNAME} ${OpenCL_LIBRARY})
 target_link_libraries (${PNAME} ${OPENGL_LIBRARIES})
 
 if (UNIX)
-    target_link_libraries (${PNAME} ${EGL_LIBRARIES})
+    #    target_link_libraries (${PNAME} ${EGL_LIBRARIES})
 endif()
 
 if (WIN32)

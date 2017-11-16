@@ -3,10 +3,11 @@
 #include <vector>
 #include <iostream>
 #include <map>
+#include <GL/glew.h>
 #include <string.h>
 #include "LightController.h"
 #include "Camera.h"
-#include <GL/glew.h>
+//#include <GL/glew.h>
 #include <Application.h>
 #include <unordered_map>
 #include "Logger.h"
@@ -16,7 +17,10 @@
 #ifdef linux
 #include <CL/cl.h>
 #include <CL/opencl.h>
-#include <EGL/egl.h>
+#include <GL/gl.h>
+#include <GL/glx.h>
+#include <GL/glu.h>
+//#include <EGL/egl.h>
 //#include <GL/glx.h>
 
 #elif defined _WIN32

@@ -44,9 +44,9 @@ public:
 	static const int WINDOW_X = 1600;
 	static const int WINDOW_Y = 900;
 
-	static const int MAP_X = 32;
-	static const int MAP_Y = 32;
-	static const int MAP_Z = 32;
+	static const int MAP_X;
+	static const int MAP_Y;
+	static const int MAP_Z;
 
 	Application();
 	~Application();
