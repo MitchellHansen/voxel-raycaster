@@ -14,7 +14,11 @@ if (WIN32)
     set(SFML_INCLUDE_DIR ${SFML_ROOT}/include)
 endif()
 
-set(OPENGL_LIBRARIES "/opt/amdgpu-pro/lib/x86_64-linux-gnu")
+# You're probably going to need to change these paths
+if (UNIX)
+	set(OpenCL_INCLUDE_DIR /usr/include/CL)
+	set(OpenCL_LIBRARY /usr/lib/x86_64-linux-gnu/libOpenCL.so.1)
+endif (UNIX)
 
 set(SFML_COMPONENTS graphics window system network audio)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})

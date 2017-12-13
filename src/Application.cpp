@@ -18,8 +18,8 @@ Application::Application() {
 
 Application::~Application() {
 
-	light_handle->~LightHandle();
-	light_controller->~LightController();
+	//light_handle->~LightHandle();
+	//light_controller->~LightController();
 }
 
 bool Application::init_clcaster() {
@@ -98,13 +98,15 @@ bool Application::init_events() {
 
 bool Application::game_loop() {
 
-	while (window->isOpen()) {
+	while (true) {
 
 		// Have the input handler empty the event stack, generate events for held keys, and then dispatch the events to listeners
 		input_handler.consume_sf_events(window.get());
 		input_handler.handle_held_keys();
 		input_handler.dispatch_events();
 
+		if (!window->isOpen())
+			break;
 		// Time keeping
 		elapsed_time = elap_time();
 		delta_time = elapsed_time - current_time;

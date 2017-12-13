@@ -1,7 +1,10 @@
 #include "CLCaster.h"
 
 CLCaster::CLCaster() {}
-CLCaster::~CLCaster() {}
+CLCaster::~CLCaster() {
+    delete[] viewport_matrix;
+    delete[] viewport_image;
+}
 
 bool CLCaster::init() {
 
