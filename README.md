@@ -5,7 +5,8 @@ This project is an implementation of an experimental "from scratch" volumetric r
 
 # Build
 
-In order to build this project you must have Cmake, GLEW, SFML, and the OpenCL development libraries installed / downloaded. You're also going to need OpenCL compatable hardware that supports the cl_khr_gl_sharing extension. The VS2015 build is working, Linux compiles but I don't have hardware that works, and Mac should compile and run, but I don't have access to a Mac.
+In order to build this project you must have Cmake, GLEW, SFML, and the OpenCL development libraries installed / downloaded. You're also going to need OpenCL compatable hardware that supports the cl_khr_gl_sharing extension. This project has, at some point, run on all three platforms: Windows (VS2017), Linux, and macOS. With a little bit of elbow grease it should still be able to compile and run on all these platforms. 
+
 
 * Note on GLEW: macOS takes care of most of the "extension wrangling" so GLEW is not required when compiling for macOS
 
