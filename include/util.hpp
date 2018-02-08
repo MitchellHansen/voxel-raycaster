@@ -11,6 +11,7 @@
 #include <SFML/Graphics/Texture.hpp>
 #include <algorithm>
 #include <tuple>
+#include "Vector4.hpp"
 
 const double PI = 3.141592653589793238463;
 const float  PI_F = 3.14159265358979f;
@@ -107,7 +108,6 @@ inline sf::Vector3f Normalize(sf::Vector3f in) {
 	);
 	return r;
 }
-
 
 inline float DotProduct(sf::Vector3f a, sf::Vector3f b){
 	return a.x * b.x + a.y * b.y + a.z * b.z;

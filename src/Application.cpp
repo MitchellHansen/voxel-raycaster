@@ -40,8 +40,8 @@ bool Application::init_clcaster() {
 
 	// Create a new camera with (starting position, direction)
 	camera = std::make_shared<Camera>(
-		sf::Vector3f(0.5f, 0.5f, 0.5f),
-		sf::Vector2f(1.45f, 0.3f),
+		sf::Vector3f(3.5f, 3.5f, 3.5f),
+		sf::Vector2f(1.57f, 0.0f),
 		window.get()
 	);
 

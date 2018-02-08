@@ -336,11 +336,13 @@ bool Octree::Validate(char* data, sf::Vector3i dimensions){
                 char arr_val = get1DIndexedVoxel(data, dimensions, pos);
                 char oct_val = GetVoxel(pos).found;
 
-				if (arr_val != oct_val) {
+
+				if (arr_val != oct_val && (oct_val == 0 || arr_val == 0)) {
 					std::cout << "X: " << pos.x << " Y: " << pos.y << " Z: " << pos.z << "   ";
                     std::cout << (int)arr_val << "  :  " << (int)oct_val << std::endl;
 					//return false;
 				}
+
 			}
 		}
 	}

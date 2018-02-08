@@ -41,9 +41,10 @@ class CLCaster;
 class Application {
 
 public:	
-	static const int WINDOW_X = 1600;
-	static const int WINDOW_Y = 900;
-
+	static const int WINDOW_X = 1366;
+	static const int WINDOW_Y = 768;
+//	static const int WINDOW_X = 1920;
+//	static const int WINDOW_Y = 1080;
 	static const int MAP_X;
 	static const int MAP_Y;
 	static const int MAP_Z;

@@ -16,7 +16,7 @@ __constant int2 zeroed_int2     = {0, 0};
 __constant const uchar idx_set_x_mask = 0x1;
 __constant const uchar idx_set_y_mask = 0x2;
 __constant const uchar idx_set_z_mask = 0x4;
-__constant const uchar idx_set_mask = {0x1, 0x2, 0x4};
+__constant const uchar3 idx_set_mask = {0x1, 0x2, 0x4};
 
 __constant const uchar mask_8[8] = {
 	0x1,  0x2,  0x4,  0x8,
@@ -50,15 +50,6 @@ constant float4 overshoot_color_2 = { 0.00f, 0.00f, 0.00f, 0.00f };
 // =========================================================================
 // ========================= HELPER FUNCTIONS ==============================
 
-float DistanceBetweenPoints(float3 a, float3 b) {
-	return fast_distance(a, b);
-}
-
-float Distance(float3 a) {
-	return fast_length(a);
-}
-
-
 // Phong + diffuse lighting function for g
 //  0  1  2  3  4  5  6  7   8   9
 // {r, g, b, i, x, y, z, x', y', z'}
@@ -68,7 +59,7 @@ float4 view_light(float4 in_color, float3 light, float4 light_color, float3 view
 	if (all(light == zeroed_float3))
 		return zeroed_float4;
 
-	float d = Distance(light) / 120.0f;
+	float d = fast_length(light) * 0.01f;
 	d *= d;
 
 	float diffuse = max(dot(normalize(convert_float3(mask)), normalize(light)), 0.1f);
@@ -474,8 +465,8 @@ __kernel void raycaster(
 
 		constant int vox_dim = OCTDIM;
 
-        // If we hit a voxel
-		if (voxel.x < vox_dim && voxel.y < vox_dim && voxel.z < vox_dim){
+//        If we hit a voxel
+		if (voxel.x < (*map_dim).x && voxel.y < (*map_dim).x && voxel.z < (*map_dim).x){
 		 	if (get_oct_vox(
 		 		voxel,
 		 		octree_descriptor_buffer,
@@ -570,7 +561,7 @@ __kernel void raycaster(
 				voxel_color.xyz += (float3)read_imagef(
 						 texture_atlas,
 						 convert_int2(tile_face_position * convert_float2(*atlas_dim / *tile_dim)) +
-						 convert_int2((float2)(3, 0) * convert_float2(*atlas_dim / *tile_dim))
+						 convert_int2((float2)(5, 0) * convert_float2(*atlas_dim / *tile_dim))
 				).xyz/2;
 
 				color_accumulator = view_light(
@@ -582,7 +573,7 @@ __kernel void raycaster(
 				);
 
 				fog_distance = distance_traveled;
-				max_distance = distance_traveled + DistanceBetweenPoints(convert_float3(voxel), (float3)(lights[4], lights[5], lights[6]));
+				max_distance = distance_traveled + fast_distance(convert_float3(voxel), (float3)(lights[4], lights[5], lights[6]));
 
 				float3 hit_pos = convert_float3(voxel) + face_position;
 				ray_dir = normalize((float3)(lights[4], lights[5], lights[6]) - hit_pos);

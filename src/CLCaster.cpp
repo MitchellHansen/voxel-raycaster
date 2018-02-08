@@ -2,8 +2,18 @@
 
 CLCaster::CLCaster() {}
 CLCaster::~CLCaster() {
+
+	// Causes sigabrt??
+    //release_map();
+    //release_camera();
+    //release_octree();
+    release_viewport();
+
     delete[] viewport_matrix;
     delete[] viewport_image;
+
+	camera.reset();
+	map.reset();
 }
 
 bool CLCaster::init() {
@@ -173,7 +183,7 @@ bool CLCaster::validate() {
 		Logger::log("Raycaster.validate() failed, viewport_matrix not initialized", Logger::LogLevel::WARN);
 		return false;
 	}
-	
+
 	// Set all the kernel args
 	set_kernel_arg("raycaster", 0, "map");
 	set_kernel_arg("raycaster", 1, "map_dimensions");
@@ -222,7 +232,6 @@ bool CLCaster::compute() {
 // There is a possibility that I would want to move this over to be all inside it's own
 // container to make it so it can be changed via CL_MEM_USE_HOST_PTR. But I doubt it
 // would ever be called enough to warrant that
-// TODO : Move CL interaction into the CLCaster?
 bool CLCaster::create_viewport(int width, int height, float v_fov, float h_fov) {
 	
 	// CL needs the screen resolution
@@ -235,46 +244,34 @@ bool CLCaster::create_viewport(int width, int height, float v_fov, float h_fov) 
 
 	// This could be modified to make some odd looking camera lenses
 
-	double y_increment_radians = DegreesToRadians(v_fov / view_res.y);
-	double x_increment_radians = DegreesToRadians(h_fov / view_res.x);
-
 	viewport_matrix = new sf::Vector4f[width * height * 4];
 
 	for (int y = -view_res.y / 2; y < view_res.y / 2; y++) {
+
 		for (int x = -view_res.x / 2; x < view_res.x / 2; x++) {
 
 			// The base ray direction to slew from
-			sf::Vector3f ray(1, 0, 0);
-
-			// Y axis, pitch
-			ray = sf::Vector3f(
-				static_cast<float>(ray.z * sin(y_increment_radians * y) + ray.x * cos(y_increment_radians * y)),
-				static_cast<float>(ray.y),
-				static_cast<float>(ray.z * cos(y_increment_radians * y) - ray.x * sin(y_increment_radians * y))
-			);
-
-			// Z axis, yaw
-			ray = sf::Vector3f(
-				static_cast<float>(ray.x * cos(x_increment_radians * x) - ray.y * sin(x_increment_radians * x)),
-				static_cast<float>(ray.x * sin(x_increment_radians * x) + ray.y * cos(x_increment_radians * x)),
-				static_cast<float>(ray.z)
-			);
+			sf::Vector3f ray(-800, x, y);
 
 			// correct for the base ray pointing to (1, 0, 0) as (0, 0). Should equal (1.57, 0)
 			ray = sf::Vector3f(
-				static_cast<float>(ray.z * sin(-1.57) + ray.x * cos(-1.57)),
+				static_cast<float>(ray.z * sin(1.57) + ray.x * cos(1.57)),
 				static_cast<float>(ray.y),
-				static_cast<float>(ray.z * cos(-1.57) - ray.x * sin(-1.57))
+				static_cast<float>(ray.z * cos(1.57) - ray.x * sin(1.57))
 			);
 
-			int index = (x + view_res.x / 2) + view_res.x * (y + view_res.y / 2);
+            ray.y += (rand() % 1000) / 100000.0;
+            ray.x += (rand() % 1000) / 100000.0;
+            ray.z += (rand() % 1000) / 100000.0;
+
 			ray = Normalize(ray);
+			int index = (x + view_res.x / 2) + view_res.x * (y + view_res.y / 2);
 
 			viewport_matrix[index] = sf::Vector4f(
-				ray.x,
-				ray.y,
-				ray.z,
-				0
+					ray.x,
+					ray.y,
+					ray.z,
+					0
 			);
 		}
 	}
@@ -304,6 +301,18 @@ bool CLCaster::create_viewport(int width, int height, float v_fov, float h_fov) 
 
 	return true;
 
+}
+
+bool CLCaster::release_viewport() {
+
+    bool success = true;
+    if (!release_buffer("viewport_resolution"))
+        success = false;
+    if (!release_buffer("viewport_matrix"))
+        success = false;
+    if (!release_buffer("image"))
+        success = false;
+    return success;
 }
 
 bool CLCaster::assign_lights(std::vector<PackedData> *data) {
@@ -854,7 +863,8 @@ bool CLCaster::create_buffer(std::string buffer_name, cl_uint size, void* data) 
 bool CLCaster::release_buffer(std::string buffer_name) {
 
 	if (buffer_map.count(buffer_name) > 0) {
-		
+
+		clFinish(command_queue);
 		int error = clReleaseMemObject(buffer_map.at(buffer_name));
 		
 		if (cl_assert(error)) {
@@ -1159,6 +1169,7 @@ std::string CLCaster::cl_err_lookup(int error_code) {
 	return err_msg;
 
 }
+
 
 CLCaster::device::device(cl_device_id device_id, cl_platform_id platform_id) {
 
