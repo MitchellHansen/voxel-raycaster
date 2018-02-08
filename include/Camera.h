@@ -47,8 +47,8 @@ public:
 
 private:
 
-	float friction_coefficient = 0.1f;
-	float default_impulse = 0.3f;
+	float friction_coefficient = 0.001f;
+	float default_impulse = 0.1f;
 
 	// 3D vector
 	sf::Vector3f movement;

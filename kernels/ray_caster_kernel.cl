@@ -466,21 +466,21 @@ __kernel void raycaster(
 		constant int vox_dim = OCTDIM;
 
 //        If we hit a voxel
-		if (voxel.x < (*map_dim).x && voxel.y < (*map_dim).x && voxel.z < (*map_dim).x){
-		 	if (get_oct_vox(
-		 		voxel,
-		 		octree_descriptor_buffer,
-		 		octree_attachment_lookup_buffer,
-		 		octree_attachment_buffer,
-		 		settings_buffer
-		 		)){
-		 			voxel_data = 5;
-		 		} else {
-		 			voxel_data = 0;
-		 		}
-		} else {
+		// if (voxel.x < (*map_dim).x && voxel.y < (*map_dim).x && voxel.z < (*map_dim).x){
+		//  	if (get_oct_vox(
+		//  		voxel,
+		//  		octree_descriptor_buffer,
+		//  		octree_attachment_lookup_buffer,
+		//  		octree_attachment_buffer,
+		//  		settings_buffer
+		//  		)){
+		//  			voxel_data = 5;
+		//  		} else {
+		//  			voxel_data = 0;
+		//  		}
+		// } else {
 			voxel_data = map[voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z))];
-		}
+		//}
 
 
 

@@ -53,7 +53,9 @@ int Camera::add_relative_impulse(DIRECTION impulse_direction, float speed) {
 
 	}
 
+	float val = movement.z;
 	movement += SphereToCart(dir) * speed;
+	movement.z = val;
 
 	return 1;
 }
@@ -79,8 +81,16 @@ int Camera::update(double delta_time) {
 	position.y += static_cast<float>(movement.y * delta_time * multiplier);
 	position.z += static_cast<float>(movement.z * delta_time * multiplier);
 	
-	movement *= static_cast<float>(friction_coefficient * delta_time * multiplier);
-	
+	movement.x *= static_cast<float>(friction_coefficient * delta_time * multiplier);
+	movement.y *= static_cast<float>(friction_coefficient * delta_time * multiplier);
+
+	if (position.z < 3.0f){
+		position.z = 3.0f;
+		movement.z = -0.1;
+	} else {
+		// gravity
+		movement.z -= 0.7f * delta_time;
+	}
 	return 1;
 }
 
@@ -117,6 +127,8 @@ void Camera::recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Even
 		else if (held_event->code == sf::Keyboard::D) {
 			add_relative_impulse(Camera::DIRECTION::RIGHT, default_impulse);
 		}
+
+
 	}
 
 	else if (event->type == vr::Event::KeyPressed) {
@@ -128,6 +140,8 @@ void Camera::recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Even
 				mouse_enabled = false;
 			else
 				mouse_enabled = true;
+		} else if (key_event->code == sf::Keyboard::Space) {
+			movement.z = 0.25f;
 		}
 	}
 

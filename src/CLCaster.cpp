@@ -7,9 +7,12 @@ CLCaster::~CLCaster() {
     //release_map();
     //release_camera();
     //release_octree();
-    release_viewport();
+    //clReleaseKernel(kernel_map.at("raycaster"));
+  //  clReleaseProgram()
+    //release_viewport();
 
     delete[] viewport_matrix;
+    delete[] viewport_image;
     delete[] viewport_image;
 
 	camera.reset();
@@ -864,7 +867,6 @@ bool CLCaster::release_buffer(std::string buffer_name) {
 
 	if (buffer_map.count(buffer_name) > 0) {
 
-		clFinish(command_queue);
 		int error = clReleaseMemObject(buffer_map.at(buffer_name));
 		
 		if (cl_assert(error)) {
