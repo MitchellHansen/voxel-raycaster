@@ -36,7 +36,7 @@ void LightController::remove_light(unsigned int light_index) {
 
 }
 
-void LightController::recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Event> event) {
+void LightController::event_handler(VrEventPublisher *publisher, std::unique_ptr<vr::Event> event) {
 
 	if (event->type == vr::Event::KeyHeld) {}
 	else if (event->type == vr::Event::KeyPressed) {}

@@ -94,7 +94,7 @@ int Camera::update(double delta_time) {
 	return 1;
 }
 
-void Camera::recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Event> event) {
+void Camera::event_handler(VrEventPublisher *publisher, std::unique_ptr<vr::Event> event) {
 
 	if (event->type == vr::Event::KeyHeld) {
 

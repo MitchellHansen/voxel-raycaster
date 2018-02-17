@@ -87,7 +87,7 @@ public:
 	
 	void remove_light(unsigned int light_index);
 
-	void recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Event> event) override;
+	void event_handler(VrEventPublisher *publisher, std::unique_ptr<vr::Event> event) override;
 
 private:
 

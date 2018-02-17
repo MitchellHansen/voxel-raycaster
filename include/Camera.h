@@ -57,7 +57,7 @@ public:
 	void setSpeed(float speed);
 	float getSpeed();
 
-	void recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Event> event) override;
+	void event_handler(VrEventPublisher *publisher, std::unique_ptr<vr::Event> event) override;
 
 
 	virtual void render_gui() override;

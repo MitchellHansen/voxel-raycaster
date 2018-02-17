@@ -68,7 +68,7 @@ void LightHandle::set_rgbi(sf::Vector4f rgbi)
 	data_reference->rgbi = rgbi;
 }
 
-void LightHandle::recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Event> event)
+void LightHandle::event_handler(VrEventPublisher *publisher, std::unique_ptr<vr::Event> event)
 {
 		if (event->type == vr::Event::JoystickMoved) {
 			

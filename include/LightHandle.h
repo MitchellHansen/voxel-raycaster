@@ -33,7 +33,7 @@ public:
 	void set_rgbi(sf::Vector4f rgbi);
 
 
-	virtual void recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Event> event) override;
+	virtual void event_handler(VrEventPublisher *publisher, std::unique_ptr<vr::Event> event) override;
 
 	void update(double delta_time);
 

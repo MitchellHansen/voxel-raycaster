@@ -370,7 +370,7 @@ void CLCaster::update_gui() {
 }
 
 
-void CLCaster::recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Event> event) {
+void CLCaster::event_handler(VrEventPublisher *publisher, std::unique_ptr<vr::Event> event) {
 
 	if (event->type == vr::Event::KeyPressed) {
 

@@ -168,7 +168,7 @@ public:
 	virtual void render_gui() override;
 	virtual void update_gui() override;
 
-	virtual void recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Event> event) override;
+	virtual void event_handler(VrEventPublisher *publisher, std::unique_ptr<vr::Event> event) override;
 
 	// ================================
 

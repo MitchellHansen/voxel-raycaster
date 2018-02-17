@@ -7,10 +7,28 @@
 
 class VrEventPublisher;
 
+
+
+/**
+ *
+ * VrEventSubscriber
+ *
+ * When inherited, the user must impliment a
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
+
+
 class VrEventSubscriber {
 public:
 	virtual ~VrEventSubscriber();
-	virtual void recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Event> event) = 0;
+	virtual void event_handler(VrEventPublisher *publisher, std::unique_ptr<vr::Event> event) = 0;
 	void subscribe_to_publisher(VrEventPublisher* publisher, vr::Event::EventType type);
 	void subscribe_to_publisher(VrEventPublisher* publisher, std::vector<vr::Event::EventType> type);
 	void unsubscribe(VrEventPublisher* publisher, vr::Event::EventType type);
