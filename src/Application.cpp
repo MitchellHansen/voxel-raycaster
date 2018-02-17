@@ -26,6 +26,7 @@ bool Application::init_clcaster() {
 
 	// Start up the raycaster
 	raycaster = std::make_shared<CLCaster>();
+    raycaster->setDefine("OCTDIM", std::to_string(MAP_X));
 	if (!raycaster->init())
 		abort();
 
@@ -41,6 +42,9 @@ bool Application::init_clcaster() {
 	raycaster->assign_octree(map);
 	raycaster->assign_map(map);
 
+
+
+
 	camera = std::make_shared<Camera>(
 		sf::Vector3f(3.5f, 3.5f, 3.5f), // Starting position
 		sf::Vector2f(1.57f, 0.0f),      // Direction
@@ -52,6 +56,7 @@ bool Application::init_clcaster() {
 	raycaster->create_viewport(WINDOW_X, WINDOW_Y, 0.625f * 90.0f, 90.0f);
 
 	// Initialize the light controller and link it to the GPU
+    // TODO: Bad behaviour when raycaster has errors!!!!
 	light_controller = std::make_shared<LightController>(raycaster);
 
 	// Create a light prototype, send it to the controller, and get the handle back

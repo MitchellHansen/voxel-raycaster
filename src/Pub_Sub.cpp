@@ -47,7 +47,7 @@ VrEventPublisher::~VrEventPublisher() {
 
 		// And one by one remove the
 		for (auto subscriber: subscriber_bucket.second){
-			subscriber.
+			//subscriber.
 		}
 	}
 }

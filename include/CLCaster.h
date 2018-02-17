@@ -151,9 +151,9 @@ public:
 	// Save the chosen device config to a file
 	void save_config();
 
-    // Set a
-    void
-
+    // Set a define
+    void setDefine(std::string name, std::string value);
+	void removeDefine(std::string name);
 
 	// ================================== DEBUG =======================================
 	
@@ -287,7 +287,7 @@ private:
 	// Containers holding the kernels and buffers
 	std::map<std::string, cl_kernel> kernel_map;
 	std::map<std::string, cl_mem> buffer_map;
-	std::vector<std::pair<std::string, unsigned int>> settings_index_map;
+	std::map<std::string, std::string> defines_map;
 	std::unordered_map<std::string, std::pair<sf::Sprite, std::unique_ptr<sf::Texture>>> image_map;
 
 	// Hardware caster holds and renders its own textures

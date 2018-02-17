@@ -463,7 +463,7 @@ __kernel void raycaster(
 			break;
 		}
 
-		constant int vox_dim = OCTDIM;
+		int vox_dim = OCTDIM;
 
 //        If we hit a voxel
 		// if (voxel.x < (*map_dim).x && voxel.y < (*map_dim).x && voxel.z < (*map_dim).x){

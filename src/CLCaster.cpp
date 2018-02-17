@@ -723,11 +723,11 @@ bool CLCaster::compile_kernel(std::string kernel_source, bool is_path, std::stri
     std::stringstream build_string_stream;
 
     // walk the settings index's and add them to the defines
-    for (auto i: settings_index_map){
-        build_string_stream << " -D" << i.first << "=" << std::to_string(i.second);
+    for (auto const& define : defines_map){
+        build_string_stream << " -D" << define.first << "=" << define.second;
     }
 
-    build_string_stream << "-DOCTDIM=" << std::to_string(Application::MAP_X);
+    //build_string_stream << "-DOCTDIM=" << std::to_string(Application::MAP_X);
 	build_string_stream << " -cl-finite-math-only -cl-fast-relaxed-math -cl-unsafe-math-optimizations";
 
     std::string build_string = build_string_stream.str();
@@ -745,8 +745,8 @@ bool CLCaster::compile_kernel(std::string kernel_source, bool is_path, std::stri
 		// Grab the log
 		clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, log_size, log, NULL);
 
-		Logger::log("Failed at clBuildProgram() : " + cl_err_lookup(error), Logger::LogLevel::ERROR, __LINE__, __FILE__);
-		Logger::log(log, Logger::LogLevel::ERROR, __LINE__, __FILE__);
+		Logger::log("Failed at clBuildProgram() with " + cl_err_lookup(error), Logger::LogLevel::ERROR, __LINE__, __FILE__);
+		Logger::log("CL_ERROR -->" + std::string(log), Logger::LogLevel::ERROR, __LINE__, __FILE__);
 
 		return false;
 	}
@@ -1175,6 +1175,14 @@ std::string CLCaster::cl_err_lookup(int error_code) {
 
 	return err_msg;
 
+}
+
+void CLCaster::setDefine(std::string name, std::string value) {
+	defines_map[name] = value;
+}
+
+void CLCaster::removeDefine(std::string name) {
+    defines_map.erase(name);
 }
 
 
