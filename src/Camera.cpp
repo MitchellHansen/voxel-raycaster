@@ -65,11 +65,11 @@ int Camera::slew_camera(sf::Vector2f input) {
 	return 1;
 }
 
-void Camera::set_camera(sf::Vector2f input) {
+void Camera::set_camera_direction(sf::Vector2f input) {
 	direction = input;
 }
 
-void Camera::set_camera(sf::Vector3f input) {
+void Camera::set_camera_direction(sf::Vector3f input) {
 	direction = CartToNormalizedSphere(input);
 }
 
@@ -101,10 +101,10 @@ void Camera::recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Even
 		auto held_event = static_cast<vr::KeyHeld*>(event.get());
 
 		if (held_event->code == sf::Keyboard::LShift) {
-			default_impulse = 0.01f;
+			setSpeed(0.01f);
 		}
 		else if (held_event->code == sf::Keyboard::RShift) {
-			default_impulse = 1.0f;
+			setSpeed(0.3f);
 		}
 		else if (held_event->code == sf::Keyboard::C) {
 			look_at_center();
@@ -151,7 +151,6 @@ void Camera::recieve_event(VrEventPublisher* publisher, std::unique_ptr<vr::Even
 
 			vr::MouseMoved *mouse_event = static_cast<vr::MouseMoved*>(event.get());
 
-			//deltas = fixed - sf::Mouse::getPosition();
 			deltas = fixed - sf::Vector2i(mouse_event->x, mouse_event->y);
 			if (deltas != sf::Vector2i(0, 0) && mouse_enabled == true) {
 
@@ -271,7 +270,7 @@ sf::Vector2f Camera::get_direction() {
 }
 
 void Camera::setSpeed(float speed) {
-	default_impulse = speed;;
+	default_impulse = speed;
 }
 
 float Camera::getSpeed() {

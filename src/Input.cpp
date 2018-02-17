@@ -147,7 +147,6 @@ void Input::render_gui() {
 
 	for (int i = 0; i < 3; i++) {
 
-
 		float offset = ImGui::GetColumnWidth(i);
 
 		draw_list->AddLine(ImVec2(p.x + 0 + offset * i, p.y + 50), ImVec2(p.x + 100 + offset * i, p.y + 50), col32, 1.0);
@@ -284,8 +283,7 @@ void Input::transpose_sf_events(std::list<sf::Event> sf_event_queue) {
 				break;
 			};
 			default: {
-				std::cout << "Event not recognized";
-				abort();
+				Logger::log("Event not recognized", Logger::LogLevel::WARN);
 				break;
 			}
 		}

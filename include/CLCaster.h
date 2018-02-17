@@ -137,19 +137,24 @@ public:
 	bool create_texture_atlas(sf::Texture *t, sf::Vector2i tile_dim);
 	
 	// Check to make sure that the buffers have been initiated and set them as kernel args
-	bool validate() ;
+	bool validate();
 
 	// Aquires the GL objects, runs the kernel, releases back the GL objects
-	bool compute() ;
+	bool compute();
 
 	// Take the viewport sprite and draw it to the screen
-	void draw(sf::RenderWindow* window) ;
+	void draw(sf::RenderWindow* window);
 
 	// Load the saved device config from a file
 	bool load_config();
 
 	// Save the chosen device config to a file
 	void save_config();
+
+    // Set a
+    void
+
+
 	// ================================== DEBUG =======================================
 	
 	// Re compile the kernel and revalidate the args
@@ -282,6 +287,7 @@ private:
 	// Containers holding the kernels and buffers
 	std::map<std::string, cl_kernel> kernel_map;
 	std::map<std::string, cl_mem> buffer_map;
+	std::vector<std::pair<std::string, unsigned int>> settings_index_map;
 	std::unordered_map<std::string, std::pair<sf::Sprite, std::unique_ptr<sf::Texture>>> image_map;
 
 	// Hardware caster holds and renders its own textures

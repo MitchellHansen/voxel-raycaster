@@ -3,6 +3,19 @@
 #include <Logger.h>
 #include <list>
 
+/**
+ *
+ * GUI
+ *
+ * Any class that wants to have an interactive GUI rendered to the window may
+ * inherit GUI and override the render_gui() and update_gui() methods
+ *
+ * ImGui operations must be completely wrapped in Begins and Ends
+ *
+ * You may enable and disable rendering by setting the 'rendering' flag to true or false
+ *
+ */
+
 class Gui {
 	
 public:

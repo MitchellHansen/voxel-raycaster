@@ -8,11 +8,10 @@ CLCaster::~CLCaster() {
     //release_camera();
     //release_octree();
     //clReleaseKernel(kernel_map.at("raycaster"));
-  //  clReleaseProgram()
+    //clReleaseProgram()
     //release_viewport();
 
     delete[] viewport_matrix;
-    delete[] viewport_image;
     delete[] viewport_image;
 
 	camera.reset();
@@ -720,13 +719,19 @@ bool CLCaster::compile_kernel(std::string kernel_source, bool is_path, std::stri
 		return false;
 	}
 		
-	// Try and build the program
-	// "-cl-finite-math-only -cl-fast-relaxed-math -cl-unsafe-math-optimizations"
-	
-	// need a ref to the oct dimensions
-	//std::string oct_dimensions = std::to_string(map->getDimensions().x);
-	
-	std::string build_string =  "-DOCTDIM=" + std::to_string(Application::MAP_X) + " -cl-finite-math-only -cl-fast-relaxed-math -cl-unsafe-math-optimizations";
+
+    std::stringstream build_string_stream;
+
+    // walk the settings index's and add them to the defines
+    for (auto i: settings_index_map){
+        build_string_stream << " -D" << i.first << "=" << std::to_string(i.second);
+    }
+
+    build_string_stream << "-DOCTDIM=" << std::to_string(Application::MAP_X);
+	build_string_stream << " -cl-finite-math-only -cl-fast-relaxed-math -cl-unsafe-math-optimizations";
+
+    std::string build_string = build_string_stream.str();
+
 	error = clBuildProgram(program, 1, &device_id, build_string.c_str(), NULL, NULL);
 
 	// Check to see if it error'd out

@@ -30,22 +30,22 @@ bool Application::init_clcaster() {
 		abort();
 
 	map = std::make_shared<Map>(MAP_X);
-	sf::Image bitmap = map->GenerateHeightBitmap(sf::Vector3i(MAP_X, MAP_Y, MAP_Z));
+
+    // TODO: Implement this
+    sf::Image bitmap = map->GenerateHeightBitmap(sf::Vector3i(MAP_X, MAP_Y, MAP_Z));
 	map->ApplyHeightmap(bitmap);
 	
-	map->octree.CastRayOctree(sf::Vector2f(1.57f, 0.0001f), sf::Vector3f(0.5f, 0.5f, 0.5f));
+	//map->octree.CastRayOctree(sf::Vector2f(1.57f, 0.0001f), sf::Vector3f(0.5f, 0.5f, 0.5f));
 
+    // TODO: Consolidate this to one call
 	raycaster->assign_octree(map);
 	raycaster->assign_map(map);
 
-	// Create a new camera with (starting position, direction)
 	camera = std::make_shared<Camera>(
-		sf::Vector3f(3.5f, 3.5f, 3.5f),
-		sf::Vector2f(1.57f, 0.0f),
+		sf::Vector3f(3.5f, 3.5f, 3.5f), // Starting position
+		sf::Vector2f(1.57f, 0.0f),      // Direction
 		window.get()
 	);
-
-	// *link* the camera to the GPU
 	raycaster->assign_camera(camera);
 
 	// Generate and send the viewport to the GPU. Also creates the viewport texture
@@ -63,7 +63,6 @@ bool Application::init_clcaster() {
 	light_handle = light_controller->create_light(prototype);
 
 	// Load in the spritesheet texture
-
 	if (!spritesheet.loadFromFile("../assets/textures/minecraft_tiles.png"))
 		Logger::log("Failed to load spritesheet from file", Logger::LogLevel::WARN);
 	raycaster->create_texture_atlas(&spritesheet, sf::Vector2i(16, 16));

@@ -4,6 +4,17 @@
 #include "Pub_Sub.h"
 #include <list>
 
+/**
+ *
+ * NetworkInput
+ *
+ * Prototype network joystick, listens to clients connecting to a certain port and reads
+ * packets pertaining to, in the case of the lights, xyz movement. This could in theory
+ * provide a very generic way to listen to network input and generate events from received
+ * packets.
+ *
+ */
+
 struct CustomPacket {
 
 	char data[1024];
