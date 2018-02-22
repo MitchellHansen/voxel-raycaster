@@ -6,7 +6,6 @@
 /**
  * Subscriber
  */
-
 VrEventSubscriber::~VrEventSubscriber() {
 
 	// Cycles through the publishers we're subscribed to
@@ -23,18 +22,30 @@ void VrEventSubscriber::subscribe_to_publisher(VrEventPublisher* publisher, vr::
 
 	publisher->subscribe(this, type);
 
-	subscriptions[publisher].push_back(type);
+	subscriptions[publisher].insert(type);
 }
 
 void VrEventSubscriber::subscribe_to_publisher(VrEventPublisher* publisher, std::vector<vr::Event::EventType> type) {
 
 	publisher->subscribe(this, type);
 
-	subscriptions[publisher].insert(subscriptions[publisher].end(), type.begin(), type.end());
+	subscriptions[publisher].insert(type.begin(), type.end());
 }
 
 void VrEventSubscriber::unsubscribe(VrEventPublisher* publisher, vr::Event::EventType type){
 
+    if (subscriptions.count(publisher)){
+        std::set<vr::Event::EventType> set = subscriptions[publisher];
+        auto it = set.find (type);
+        set.erase (it, set.end());
+    }
+}
+
+void VrEventSubscriber::unsubscribe_all(VrEventPublisher* publisher){
+
+    if (subscriptions.count(publisher)){
+        subscriptions.erase(publisher);
+    }
 }
 
 /**
@@ -43,11 +54,11 @@ void VrEventSubscriber::unsubscribe(VrEventPublisher* publisher, vr::Event::Even
 VrEventPublisher::~VrEventPublisher() {
 
 	// Cycle through the subscribers that are listening to us
-	for (auto const& subscriber_bucket : subscribers) {
+	for (auto const& event_bucket : subscribers) {
 
-		// And one by one remove the
-		for (auto subscriber: subscriber_bucket.second){
-			//subscriber.
+		// And one by one remove the subscriber
+		for (auto subscriber: event_bucket.second){
+			subscriber->unsubscribe(this, event_bucket.first);
 		}
 	}
 }

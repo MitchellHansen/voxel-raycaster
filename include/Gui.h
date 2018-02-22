@@ -49,7 +49,6 @@ private:
 		}
 	};
 
-	
 
 	static std::mutex container_lock;
 	static std::list<Gui*> renderable_container;

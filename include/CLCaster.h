@@ -177,7 +177,7 @@ private:
 	/**
 	* Device is a storage container for device data we retrieve from OpenCL
 	*
-	* The data is mainly queries as strings or integer types and stored into
+	* The data are mainly queries as strings or integer types and stored into
 	* respective containers. We store this data into a file and retrieve it later
 	* to let users select a preferred compute device and keep track of their choice
 	*/
