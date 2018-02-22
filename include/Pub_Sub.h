@@ -2,6 +2,7 @@
 #include <iostream>
 #include <memory>
 #include <set>
+#include <vector>
 #include <SFML/Graphics.hpp>
 #include "Event.hpp"
 

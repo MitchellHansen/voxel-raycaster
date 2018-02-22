@@ -5,11 +5,11 @@
 #include <string>
 #include <SFML/Graphics.hpp>
 #include "Event.hpp"
-#include "Pub_Sub.h"
 #include "Gui.h"
-#include "Logger.h"
 #include "LightHandle.h"
-
+#include "Logger.h"
+#include "Pub_Sub.h"
+#include <imgui/imgui-SFML.h>
 /**
  *
  * Input

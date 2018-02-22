@@ -1,19 +1,17 @@
 #pragma once
-#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
-#include <Vector4.hpp>
-#include <vector>
+#include <GL/glew.h>
 #include <iostream>
 #include <map>
-#include <GL/glew.h>
 #include <string.h>
-#include "LightController.h"
-#include "Camera.h"
-//#include <GL/glew.h>
-#include <Application.h>
 #include <unordered_map>
+#include <vector>
+#include "Application.h"
+#include "Camera.h"
+#include "Gui.h"
+#include "LightController.h"
 #include "Logger.h"
 #include "map/Map.h"
-#include "Gui.h"
+#include "Vector4.hpp"
 
 #ifdef linux
 #include <CL/cl.h>

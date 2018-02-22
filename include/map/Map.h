@@ -5,9 +5,10 @@
 #include <time.h>
 #include <SFML/System/Clock.hpp>
 #include <SFML/System/Vector3.hpp>
-#include "util.hpp"
+#include "Logger.h"
 #include "map/ArrayMap.h"
 #include "map/Octree.h"
+#include "util.hpp"
 
 #define _USE_MATH_DEFINES
 #include <math.h>

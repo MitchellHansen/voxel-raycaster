@@ -1,7 +1,4 @@
 #include "NetworkInput.h"
-#include <iostream>
-#include <cstring>
-#include <memory>
 
 NetworkInput::NetworkInput() {
 

@@ -1,6 +1,4 @@
-﻿#pragma once
-#include <imgui/imgui-SFML.h>
-#include "Input.h"
+﻿#include "Input.h"
 
 
 Input::Input() {

@@ -1,5 +1,5 @@
 #include "map/Map.h"
-#include "Logger.h"
+
 
 
 Map::Map(uint32_t dimensions) : array_map(sf::Vector3i(dimensions, dimensions, dimensions)) {

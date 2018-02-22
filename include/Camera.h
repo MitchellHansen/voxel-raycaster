@@ -1,10 +1,10 @@
 #pragma once
+#include <cmath>
 #include <SFML/System/Vector3.hpp>
 #include <SFML/System/Vector2.hpp>
-#include "util.hpp"
-#include "Pub_Sub.h"
-#include <cmath>
 #include "Gui.h"
+#include "Pub_Sub.h"
+#include "util.hpp"
 
 
 

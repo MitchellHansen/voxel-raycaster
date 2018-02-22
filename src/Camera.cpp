@@ -1,5 +1,4 @@
 #include "Camera.h"
-#include "Pub_Sub.h"
 
 
 Camera::Camera() {}

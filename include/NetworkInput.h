@@ -1,4 +1,5 @@
 #pragma once
+#include <cstring>
 #include <list>
 #include <thread>
 #include <SFML/Network.hpp>

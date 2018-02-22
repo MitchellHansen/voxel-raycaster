@@ -1,8 +1,4 @@
-#include <SFML/Graphics.hpp>
-#include <iostream>
-#include "map/Map.h"
 #include <Ray.h>
-#include "util.hpp"
 
 Ray::Ray(
         Map *map,
