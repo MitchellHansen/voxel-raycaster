@@ -1,8 +1,9 @@
-#include <SFML/Network.hpp>
+#pragma once
+#include <list>
 #include <thread>
+#include <SFML/Network.hpp>
 #include "Event.hpp"
 #include "Pub_Sub.h"
-#include <list>
 
 /**
  *

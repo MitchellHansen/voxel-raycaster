@@ -1,6 +1,6 @@
 #pragma once
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #undef ERROR
 
 class Logger {

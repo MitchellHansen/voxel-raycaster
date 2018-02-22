@@ -1,23 +1,17 @@
 #pragma once
-#include <SFML/Graphics.hpp>
 #include <iostream>
-#include "Event.hpp"
 #include <memory>
 #include <set>
-
+#include <SFML/Graphics.hpp>
+#include "Event.hpp"
 
 class VrEventPublisher;
 
 
 
 /**
- *
  * VrEventSubscriber
- *
  */
-
-
-
 class VrEventSubscriber {
 public:
 	virtual ~VrEventSubscriber();
@@ -32,7 +26,6 @@ public:
     // Looks for the publisher ptr and event type in the subscriptions map. If there, Removes them
     void unsubscribe(VrEventPublisher* publisher, vr::Event::EventType type);
     void unsubscribe_all(VrEventPublisher* publisher);
-    void unsubscribe_all();
 
 protected:
 

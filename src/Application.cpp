@@ -21,7 +21,7 @@ Application::~Application() {
     if (window.unique())
         window.reset();
     else {
-        Logger::log("Can't release window, shared_ptr coun : " + window.use_count(), Logger::LogLevel::WARN);
+        Logger::log("Can't release window, shared_ptr count : " + window.use_count(), Logger::LogLevel::WARN);
     }
 	//light_handle->~LightHandle();
 	//light_controller->~LightController();

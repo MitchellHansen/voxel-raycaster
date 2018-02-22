@@ -1,11 +1,14 @@
 ﻿#pragma once
-#include <SFML/Graphics.hpp>
+#include <iostream>
 #include <list>
-#include "Event.hpp"
 #include <memory>
+#include <string>
+#include <SFML/Graphics.hpp>
+#include "Event.hpp"
 #include "Pub_Sub.h"
 #include "Gui.h"
-#include <string>
+#include "Logger.h"
+#include "LightHandle.h"
 
 /**
  *
@@ -47,9 +50,6 @@ private:
 	std::vector<sf::Keyboard::Key> held_keys;
 	std::vector<sf::Mouse::Button> held_mouse_buttons;
 
-	// TODO: What the hell was I using these for?
-	std::vector<bool> keyboard_flags;
-	std::vector<bool> mouse_flags;
 
 private:
 	

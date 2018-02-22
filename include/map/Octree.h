@@ -1,8 +1,9 @@
 #pragma once
-#include <SFML/System/Vector3.hpp>
-#include <vector>
-#include "util.hpp"
 #include <tuple>
+#include <vector>
+#include <SFML/System/Vector3.hpp>
+#include "util.hpp"
+
 
 struct OctState {
 

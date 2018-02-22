@@ -1,10 +1,10 @@
 #pragma once
-#include <SFML/Graphics.hpp>
-#include <util.hpp>
 #include <memory>
-#include "Pub_Sub.h"
-#include "Vector4.hpp"
+#include <SFML/Graphics.hpp>
 #include "Gui.h"
+#include "Pub_Sub.h"
+#include "util.hpp"
+#include "Vector4.hpp"
 
 
 struct LightPrototype;

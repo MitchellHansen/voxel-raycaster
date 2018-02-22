@@ -1,4 +1,5 @@
 #pragma once
+#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 #include <Vector4.hpp>
 #include <vector>
 #include <iostream>

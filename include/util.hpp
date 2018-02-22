@@ -1,16 +1,16 @@
 #pragma once
-#include <SFML/System/Vector3.hpp>
-#include <SFML/System/Vector2.hpp>
+#include <algorithm>
 #include <bitset>
-#include <iostream>
+#include <cmath>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include <string>
-#include <imgui/imgui.h>
-#include <cmath>
-#include <SFML/Graphics/Texture.hpp>
-#include <algorithm>
 #include <tuple>
+#include <SFML/System/Vector3.hpp>
+#include <SFML/System/Vector2.hpp>
+#include <SFML/Graphics/Texture.hpp>
+#include <imgui/imgui.h>
 #include "Vector4.hpp"
 
 const double PI = 3.141592653589793238463;

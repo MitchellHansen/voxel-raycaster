@@ -1,15 +1,9 @@
 ﻿#pragma once
+#include <imgui/imgui-SFML.h>
 #include "Input.h"
-#include <iostream>
-#include <memory>
-#include "Logger.h"
-#include "LightHandle.h"
-#include "imgui/imgui-SFML.h"
 
 
-Input::Input() :
-	keyboard_flags(sf::Keyboard::Key::KeyCount, false),
-	mouse_flags(sf::Mouse::Button::ButtonCount, false){
+Input::Input() {
 
 }
 
@@ -166,7 +160,7 @@ void Input::render_gui() {
 	for (auto i : held_keys) {
 		if (i < 0)
 			continue;
-		ImGui::Text(key_strings.at(i).c_str());
+		ImGui::Text("%s", key_strings.at(i).c_str());
 		ImGui::NextColumn();
 	}
 

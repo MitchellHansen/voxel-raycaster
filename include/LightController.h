@@ -2,10 +2,10 @@
 #include <SFML/System/Vector3.hpp>
 #include <list>
 #include <numeric>
-#include "util.hpp"
-#include "Pub_Sub.h"
 #include "CLCaster.h"
 #include "LightHandle.h"
+#include "Pub_Sub.h"
+#include "util.hpp"
 
 /**
 * Light Handle :

@@ -1,9 +1,9 @@
 #pragma once
-#include<SFML/Graphics.hpp>
 #include <algorithm>
-#include "util.hpp"
-#include <random>
 #include <functional>
+#include <random>
+#include<SFML/Graphics.hpp>
+#include "util.hpp"
 
 class ArrayMap {
 	

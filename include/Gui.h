@@ -1,7 +1,7 @@
 #pragma once
+#include <list>
 #include <mutex>
 #include <Logger.h>
-#include <list>
 
 /**
  *
