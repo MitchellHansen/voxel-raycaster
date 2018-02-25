@@ -151,8 +151,13 @@ public:
 	void save_config();
 
     // Set a define
-    void setDefine(std::string name, std::string value);
-	void removeDefine(std::string name);
+    void set_define(std::string name, std::string value);
+	void remove_define(std::string name);
+
+    bool create_settings_buffer();
+    bool release_settings_buffer();
+    bool add_to_settings_buffer(std::string setting_name, std::string define_accessor_name, int64_t *value);
+    bool remove_from_settings_buffer(std::string setting_name);
 
 	// ================================== DEBUG =======================================
 	
@@ -286,8 +291,17 @@ private:
 	// Containers holding the kernels and buffers
 	std::map<std::string, cl_kernel> kernel_map;
 	std::map<std::string, cl_mem> buffer_map;
-	std::map<std::string, std::string> defines_map;
 	std::unordered_map<std::string, std::pair<sf::Sprite, std::unique_ptr<sf::Texture>>> image_map;
+
+    const unsigned int SETTINGS_BUFFER_SIZE = 64;
+    unsigned int settings_buffer_position = 0;
+    int64_t* settings_buffer = nullptr;
+
+    // name of setting, position in the settings buffer
+    std::map<std::string, unsigned int> settings_buffer_indices;
+
+    // name of define, value
+    std::map<std::string, std::string> defines_map;
 
 	// Hardware caster holds and renders its own textures
 	sf::Sprite viewport_sprite;
@@ -302,7 +316,6 @@ private:
 
 	std::vector<PackedData> *lights;
 	int light_count = 0;
-	
 
 	int error = 0;
 

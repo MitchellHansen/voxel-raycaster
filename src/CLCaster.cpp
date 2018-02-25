@@ -3,14 +3,6 @@
 CLCaster::CLCaster() {}
 CLCaster::~CLCaster() {
 
-	// Causes sigabrt??
-    //release_map();
-    //release_camera();
-    //release_octree();
-    //clReleaseKernel(kernel_map.at("raycaster"));
-    //clReleaseProgram()
-    //release_viewport();
-
     delete[] viewport_matrix;
     delete[] viewport_image;
 
@@ -64,12 +56,11 @@ bool CLCaster::init() {
 		return false;
 	}
 
-	if (!compile_kernel("../kernels/ray_caster_kernel.cl", true, "raycaster")) {
-		Logger::log("Failed to compile the kernel", Logger::LogLevel::ERROR, __LINE__, __FILE__);
-		std::cin.get(); // hang the output window so we can read the error
-		return false;
-	}
-	
+    if (!create_settings_buffer()) {
+        Logger::log("Failed to create settings buffer", Logger::LogLevel::ERROR, __LINE__, __FILE__);
+        return false;
+    }
+
 	srand(time(nullptr));
 
 	int *seed_memory = new int[1920*1080];
@@ -117,8 +108,8 @@ bool CLCaster::assign_octree(std::shared_ptr<Map> map) {
 		return false;
 	if (!create_buffer("octree_attachment_buffer", map->octree.buffer_size * sizeof(uint64_t), map->octree.attachment_buffer))
 		return false;
-	if (!create_buffer("settings_buffer", sizeof(uint64_t), &map->octree.root_index))
-		return false;
+
+    add_to_settings_buffer("octree_root_index", "OCTREE_ROOT_INDEX", (int64_t*)&map->octree.root_index);
 
 	return true;
 }
@@ -133,8 +124,6 @@ bool CLCaster::release_octree()
 	if (!release_buffer("octree_attachment_lookup_buffer"))
 		return false;
 	if (!release_buffer("octree_attachment_buffer"))
-		return false;
-	if (!release_buffer("settings_buffer"))
 		return false;
 
 	return true;
@@ -165,6 +154,12 @@ bool CLCaster::release_camera() {
 }
 
 bool CLCaster::validate() {
+
+    if (!compile_kernel("../kernels/ray_caster_kernel.cl", true, "raycaster")) {
+        Logger::log("Failed to compile the kernel", Logger::LogLevel::ERROR, __LINE__, __FILE__);
+        std::cin.get(); // hang the output window so we can read the error
+        return false;
+    }
 
 	Logger::log("Validating OpenCL kernel args", Logger::LogLevel::INFO);
 
@@ -278,7 +273,7 @@ bool CLCaster::create_viewport(int width, int height, float v_fov, float h_fov) 
 		}
 	}
 
-	if (!create_buffer("viewport_matrix", sizeof(float) * 4 * view_res.x * view_res.y, viewport_matrix, CL_MEM_USE_HOST_PTR))
+	if (!create_buffer("viewport_matrix", sizeof(float) * 4 * view_res.x * view_res.y, viewport_matrix))
 		return false;
 
 	// Create the image that opencl's rays write to
@@ -635,7 +630,6 @@ bool CLCaster::create_shared_context()
 		0
 	};
 
-
 #elif defined TARGET_OS_MAC
 
 	CGLContextObj glContext = CGLGetCurrentContext();
@@ -647,8 +641,6 @@ bool CLCaster::create_shared_context()
 	};
 
 #endif
-
-	
 
 	// Create our shared context
 	context = clCreateContext(
@@ -718,7 +710,6 @@ bool CLCaster::compile_kernel(std::string kernel_source, bool is_path, std::stri
 		Logger::log("Failed at clCreateProgramWithSource() :" + cl_err_lookup(error), Logger::LogLevel::ERROR, __LINE__, __FILE__);
 		return false;
 	}
-		
 
     std::stringstream build_string_stream;
 
@@ -727,7 +718,6 @@ bool CLCaster::compile_kernel(std::string kernel_source, bool is_path, std::stri
         build_string_stream << " -D" << define.first << "=" << define.second;
     }
 
-    //build_string_stream << "-DOCTDIM=" << std::to_string(Application::MAP_X);
 	build_string_stream << " -cl-finite-math-only -cl-fast-relaxed-math -cl-unsafe-math-optimizations";
 
     std::string build_string = build_string_stream.str();
@@ -1177,12 +1167,61 @@ std::string CLCaster::cl_err_lookup(int error_code) {
 
 }
 
-void CLCaster::setDefine(std::string name, std::string value) {
+void CLCaster::set_define(std::string name, std::string value) {
 	defines_map[name] = value;
 }
 
-void CLCaster::removeDefine(std::string name) {
+void CLCaster::remove_define(std::string name) {
     defines_map.erase(name);
+}
+
+bool CLCaster::add_to_settings_buffer(std::string setting_name, std::string define_accessor_name, int64_t *value) {
+
+    bool success = true;
+
+    if (settings_buffer == nullptr){
+
+        Logger::log("Trying to push settings to an uninitialized settings buffer", Logger::LogLevel::ERROR, __LINE__, __FILE__);
+        success = false;
+
+    } else if (defines_map.count(define_accessor_name)) {
+
+        Logger::log("Define name already present in the defines map", Logger::LogLevel::ERROR, __LINE__, __FILE__);
+        success = false;
+
+    } else {
+
+        if (settings_buffer_position < SETTINGS_BUFFER_SIZE) {
+            defines_map[define_accessor_name] = std::to_string(settings_buffer_position);
+            settings_buffer[settings_buffer_position] = *value;
+            settings_buffer_position++;
+        } else {
+            Logger::log("Settings buffer has reached the maximum size of " + std::to_string(SETTINGS_BUFFER_SIZE) + " elements", Logger::LogLevel::ERROR, __LINE__, __FILE__);
+            success = false;
+        }
+    }
+
+    return success;
+}
+
+bool CLCaster::create_settings_buffer() {
+
+    settings_buffer = new int64_t[SETTINGS_BUFFER_SIZE];
+    if (!create_buffer("settings_buffer", sizeof(int64_t) * SETTINGS_BUFFER_SIZE, settings_buffer, CL_MEM_USE_HOST_PTR))
+        return false;
+    return true;
+}
+
+bool CLCaster::remove_from_settings_buffer(std::string setting_name) {
+
+    Logger::log("remove_from_settings_buffer() not implimented", Logger::LogLevel::WARN, __LINE__, __FILE__);
+    return false;
+}
+
+bool CLCaster::release_settings_buffer() {
+    if (!release_buffer("settings_buffer"))
+        return false;
+    return true;
 }
 
 
@@ -1237,26 +1276,25 @@ CLCaster::device::device(const device& d) {
 void CLCaster::device::print(std::ostream& stream) const {
 
 	stream << "\n\tDevice ID        : " << device_id << std::endl;
-	stream << "\tDevice Name      : " << data.device_name << std::endl;
+    stream <<   "\tPlatform ID      : " << platform_id << std::endl;
 
-	stream << "\tPlatform ID      : " << platform_id << std::endl;
-	stream << "\tPlatform Name    : " << data.platform_name << std::endl;
+    stream <<   "\tDevice Name      : " << data.device_name << std::endl;
+	stream <<   "\tPlatform Name    : " << data.platform_name << std::endl;
+    stream <<   "\tDevice Type      : ";
 
-	stream << "\tOpenCL Version   : " << data.opencl_version << std::endl;
-	stream << "\tSupports sharing : " << std::boolalpha << cl_gl_sharing << std::endl;
-	stream << "\tDevice Type      : ";
+    if (data.device_type == CL_DEVICE_TYPE_CPU)
+        stream << "CPU" << std::endl;
 
-	if (data.device_type == CL_DEVICE_TYPE_CPU)
-		stream << "CPU" << std::endl;
+    else if (data.device_type == CL_DEVICE_TYPE_GPU)
+        stream << "GPU" << std::endl;
 
-	else if (data.device_type == CL_DEVICE_TYPE_GPU)
-		stream << "GPU" << std::endl;
+    else if (data.device_type == CL_DEVICE_TYPE_ACCELERATOR)
+        stream << "Accelerator" << std::endl;
 
-	else if (data.device_type == CL_DEVICE_TYPE_ACCELERATOR)
-		stream << "Accelerator" << std::endl;
+	stream <<   "\tOpenCL Version   : " << data.opencl_version << std::endl;
+	stream <<   "\tSupports sharing : " << std::boolalpha << cl_gl_sharing << std::endl;
 
 	stream << "\tIs Little Endian : " << std::boolalpha << is_little_endian << std::endl;
-
 	stream << "\tClock Frequency  : " << data.clock_frequency << std::endl;
 	stream << "\tCompute Units    : " << data.compute_units << std::endl;
 

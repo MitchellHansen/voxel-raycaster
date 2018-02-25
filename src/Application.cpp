@@ -23,17 +23,17 @@ Application::~Application() {
     else {
         Logger::log("Can't release window, shared_ptr count : " + window.use_count(), Logger::LogLevel::WARN);
     }
-	//light_handle->~LightHandle();
-	//light_controller->~LightController();
 }
 
 bool Application::init_clcaster() {
 
 	// Start up the raycaster
 	raycaster = std::make_shared<CLCaster>();
-    raycaster->setDefine("OCTDIM", std::to_string(MAP_X));
+
 	if (!raycaster->init())
 		abort();
+
+    raycaster->add_to_settings_buffer("octree_dimensions", "OCTDIM", (int64_t*)&MAP_X);
 
 	map = std::make_shared<Map>(MAP_X);
 
@@ -46,9 +46,6 @@ bool Application::init_clcaster() {
     // TODO: Consolidate this to one call
 	raycaster->assign_octree(map);
 	raycaster->assign_map(map);
-
-
-
 
 	camera = std::make_shared<Camera>(
 		sf::Vector3f(3.5f, 3.5f, 3.5f), // Starting position
@@ -77,7 +74,7 @@ bool Application::init_clcaster() {
 		Logger::log("Failed to load spritesheet from file", Logger::LogLevel::WARN);
 	raycaster->create_texture_atlas(&spritesheet, sf::Vector2i(16, 16));
 
-	// Checks to see if proper data was uploaded, then sets the kernel args
+	// Compiles the kernel, Checks to see if proper data was uploaded, then sets the kernel args
 	// ALL DATA LOADING MUST BE FINISHED
 	if (!raycaster->validate()) {
 		abort();
