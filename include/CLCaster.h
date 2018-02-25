@@ -156,8 +156,11 @@ public:
 
     bool create_settings_buffer();
     bool release_settings_buffer();
-    bool add_to_settings_buffer(std::string setting_name, std::string define_accessor_name, int64_t *value);
-    bool overwrite_setting(std::string settings_name, int64_t *value);
+
+	template<typename T>
+    bool add_to_settings_buffer(std::string setting_name, std::string define_accessor_name, T value);
+
+	bool overwrite_setting(std::string settings_name, int64_t *value);
     bool remove_from_settings_buffer(std::string setting_name);
 
 	// ================================== DEBUG =======================================
@@ -175,6 +178,9 @@ public:
 
 	virtual void event_handler(VrEventPublisher *publisher, std::unique_ptr<vr::Event> event) override;
 
+	bool decimal = false;
+	bool hex = false;
+	bool binary = false;
 	// ================================
 
 private:

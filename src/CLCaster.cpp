@@ -1,3 +1,4 @@
+#include <iomanip>
 #include "CLCaster.h"
 
 CLCaster::CLCaster() {}
@@ -109,7 +110,7 @@ bool CLCaster::assign_octree(std::shared_ptr<Map> map) {
 	if (!create_buffer("octree_attachment_buffer", map->octree.buffer_size * sizeof(uint64_t), map->octree.attachment_buffer))
 		return false;
 
-    add_to_settings_buffer("octree_root_index", "OCTREE_ROOT_INDEX", (int64_t*)&map->octree.root_index);
+    add_to_settings_buffer("octree_root_index", "OCTREE_ROOT_INDEX", map->octree.root_index);
 
 	return true;
 }
@@ -356,6 +357,58 @@ void CLCaster::render_gui() {
 		};
 	}
 
+	ImGui::Checkbox("HEX", &hex); ImGui::SameLine();
+	ImGui::Checkbox("DECIMAL", &decimal); ImGui::SameLine();
+	ImGui::Checkbox("BINARY", &binary);
+
+    std::stringstream ss;
+
+	int columns = 1;
+
+	if (binary) {columns++;} if (decimal) {columns++;} if (hex) {columns++;}
+
+    ImGui::Columns(columns, NULL, true);
+
+    for (auto const& x : settings_buffer_indices) {
+
+		int offset = 150;
+		int count = 1;
+
+        ImGui::Text(x.first.c_str());
+
+        ImGui::NextColumn();
+
+		if (decimal) {
+			ImGui::SetColumnOffset(count, offset);
+			offset += 150; count++;
+			ss << std::dec << std::to_string(settings_buffer[x.second]);
+			ImGui::Text(ss.str().c_str());
+			ss.clear();
+			ss.str("");
+			ImGui::NextColumn();
+		}
+
+		if (hex){
+			ImGui::SetColumnOffset(count, offset);
+			offset += 150; count++;
+			ss << "0x" << std::setfill ('0') << std::setw(sizeof(int64_t)*2) << std::hex << settings_buffer[x.second];
+			ImGui::Text(ss.str().c_str());
+			ss.clear();
+			ss.str("");
+			ImGui::NextColumn();
+		}
+
+		if (binary) {
+			ImGui::SetColumnOffset(count, offset);
+			offset += 150; count++;
+			ss << "b" << std::setfill('0') << std::setw(sizeof(int64_t) * 2) << std::bitset<64>(settings_buffer[x.second]);
+			ImGui::Text(ss.str().c_str());
+			ss.clear();
+			ss.str("");
+			ImGui::NextColumn();
+		}
+
+    }
 	ImGui::End();
 }
 
@@ -967,205 +1020,6 @@ bool CLCaster::cl_assert(int error_code) {
 }
 
 
-std::string CLCaster::cl_err_lookup(int error_code) {
-	
-	std::string err_msg = "";
-
-	switch (error_code) {
-
-		case CL_SUCCESS:
-			err_msg += "CL_SUCCESS";
-			break;
-		case 1:
-			err_msg += "CL_SUCCESS";
-			break;
-		case CL_DEVICE_NOT_FOUND:
-			err_msg += "CL_DEVICE_NOT_FOUND";
-			break;
-		case CL_DEVICE_NOT_AVAILABLE:
-			err_msg = "CL_DEVICE_NOT_AVAILABLE";
-			break;
-		case CL_COMPILER_NOT_AVAILABLE:
-			err_msg = "CL_COMPILER_NOT_AVAILABLE";
-			break;
-		case CL_MEM_OBJECT_ALLOCATION_FAILURE:
-			err_msg = "CL_MEM_OBJECT_ALLOCATION_FAILURE";
-			break;
-		case CL_OUT_OF_RESOURCES:
-			err_msg = "CL_OUT_OF_RESOURCES";
-			break;
-		case CL_OUT_OF_HOST_MEMORY:
-			err_msg = "CL_OUT_OF_HOST_MEMORY";
-			break;
-		case CL_PROFILING_INFO_NOT_AVAILABLE:
-			err_msg = "CL_PROFILING_INFO_NOT_AVAILABLE";
-			break;
-		case CL_MEM_COPY_OVERLAP:
-			err_msg = "CL_MEM_COPY_OVERLAP";
-			break;
-		case CL_IMAGE_FORMAT_MISMATCH:
-			err_msg = "CL_IMAGE_FORMAT_MISMATCH";
-			break;
-		case CL_IMAGE_FORMAT_NOT_SUPPORTED:
-			err_msg = "CL_IMAGE_FORMAT_NOT_SUPPORTED";
-			break;
-		case CL_BUILD_PROGRAM_FAILURE:
-			err_msg = "CL_BUILD_PROGRAM_FAILURE";
-			break;
-		case CL_MAP_FAILURE:
-			err_msg = "CL_MAP_FAILURE";
-			break;
-		case CL_MISALIGNED_SUB_BUFFER_OFFSET:
-			err_msg = "CL_MISALIGNED_SUB_BUFFER_OFFSET";
-			break;
-		case CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST:
-			err_msg = "CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST";
-			break;
-		case CL_COMPILE_PROGRAM_FAILURE:
-			err_msg = "CL_COMPILE_PROGRAM_FAILURE";
-			break;
-		case CL_LINKER_NOT_AVAILABLE:
-			err_msg = "CL_LINKER_NOT_AVAILABLE";
-			break;
-		case CL_LINK_PROGRAM_FAILURE:
-			err_msg = "CL_LINK_PROGRAM_FAILURE";
-			break;
-		case CL_DEVICE_PARTITION_FAILED:
-			err_msg = "CL_DEVICE_PARTITION_FAILED";
-			break;
-		case CL_KERNEL_ARG_INFO_NOT_AVAILABLE:
-			err_msg = "CL_KERNEL_ARG_INFO_NOT_AVAILABLE";
-			break;
-		case CL_INVALID_VALUE:
-			err_msg = "CL_INVALID_VALUE";
-			break;
-		case CL_INVALID_DEVICE_TYPE:
-			err_msg = "CL_INVALID_DEVICE_TYPE";
-			break;
-		case CL_INVALID_PLATFORM:
-			err_msg = "CL_INVALID_PLATFORM";
-			break;
-		case CL_INVALID_DEVICE:
-			err_msg = "CL_INVALID_DEVICE";
-			break;
-		case CL_INVALID_CONTEXT:
-			err_msg = "CL_INVALID_CONTEXT";
-			break;
-		case CL_INVALID_QUEUE_PROPERTIES:
-			err_msg = "CL_INVALID_QUEUE_PROPERTIES";
-			break;
-		case CL_INVALID_COMMAND_QUEUE:
-			err_msg = "CL_INVALID_COMMAND_QUEUE";
-			break;
-		case CL_INVALID_HOST_PTR:
-			err_msg = "CL_INVALID_HOST_PTR";
-			break;
-		case CL_INVALID_MEM_OBJECT:
-			err_msg = "CL_INVALID_MEM_OBJECT";
-			break;
-		case CL_INVALID_IMAGE_FORMAT_DESCRIPTOR:
-			err_msg = "CL_INVALID_IMAGE_FORMAT_DESCRIPTOR";
-			break;
-		case CL_INVALID_IMAGE_SIZE:
-			err_msg = "CL_INVALID_IMAGE_SIZE";
-			break;
-		case CL_INVALID_SAMPLER:
-			err_msg = "CL_INVALID_SAMPLER";
-			break;
-		case CL_INVALID_BINARY:
-			err_msg = "CL_INVALID_BINARY";
-			break;
-		case CL_INVALID_BUILD_OPTIONS:
-			err_msg = "CL_INVALID_BUILD_OPTIONS";
-			break;
-		case CL_INVALID_PROGRAM:
-			err_msg = "CL_INVALID_PROGRAM";
-			break;
-		case CL_INVALID_PROGRAM_EXECUTABLE:
-			err_msg = "CL_INVALID_PROGRAM_EXECUTABLE";
-			break;
-		case CL_INVALID_KERNEL_NAME:
-			err_msg = "CL_INVALID_KERNEL_NAME";
-			break;
-		case CL_INVALID_KERNEL_DEFINITION:
-			err_msg = "CL_INVALID_KERNEL_DEFINITION";
-			break;
-		case CL_INVALID_KERNEL:
-			err_msg = "CL_INVALID_KERNEL";
-			break;
-		case CL_INVALID_ARG_INDEX:
-			err_msg = "CL_INVALID_ARG_INDEX";
-			break;
-		case CL_INVALID_ARG_VALUE:
-			err_msg = "CL_INVALID_ARG_VALUE";
-			break;
-		case CL_INVALID_ARG_SIZE:
-			err_msg = "CL_INVALID_ARG_SIZE";
-			break;
-		case CL_INVALID_KERNEL_ARGS:
-			err_msg = "CL_INVALID_KERNEL_ARGS";
-			break;
-		case CL_INVALID_WORK_DIMENSION:
-			err_msg = "CL_INVALID_WORK_DIMENSION";
-			break;
-		case CL_INVALID_WORK_GROUP_SIZE:
-			err_msg = "CL_INVALID_WORK_GROUP_SIZE";
-			break;
-		case CL_INVALID_WORK_ITEM_SIZE:
-			err_msg = "CL_INVALID_WORK_ITEM_SIZE";
-			break;
-		case CL_INVALID_GLOBAL_OFFSET:
-			err_msg = "CL_INVALID_GLOBAL_OFFSET";
-			break;
-		case CL_INVALID_EVENT_WAIT_LIST:
-			err_msg = "CL_INVALID_EVENT_WAIT_LIST";
-			break;
-		case CL_INVALID_EVENT:
-			err_msg = "CL_INVALID_EVENT";
-			break;
-		case CL_INVALID_OPERATION:
-			err_msg = "CL_INVALID_OPERATION";
-			break;
-		case CL_INVALID_GL_OBJECT:
-			err_msg = "CL_INVALID_GL_OBJECT";
-			break;
-		case CL_INVALID_BUFFER_SIZE:
-			err_msg = "CL_INVALID_BUFFER_SIZE";
-			break;
-		case CL_INVALID_MIP_LEVEL:
-			err_msg = "CL_INVALID_MIP_LEVEL";
-			break;
-		case CL_INVALID_GLOBAL_WORK_SIZE:
-			err_msg = "CL_INVALID_GLOBAL_WORK_SIZE";
-			break;
-		case CL_INVALID_PROPERTY:
-			err_msg = "CL_INVALID_PROPERTY";
-			break;
-		case CL_INVALID_IMAGE_DESCRIPTOR:
-			err_msg = "CL_INVALID_IMAGE_DESCRIPTOR";
-			break;
-		case CL_INVALID_COMPILER_OPTIONS:
-			err_msg = "CL_INVALID_COMPILER_OPTIONS";
-			break;
-		case CL_INVALID_LINKER_OPTIONS:
-			err_msg = "CL_INVALID_LINKER_OPTIONS";
-			break;
-		case CL_INVALID_DEVICE_PARTITION_COUNT:
-			err_msg = "CL_INVALID_DEVICE_PARTITION_COUNT";
-			break;
-		case CL_INVALID_GL_SHAREGROUP_REFERENCE_KHR:
-			err_msg = "CL_INVALID_GL_SHAREGROUP_REFERENCE_KHR";
-			break;
-		case CL_PLATFORM_NOT_FOUND_KHR:
-			err_msg = "CL_PLATFORM_NOT_FOUND_KHR";
-			break;
-		default:
-			err_msg = "UNKNOWN_ERROR";
-	}
-
-	return err_msg;
-
-}
 
 void CLCaster::set_define(std::string name, std::string value) {
 	defines_map[name] = value;
@@ -1175,7 +1029,8 @@ void CLCaster::remove_define(std::string name) {
     defines_map.erase(name);
 }
 
-bool CLCaster::add_to_settings_buffer(std::string setting_name, std::string define_accessor_name, int64_t *value) {
+template<typename T>
+bool CLCaster::add_to_settings_buffer(std::string setting_name, std::string define_accessor_name, T value) {
 
     bool success = true;
 
@@ -1193,7 +1048,8 @@ bool CLCaster::add_to_settings_buffer(std::string setting_name, std::string defi
 
         if (settings_buffer_position < SETTINGS_BUFFER_SIZE) {
             defines_map[define_accessor_name] = std::to_string(settings_buffer_position);
-            settings_buffer[settings_buffer_position] = *value;
+            settings_buffer[settings_buffer_position] = (int64_t)value;
+			settings_buffer_indices[setting_name] = settings_buffer_position;
             settings_buffer_position++;
         } else {
             Logger::log("Settings buffer has reached the maximum size of " + std::to_string(SETTINGS_BUFFER_SIZE) + " elements", Logger::LogLevel::ERROR, __LINE__, __FILE__);
@@ -1204,9 +1060,15 @@ bool CLCaster::add_to_settings_buffer(std::string setting_name, std::string defi
     return success;
 }
 
+template bool CLCaster::add_to_settings_buffer(std::string, std::string, int);
+template bool CLCaster::add_to_settings_buffer(std::string, std::string, long);
+template bool CLCaster::add_to_settings_buffer(std::string, std::string, bool);
+template bool CLCaster::add_to_settings_buffer(std::string, std::string, char);
+template bool CLCaster::add_to_settings_buffer(std::string, std::string, uint64_t);
+
 bool CLCaster::create_settings_buffer() {
 
-    settings_buffer = new int64_t[SETTINGS_BUFFER_SIZE];
+    settings_buffer = new int64_t[SETTINGS_BUFFER_SIZE]();
     if (!create_buffer("settings_buffer", sizeof(int64_t) * SETTINGS_BUFFER_SIZE, settings_buffer, CL_MEM_USE_HOST_PTR))
         return false;
     return true;
@@ -1248,6 +1110,216 @@ bool CLCaster::overwrite_setting(std::string settings_name, int64_t *value) {
     }
     return success;
 }
+
+
+std::string CLCaster::cl_err_lookup(int error_code) {
+
+    std::string err_msg = "";
+
+    switch (error_code) {
+
+        case CL_SUCCESS:
+            err_msg += "CL_SUCCESS";
+            break;
+        case 1:
+            err_msg += "CL_SUCCESS";
+            break;
+        case CL_DEVICE_NOT_FOUND:
+            err_msg += "CL_DEVICE_NOT_FOUND";
+            break;
+        case CL_DEVICE_NOT_AVAILABLE:
+            err_msg = "CL_DEVICE_NOT_AVAILABLE";
+            break;
+        case CL_COMPILER_NOT_AVAILABLE:
+            err_msg = "CL_COMPILER_NOT_AVAILABLE";
+            break;
+        case CL_MEM_OBJECT_ALLOCATION_FAILURE:
+            err_msg = "CL_MEM_OBJECT_ALLOCATION_FAILURE";
+            break;
+        case CL_OUT_OF_RESOURCES:
+            err_msg = "CL_OUT_OF_RESOURCES";
+            break;
+        case CL_OUT_OF_HOST_MEMORY:
+            err_msg = "CL_OUT_OF_HOST_MEMORY";
+            break;
+        case CL_PROFILING_INFO_NOT_AVAILABLE:
+            err_msg = "CL_PROFILING_INFO_NOT_AVAILABLE";
+            break;
+        case CL_MEM_COPY_OVERLAP:
+            err_msg = "CL_MEM_COPY_OVERLAP";
+            break;
+        case CL_IMAGE_FORMAT_MISMATCH:
+            err_msg = "CL_IMAGE_FORMAT_MISMATCH";
+            break;
+        case CL_IMAGE_FORMAT_NOT_SUPPORTED:
+            err_msg = "CL_IMAGE_FORMAT_NOT_SUPPORTED";
+            break;
+        case CL_BUILD_PROGRAM_FAILURE:
+            err_msg = "CL_BUILD_PROGRAM_FAILURE";
+            break;
+        case CL_MAP_FAILURE:
+            err_msg = "CL_MAP_FAILURE";
+            break;
+        case CL_MISALIGNED_SUB_BUFFER_OFFSET:
+            err_msg = "CL_MISALIGNED_SUB_BUFFER_OFFSET";
+            break;
+        case CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST:
+            err_msg = "CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST";
+            break;
+        case CL_COMPILE_PROGRAM_FAILURE:
+            err_msg = "CL_COMPILE_PROGRAM_FAILURE";
+            break;
+        case CL_LINKER_NOT_AVAILABLE:
+            err_msg = "CL_LINKER_NOT_AVAILABLE";
+            break;
+        case CL_LINK_PROGRAM_FAILURE:
+            err_msg = "CL_LINK_PROGRAM_FAILURE";
+            break;
+        case CL_DEVICE_PARTITION_FAILED:
+            err_msg = "CL_DEVICE_PARTITION_FAILED";
+            break;
+        case CL_KERNEL_ARG_INFO_NOT_AVAILABLE:
+            err_msg = "CL_KERNEL_ARG_INFO_NOT_AVAILABLE";
+            break;
+        case CL_INVALID_VALUE:
+            err_msg = "CL_INVALID_VALUE";
+            break;
+        case CL_INVALID_DEVICE_TYPE:
+            err_msg = "CL_INVALID_DEVICE_TYPE";
+            break;
+        case CL_INVALID_PLATFORM:
+            err_msg = "CL_INVALID_PLATFORM";
+            break;
+        case CL_INVALID_DEVICE:
+            err_msg = "CL_INVALID_DEVICE";
+            break;
+        case CL_INVALID_CONTEXT:
+            err_msg = "CL_INVALID_CONTEXT";
+            break;
+        case CL_INVALID_QUEUE_PROPERTIES:
+            err_msg = "CL_INVALID_QUEUE_PROPERTIES";
+            break;
+        case CL_INVALID_COMMAND_QUEUE:
+            err_msg = "CL_INVALID_COMMAND_QUEUE";
+            break;
+        case CL_INVALID_HOST_PTR:
+            err_msg = "CL_INVALID_HOST_PTR";
+            break;
+        case CL_INVALID_MEM_OBJECT:
+            err_msg = "CL_INVALID_MEM_OBJECT";
+            break;
+        case CL_INVALID_IMAGE_FORMAT_DESCRIPTOR:
+            err_msg = "CL_INVALID_IMAGE_FORMAT_DESCRIPTOR";
+            break;
+        case CL_INVALID_IMAGE_SIZE:
+            err_msg = "CL_INVALID_IMAGE_SIZE";
+            break;
+        case CL_INVALID_SAMPLER:
+            err_msg = "CL_INVALID_SAMPLER";
+            break;
+        case CL_INVALID_BINARY:
+            err_msg = "CL_INVALID_BINARY";
+            break;
+        case CL_INVALID_BUILD_OPTIONS:
+            err_msg = "CL_INVALID_BUILD_OPTIONS";
+            break;
+        case CL_INVALID_PROGRAM:
+            err_msg = "CL_INVALID_PROGRAM";
+            break;
+        case CL_INVALID_PROGRAM_EXECUTABLE:
+            err_msg = "CL_INVALID_PROGRAM_EXECUTABLE";
+            break;
+        case CL_INVALID_KERNEL_NAME:
+            err_msg = "CL_INVALID_KERNEL_NAME";
+            break;
+        case CL_INVALID_KERNEL_DEFINITION:
+            err_msg = "CL_INVALID_KERNEL_DEFINITION";
+            break;
+        case CL_INVALID_KERNEL:
+            err_msg = "CL_INVALID_KERNEL";
+            break;
+        case CL_INVALID_ARG_INDEX:
+            err_msg = "CL_INVALID_ARG_INDEX";
+            break;
+        case CL_INVALID_ARG_VALUE:
+            err_msg = "CL_INVALID_ARG_VALUE";
+            break;
+        case CL_INVALID_ARG_SIZE:
+            err_msg = "CL_INVALID_ARG_SIZE";
+            break;
+        case CL_INVALID_KERNEL_ARGS:
+            err_msg = "CL_INVALID_KERNEL_ARGS";
+            break;
+        case CL_INVALID_WORK_DIMENSION:
+            err_msg = "CL_INVALID_WORK_DIMENSION";
+            break;
+        case CL_INVALID_WORK_GROUP_SIZE:
+            err_msg = "CL_INVALID_WORK_GROUP_SIZE";
+            break;
+        case CL_INVALID_WORK_ITEM_SIZE:
+            err_msg = "CL_INVALID_WORK_ITEM_SIZE";
+            break;
+        case CL_INVALID_GLOBAL_OFFSET:
+            err_msg = "CL_INVALID_GLOBAL_OFFSET";
+            break;
+        case CL_INVALID_EVENT_WAIT_LIST:
+            err_msg = "CL_INVALID_EVENT_WAIT_LIST";
+            break;
+        case CL_INVALID_EVENT:
+            err_msg = "CL_INVALID_EVENT";
+            break;
+        case CL_INVALID_OPERATION:
+            err_msg = "CL_INVALID_OPERATION";
+            break;
+        case CL_INVALID_GL_OBJECT:
+            err_msg = "CL_INVALID_GL_OBJECT";
+            break;
+        case CL_INVALID_BUFFER_SIZE:
+            err_msg = "CL_INVALID_BUFFER_SIZE";
+            break;
+        case CL_INVALID_MIP_LEVEL:
+            err_msg = "CL_INVALID_MIP_LEVEL";
+            break;
+        case CL_INVALID_GLOBAL_WORK_SIZE:
+            err_msg = "CL_INVALID_GLOBAL_WORK_SIZE";
+            break;
+        case CL_INVALID_PROPERTY:
+            err_msg = "CL_INVALID_PROPERTY";
+            break;
+        case CL_INVALID_IMAGE_DESCRIPTOR:
+            err_msg = "CL_INVALID_IMAGE_DESCRIPTOR";
+            break;
+        case CL_INVALID_COMPILER_OPTIONS:
+            err_msg = "CL_INVALID_COMPILER_OPTIONS";
+            break;
+        case CL_INVALID_LINKER_OPTIONS:
+            err_msg = "CL_INVALID_LINKER_OPTIONS";
+            break;
+        case CL_INVALID_DEVICE_PARTITION_COUNT:
+            err_msg = "CL_INVALID_DEVICE_PARTITION_COUNT";
+            break;
+        case CL_INVALID_GL_SHAREGROUP_REFERENCE_KHR:
+            err_msg = "CL_INVALID_GL_SHAREGROUP_REFERENCE_KHR";
+            break;
+        case CL_PLATFORM_NOT_FOUND_KHR:
+            err_msg = "CL_PLATFORM_NOT_FOUND_KHR";
+            break;
+        default:
+            err_msg = "UNKNOWN_ERROR";
+    }
+
+    return err_msg;
+
+}
+
+
+/*
+ * ==================================================
+ *
+ *  CL DEVICE
+ *
+ * ==================================================
+ */
 
 
 CLCaster::device::device(cl_device_id device_id, cl_platform_id platform_id) {
