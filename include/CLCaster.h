@@ -104,7 +104,7 @@ public:
 	 */
 
 	CLCaster();
-	virtual ~CLCaster();
+	~CLCaster();
 	
 	// Queries hardware, creates the command queue and context, and compiles kernel
 	bool init();
@@ -116,7 +116,7 @@ public:
 
 	// Light controllers own the copy of the PackedData array.
 	// We receive a pointer to the array and USE_HOST_POINTER to map the memory to the GPU
-	bool assign_lights(std::vector<PackedData> *data) ;
+	bool assign_lights(std::vector<PackedData> *data);
 
     // TODO: Double maps??
 	// We take a ptr to the map and create the map, and map_dimensions buffer for the GPU
@@ -157,6 +157,7 @@ public:
     bool create_settings_buffer();
     bool release_settings_buffer();
     bool add_to_settings_buffer(std::string setting_name, std::string define_accessor_name, int64_t *value);
+    bool overwrite_setting(std::string settings_name, int64_t *value);
     bool remove_from_settings_buffer(std::string setting_name);
 
 	// ================================== DEBUG =======================================

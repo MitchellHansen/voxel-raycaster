@@ -1219,9 +1219,34 @@ bool CLCaster::remove_from_settings_buffer(std::string setting_name) {
 }
 
 bool CLCaster::release_settings_buffer() {
+
     if (!release_buffer("settings_buffer"))
         return false;
     return true;
+}
+
+bool CLCaster::overwrite_setting(std::string settings_name, int64_t *value) {
+
+    bool success = true;
+
+    if (settings_buffer == nullptr){
+
+        Logger::log("Trying to push settings to an uninitialized settings buffer", Logger::LogLevel::ERROR, __LINE__, __FILE__);
+        success = false;
+
+    } else {
+
+        if (settings_buffer_indices.count(settings_name)) {
+
+            unsigned int postion = settings_buffer_indices[settings_name];
+            settings_buffer[postion] = *value;
+        } else {
+
+            Logger::log("No setting matching [" + settings_name +"]", Logger::LogLevel::ERROR, __LINE__, __FILE__);
+            success = false;
+        }
+    }
+    return success;
 }
 
 

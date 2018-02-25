@@ -132,7 +132,7 @@ bool get_oct_vox(
 	ts.parent_stack[ts.scale] = ts.current_descriptor;
 
 	// Set our initial dimension and the position at the corner of the oct to keep track of our position
-	int dimension = OCTDIM;
+	int dimension = setting(OCTDIM);
 	ts.oct_pos = zeroed_int3;
 
 	// While we are not at the required resolution
@@ -331,19 +331,19 @@ __kernel void raycaster(
 
     //   If we hit a voxel
 
-		 if (voxel.x < (*map_dim).x && voxel.y < (*map_dim).x && voxel.z < (*map_dim).x){
-		//  	if (get_oct_vox(
-		//  		voxel,
-		//  		octree_descriptor_buffer,
-		//  		octree_attachment_lookup_buffer,
-		//  		octree_attachment_buffer,
-		//  		settings_buffer
-		//  		)){
-		//  			voxel_data = 5;
-		//  		} else {
-		//  			voxel_data = 0;
-		//  		}
-		// } else {
+		 if (setting(OCTENABLED) == 1 && voxel.x < (*map_dim).x && voxel.y < (*map_dim).x && voxel.z < (*map_dim).x){
+		 	if (get_oct_vox(
+		 		voxel,
+		 		octree_descriptor_buffer,
+		 		octree_attachment_lookup_buffer,
+		 		octree_attachment_buffer,
+		 		settings_buffer
+		 		)){
+		 			voxel_data = 5;
+		 		} else {
+		 			voxel_data = 0;
+		 		}
+		} else {
 			voxel_data = map[voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z))];
 		}
 

@@ -55,6 +55,7 @@ void Input::handle_held_keys() {
 			vr::MouseButtonReleased *e = static_cast<vr::MouseButtonReleased*>(event.get());
 			held_mouse_buttons.erase(std::remove(held_mouse_buttons.begin(), held_mouse_buttons.end(), e->button), held_mouse_buttons.end());
 		}
+
 	}
 
 	// Generate Held events for each of the held buttons and keys
