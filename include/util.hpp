@@ -11,6 +11,7 @@
 #include <SFML/System/Vector2.hpp>
 #include <SFML/Graphics/Texture.hpp>
 #include <imgui/imgui.h>
+#include <imgui/imgui-multilines.hpp>
 #include "Vector4.hpp"
 
 const double PI = 3.141592653589793238463;
@@ -40,6 +41,10 @@ public:
         instant_fps = delta_time;
 	}
 
+	static float edit(const void* data, int idx){
+		//*(int*)data = idx;
+		return *(int*)(data+sizeof(int)*idx);
+	};
 	void draw() {
 
 		if (arr_pos == 1000)
@@ -49,7 +54,21 @@ public:
 		arr_pos++;
 
 		ImGui::Begin("Performance");
-		ImVec2 wh = ImGui::GetContentRegionAvail();
+		//ImVec2 wh = ImGui::GetContentRegionAvail();
+		ImVec2 wh(100, 200);
+
+		int a[3] = {1, 2, 7};
+		int b[3] = {5, 3, 1};
+		int c[3] = {8, 1, 4};
+		const void* to_data[3] = {&a, &b, &c};
+		const char* to_names[3] = {"a", "b", "z"};
+		ImGuiPlotType plottype = ImGuiPlotType_Lines;
+		ImColor color = ImColor(255, 255, 255);
+		ImGui::PlotMultiLines(
+				"label", 3, to_names, &color, &edit,
+					to_data, 3, 0.0f, 10.0f, ImVec2(300, 300));
+
+
 		ImGui::PlotLines("FPS", fps_array, 1000, 0,
 						 std::to_string(1.0 / fps_average).c_str(),
 						 0.0f, 150.0f, wh);
@@ -287,3 +306,4 @@ inline bool IsLeaf(const uint64_t descriptor) {
 
 	return false;
 }
+
