@@ -76,12 +76,53 @@ int Camera::update(double delta_time) {
 	
 	double multiplier = 80;
 
+
+//
+//
+//	if (movement.x < 0)
+//	{
+//		movement.x = std::min( 0.0f, movement.x + 0.01f);
+//	}
+//	else if (movement.x > 0)
+//	{
+//		movement.x = std::min( 0.0f, movement.x - 0.01f);
+//	}
+//
+//	if (movement.y < 0)
+//	{
+//		movement.y = std::min( 0.0f, movement.y + 0.01f);
+//	}
+//	else if (movement.y > 0)
+//	{
+//		movement.y = std::min( 0.0f, movement.y - 0.01f);
+//	}
+//
+//
+//
+//
+////	if (movement.x > 0)
+////		movement.x -= friction_coefficient * delta_time * multiplier;
+////	else if (movement.x < 0)
+////		movement.x += friction_coefficient * delta_time * multiplier;
+////
+////	if (movement.y > 0)
+////		movement.y -= friction_coefficient * delta_time * multiplier;
+////	else if (movement.y < 0)
+////		movement.y += friction_coefficient * delta_time * multiplier;
+////
+////	if (abs(movement.x) > 0.02f)
+////		movement.x = ((movement.x > 0) - (movement.x < 0)) * 0.02f;
+////	if (abs(movement.y) > 0.02f)
+////		movement.y = ((movement.y > 0) - (movement.y < 0)) * 0.02f;
+//	//movement.x =
+//	//movement.y = abs(movement.y) - -((movement.y > 0) - (movement.y < 0)) * friction_coefficient * delta_time * multiplier;
+
 	position.x += static_cast<float>(movement.x * delta_time * multiplier);
 	position.y += static_cast<float>(movement.y * delta_time * multiplier);
 	position.z += static_cast<float>(movement.z * delta_time * multiplier);
-	
-	movement.x *= static_cast<float>(friction_coefficient * delta_time * multiplier);
-	movement.y *= static_cast<float>(friction_coefficient * delta_time * multiplier);
+
+    movement.x *= static_cast<float>(friction_coefficient * delta_time * multiplier);
+    movement.y *= static_cast<float>(friction_coefficient * delta_time * multiplier);
 
 	if (position.z < 3.0f){
 		position.z = 3.0f;
@@ -214,9 +255,12 @@ void Camera::render_gui() {
 
 	ImGui::Text("Camera Inclination");
 	ImGui::Text("Camera Azimuth");
-	ImGui::Text("Camera Pos_X");
-	ImGui::Text("Camera Poz_Y");
-	ImGui::Text("Camera Poz_Z");
+	ImGui::Text("Camera Pos X");
+	ImGui::Text("Camera Pos Y");
+	ImGui::Text("Camera Pos Z");
+	ImGui::Text("Camera Accel X");
+	ImGui::Text("Camera Accel Y");
+	ImGui::Text("Camera Accel Z");
 
 	ImGui::NextColumn();
 
@@ -225,12 +269,19 @@ void Camera::render_gui() {
 	ImGui::Text("%f", position.x);
 	ImGui::Text("%f", position.y);
 	ImGui::Text("%f", position.z);
+	ImGui::Text("%f", movement.x);
+	ImGui::Text("%f", movement.y);
+	ImGui::Text("%f", movement.z);
 
 	ImGui::Separator();
 
 	ImGui::Columns(1);
 
 	ImGui::SliderFloat("Camera Speed", &default_impulse, 0, 4);
+
+	ImGui::Separator();
+
+	ImGui::SliderFloat("Camera Friction", &friction_coefficient, 0, 1);
 
 	ImGui::End();
 }

@@ -62,7 +62,7 @@ file(GLOB_RECURSE KERNELS "kernels/*.cl")
 file(GLOB_RECURSE SHADERS "shaders/*.vert" "shaders/*.tesc" "shaders/*.tese" "shaders/*.geom" "shaders/*.frag" "shaders/*.comp")
 
 
-add_executable(${PNAME} ${SOURCES} ${HEADERS} ${KERNELS} ${SHADERS})
+add_executable(${PNAME} ${SOURCES} ${HEADERS} ${KERNELS} ${SHADERS} include/imgui/imgui-multilines.hpp)
 
 # Follow the sub directory structure to add sub-filters in VS
 # Gotta do it one by one unfortunately

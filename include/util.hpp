@@ -18,7 +18,15 @@ const float  PI_F = 3.14159265358979f;
 
 struct fps_counter {
 public:
-	fps_counter() {};
+	fps_counter() {
+
+    };
+
+    ~fps_counter() {
+        for (auto i: fps_vectors){
+            delete[] i;
+        }
+    };
 
 	void frame(double delta_time) {
 
@@ -29,27 +37,36 @@ public:
 		}
 		frame_count++;
 		fps_average += (delta_time - fps_average) / frame_count;
+        instant_fps = delta_time;
 	}
 
 	void draw() {
 
-		if (arr_pos == 200)
+		if (arr_pos == 1000)
 			arr_pos = 0;
 
-		fps_array[arr_pos] = static_cast<float>(1.0 / fps_average);
+		fps_array[arr_pos] = static_cast<float>(1.0 / instant_fps);
 		arr_pos++;
 
 		ImGui::Begin("Performance");
-		ImGui::PlotLines("FPS", fps_array, 200, 0, std::to_string(1.0 / fps_average).c_str(), 0.0f, 150.0f, ImVec2(200, 80));
+		ImVec2 wh = ImGui::GetContentRegionAvail();
+		ImGui::PlotLines("FPS", fps_array, 1000, 0,
+						 std::to_string(1.0 / fps_average).c_str(),
+						 0.0f, 150.0f, wh);
 		ImGui::End();
 	}
 
 private:
 
-	float fps_array[200]{60};
-	int arr_pos = 0;
+    const unsigned int FPS_ARRAY_LENGTH = 1000;
+    std::vector<float*> fps_vectors;
 
-	int frame_count = 0;
+
+	float fps_array[1000]{60};
+    int arr_pos = 0;
+
+	double instant_fps = 0;
+    double frame_count = 0;
 	double fps_average = 0;
 
 };
