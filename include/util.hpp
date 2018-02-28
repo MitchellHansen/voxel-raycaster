@@ -42,8 +42,8 @@ public:
 	}
 
 	static float edit(const void* data, int idx){
-		//*(int*)data = idx;
-		return *(int*)(data+sizeof(int)*idx);
+		*(int*)data = idx;
+		//return *(int*)(data+sizeof(int)*idx);
 	};
 	void draw() {
 
@@ -64,10 +64,33 @@ public:
 		const char* to_names[3] = {"a", "b", "z"};
 		ImGuiPlotType plottype = ImGuiPlotType_Lines;
 		ImColor color = ImColor(255, 255, 255);
-		ImGui::PlotMultiLines(
-				"label", 3, to_names, &color, &edit,
-					to_data, 3, 0.0f, 10.0f, ImVec2(300, 300));
+		//ImGui::PlotMultiLines(
+		//		"label", 3, to_names, &color, &edit,
+		//			to_data, 3, 0.0f, 10.0f, ImVec2(300, 300));
 
+        std::vector<std::vector<int>> data = {
+                {1, 2, 3, 4},
+                {9, 3, 7, 1},
+                {8, 3, 6, 2}
+        };
+
+        std::string title = "HELLO";
+
+        std::vector<std::string> labels = {
+                "ONE",
+                "TWO",
+                "THREE"
+        };
+
+        std::vector<ImColor> colors = {
+                ImColor(255, 255, 255),
+                ImColor(  0, 255,   0),
+                ImColor(255,   0,   0),
+        };
+
+        sf::Vector2f graph_size(300, 300);
+
+        ImGui::PlotMultiLines(data, title, labels, colors, 10, 0, graph_size);
 
 		ImGui::PlotLines("FPS", fps_array, 1000, 0,
 						 std::to_string(1.0 / fps_average).c_str(),

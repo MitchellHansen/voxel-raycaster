@@ -374,7 +374,7 @@ void CLCaster::render_gui() {
 		int offset = 150;
 		int count = 1;
 
-        ImGui::Text(x.first.c_str());
+        ImGui::Text("%s", x.first.c_str());
 
         ImGui::NextColumn();
 
@@ -382,7 +382,7 @@ void CLCaster::render_gui() {
 			ImGui::SetColumnOffset(count, offset);
 			offset += 150; count++;
 			ss << std::dec << std::to_string(settings_buffer[x.second]);
-			ImGui::Text(ss.str().c_str());
+			ImGui::Text("%s", ss.str().c_str());
 			ss.clear();
 			ss.str("");
 			ImGui::NextColumn();
@@ -392,7 +392,7 @@ void CLCaster::render_gui() {
 			ImGui::SetColumnOffset(count, offset);
 			offset += 150; count++;
 			ss << "0x" << std::setfill ('0') << std::setw(sizeof(int64_t)*2) << std::hex << settings_buffer[x.second];
-			ImGui::Text(ss.str().c_str());
+			ImGui::Text("%s", ss.str().c_str());
 			ss.clear();
 			ss.str("");
 			ImGui::NextColumn();
@@ -402,7 +402,7 @@ void CLCaster::render_gui() {
 			ImGui::SetColumnOffset(count, offset);
 			offset += 150; count++;
 			ss << "b" << std::setfill('0') << std::setw(sizeof(int64_t) * 2) << std::bitset<64>(settings_buffer[x.second]);
-			ImGui::Text(ss.str().c_str());
+			ImGui::Text("%s", ss.str().c_str());
 			ss.clear();
 			ss.str("");
 			ImGui::NextColumn();
