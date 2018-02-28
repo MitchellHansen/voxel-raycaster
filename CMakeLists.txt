@@ -42,6 +42,9 @@ endif()
 
 # beignet only supports EGL and not GLX for the cl_khr_gl_sharing extension
 if (UNIX)
+	# Find X11
+	find_package(X11 REQUIRED)
+	message(STATUS "XSS found: ${X11_FOUND}")
 #    find_package(EGL REQUIRED)
 #message(STATUS "EGL found: ${EGL_FOUND}")
 endif (UNIX)
@@ -51,6 +54,7 @@ include_directories(${SFML_INCLUDE_DIR})
 include_directories(${OpenCL_INCLUDE_DIRS})
 include_directories(${OpenGL_INCLUDE_DIRS})
 if (UNIX)
+	include_directories(${X11_INCLUDE_DIR})
     #    include_directories(${EGL_INCLUDE_DIRS})
 endif()
 include_directories(include)
@@ -62,7 +66,7 @@ file(GLOB_RECURSE KERNELS "kernels/*.cl")
 file(GLOB_RECURSE SHADERS "shaders/*.vert" "shaders/*.tesc" "shaders/*.tese" "shaders/*.geom" "shaders/*.frag" "shaders/*.comp")
 
 
-add_executable(${PNAME} ${SOURCES} ${HEADERS} ${KERNELS} ${SHADERS} include/imgui/imgui-multilines.hpp)
+add_executable(${PNAME} ${SOURCES} ${HEADERS} ${KERNELS} ${SHADERS})
 
 # Follow the sub directory structure to add sub-filters in VS
 # Gotta do it one by one unfortunately
@@ -133,6 +137,7 @@ target_link_libraries (${PNAME} ${OpenCL_LIBRARY})
 target_link_libraries (${PNAME} ${OPENGL_LIBRARIES})
 
 if (UNIX)
+	target_link_libraries (${PNAME} ${X11_LIBRARIES})
     #    target_link_libraries (${PNAME} ${EGL_LIBRARIES})
 endif()
 

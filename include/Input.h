@@ -9,6 +9,7 @@
 #include "LightHandle.h"
 #include "Logger.h"
 #include "Pub_Sub.h"
+#include <imgui/imgui.h>
 #include <imgui/imgui-SFML.h>
 /**
  *

@@ -30,6 +30,7 @@
 #include "LightHandle.h"
 #include "map/Map.h"
 #include "util.hpp"
+#include "GraphTimer.h"
 
 // Srsly people who macro error codes are the devil
 #undef ERROR
@@ -77,7 +78,7 @@ private:
 	// The sfml imgui wrapper I'm using requires Update be called with sf::Time
 	// Might modify it to also accept seconds
 	sf::Clock sf_delta_clock;
-	fps_counter fps;
+	GraphTimer fps;
 
 	// vars for us to use with ImGUI
 	float light_color[4] = { 0, 0, 0, 0 };

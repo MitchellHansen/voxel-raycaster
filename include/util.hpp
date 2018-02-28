@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <bitset>
+
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -10,108 +11,11 @@
 #include <SFML/System/Vector3.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <SFML/Graphics/Texture.hpp>
-#include <imgui/imgui.h>
-#include <imgui/imgui-multilines.hpp>
+
 #include "Vector4.hpp"
 
 const double PI = 3.141592653589793238463;
 const float  PI_F = 3.14159265358979f;
-
-struct fps_counter {
-public:
-	fps_counter() {
-
-    };
-
-    ~fps_counter() {
-        for (auto i: fps_vectors){
-            delete[] i;
-        }
-    };
-
-	void frame(double delta_time) {
-
-		// Apply 100 units of smoothing
-		if (frame_count == 100) {
-			frame_count = 0;
-			fps_average = 0;
-		}
-		frame_count++;
-		fps_average += (delta_time - fps_average) / frame_count;
-        instant_fps = delta_time;
-	}
-
-	static float edit(const void* data, int idx){
-		*(int*)data = idx;
-		//return *(int*)(data+sizeof(int)*idx);
-	};
-	void draw() {
-
-		if (arr_pos == 1000)
-			arr_pos = 0;
-
-		fps_array[arr_pos] = static_cast<float>(1.0 / instant_fps);
-		arr_pos++;
-
-		ImGui::Begin("Performance");
-		//ImVec2 wh = ImGui::GetContentRegionAvail();
-		ImVec2 wh(100, 200);
-
-		int a[3] = {1, 2, 7};
-		int b[3] = {5, 3, 1};
-		int c[3] = {8, 1, 4};
-		const void* to_data[3] = {&a, &b, &c};
-		const char* to_names[3] = {"a", "b", "z"};
-		ImGuiPlotType plottype = ImGuiPlotType_Lines;
-		ImColor color = ImColor(255, 255, 255);
-		//ImGui::PlotMultiLines(
-		//		"label", 3, to_names, &color, &edit,
-		//			to_data, 3, 0.0f, 10.0f, ImVec2(300, 300));
-
-        std::vector<std::vector<int>> data = {
-                {1, 2, 3, 4},
-                {9, 3, 7, 1},
-                {8, 3, 6, 2}
-        };
-
-        std::string title = "HELLO";
-
-        std::vector<std::string> labels = {
-                "ONE",
-                "TWO",
-                "THREE"
-        };
-
-        std::vector<ImColor> colors = {
-                ImColor(255, 255, 255),
-                ImColor(  0, 255,   0),
-                ImColor(255,   0,   0),
-        };
-
-        sf::Vector2f graph_size(300, 300);
-
-        ImGui::PlotMultiLines(data, title, labels, colors, 10, 0, graph_size);
-
-		ImGui::PlotLines("FPS", fps_array, 1000, 0,
-						 std::to_string(1.0 / fps_average).c_str(),
-						 0.0f, 150.0f, wh);
-		ImGui::End();
-	}
-
-private:
-
-    const unsigned int FPS_ARRAY_LENGTH = 1000;
-    std::vector<float*> fps_vectors;
-
-
-	float fps_array[1000]{60};
-    int arr_pos = 0;
-
-	double instant_fps = 0;
-    double frame_count = 0;
-	double fps_average = 0;
-
-};
 
 inline sf::Vector3f SphereToCart(sf::Vector2f i) {
 

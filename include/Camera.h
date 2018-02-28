@@ -2,10 +2,13 @@
 #include <cmath>
 #include <SFML/System/Vector3.hpp>
 #include <SFML/System/Vector2.hpp>
+
 #include "Gui.h"
 #include "Pub_Sub.h"
+#include "imgui/imgui.h"
+#include "imgui/imgui-SFML.h"
 #include "util.hpp"
-
+#include <X11/Xlib.h>
 
 
 /**

@@ -1,9 +1,8 @@
-
 #pragma once
+#include <string>
+#include <vector>
 #include "imgui.h"
 #include "imgui_internal.h"
-
-
 
 namespace ImGui {
 
@@ -24,7 +23,7 @@ namespace ImGui {
     }
 
     static void PlotMultiLines(
-        const std::vector<std::vector<int>> &data,
+        const std::vector<std::vector<float>> &data,
         std::string title,
         const std::vector<std::string> &labels,
         const std::vector<ImColor> &colors,

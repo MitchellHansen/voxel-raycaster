@@ -1,3 +1,4 @@
+#include <cstring>
 #include "map/Octree.h"
 
 Octree::Octree() {

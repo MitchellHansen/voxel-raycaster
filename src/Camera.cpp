@@ -1,7 +1,9 @@
 #include "Camera.h"
 
 
-Camera::Camera() {}
+
+Camera::Camera() {
+}
 
 
 Camera::Camera(sf::Vector3f position, sf::Vector2f direction, sf::RenderWindow* window) :
@@ -194,11 +196,13 @@ void Camera::event_handler(VrEventPublisher *publisher, std::unique_ptr<vr::Even
 			deltas = fixed - sf::Vector2i(mouse_event->x, mouse_event->y);
 			if (deltas != sf::Vector2i(0, 0) && mouse_enabled == true) {
 
-				sf::Mouse::setPosition(fixed, *window);
-				slew_camera(sf::Vector2f(
-					deltas.y / 1200.0f,
-					deltas.x / 1200.0f
-				));
+                // TODO: Set Position causes some weird frame-limiting behaviour
+                // TODO: consider using some other mouse interaction
+                sf::Mouse::setPosition(fixed, *window);
+                slew_camera(sf::Vector2f(
+                        deltas.y / 1200.0f,
+                        deltas.x / 1200.0f
+                ));
 			}
 		}
 	}
@@ -207,10 +211,10 @@ void Camera::event_handler(VrEventPublisher *publisher, std::unique_ptr<vr::Even
 		vr::MouseButtonPressed *mouse_event = static_cast<vr::MouseButtonPressed*>(event.get());
 
 		if (mouse_event->button == sf::Mouse::Middle) {
-			mouse_enabled = !mouse_enabled;
-			sf::Mouse::setPosition(fixed, *window);
-		}
-		
+            mouse_enabled = !mouse_enabled;
+            sf::Mouse::setPosition(fixed, *window);
+        }
+
 	}
 	else if (event->type == vr::Event::JoystickMoved) {
 

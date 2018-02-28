@@ -14,6 +14,8 @@ Application::Application() {
 	ImGui::SFML::Init(*window);
 	window->resetGLStates();
 
+
+
 }
 
 Application::~Application() {
@@ -108,12 +110,18 @@ bool Application::init_events() {
 
 bool Application::game_loop() {
 
+    int fps_idx = fps.create_line("FPS");
+    int compute_fps_idx = fps.create_line("Compute");
+    int event_fps_idx = fps.create_line("Event");
+
 	while (true) {
 
 		// Have the input handler empty the event stack, generate events for held keys, and then dispatch the events to listeners
-		input_handler.consume_sf_events(window.get());
-		input_handler.handle_held_keys();
+        fps.start(event_fps_idx);
+        input_handler.consume_sf_events(window.get());
+        input_handler.handle_held_keys();
 		input_handler.dispatch_events();
+        fps.stop(event_fps_idx);
 
 		if (!window->isOpen())
 			break;
@@ -142,16 +150,18 @@ bool Application::game_loop() {
 			light_handle->update(delta_time);
 
 			// Run the raycast
+            fps.start(compute_fps_idx);
 			if (!raycaster->compute()) {
 				abort();
 			};
+            fps.stop(compute_fps_idx);
 		}
 
 		// Let the raycaster draw it screen buffer
 		raycaster->draw(window.get());
 
 		// Give the frame counter the frame time and draw the average frame time
-		fps.frame(delta_time);
+		fps.frame(fps_idx, delta_time);
 		fps.draw();
 
 		Gui::do_render();
