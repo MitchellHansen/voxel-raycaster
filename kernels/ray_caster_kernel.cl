@@ -114,7 +114,7 @@ struct TraversalState {
 
 };
 
-bool get_oct_vox(
+struct TraversalState get_oct_vox(
 	int3 position,
 	global ulong *octree_descriptor_buffer,
 	global uint *octree_attachment_lookup_buffer,
@@ -184,7 +184,8 @@ bool get_oct_vox(
 
 				// If it is, then we cannot traverse further as CP's won't have been generated
 				ts.found = true;
-				return ts.found;
+				return ts;
+				//return ts.found;
 			}
 
 			// If all went well and we found a valid non-leaf oct then we will traverse further down the hierarchy
@@ -221,12 +222,14 @@ bool get_oct_vox(
 			// Currently it adds the last parent on the second to lowest
 			// oct CP. Not sure if thats correct
 			ts.found = 0;
-			return ts.found;
+			return ts;
+			//return ts.found;
 		}
 	}
 
 	ts.found = 1;
-	return ts.found;
+	return ts;
+	//return ts.found;
 }
 
 // =========================================================================
@@ -260,27 +263,27 @@ __kernel void raycaster(
 		ray_dir.z * sin((*cam_dir).x) + ray_dir.x * cos((*cam_dir).x),
 		ray_dir.y,
 		ray_dir.z * cos((*cam_dir).x) - ray_dir.x * sin((*cam_dir).x)
-		);
+	);
 
 	// Yaw
     ray_dir = (float3)(
-        ray_dir.x * cos((*cam_dir).y) - ray_dir.y * sin((*cam_dir).y),
-        ray_dir.x * sin((*cam_dir).y) + ray_dir.y * cos((*cam_dir).y),
-        ray_dir.z
+		ray_dir.x * cos((*cam_dir).y) - ray_dir.y * sin((*cam_dir).y),
+		ray_dir.x * sin((*cam_dir).y) + ray_dir.y * cos((*cam_dir).y),
+		ray_dir.z
     );
 	if (any(ray_dir == zeroed_float3))
 		return;
 
 	// Setup the voxel step based on what direction the ray is pointing
-    int3 voxel_step = {1, 1, 1};
+	int3 voxel_step = {1, 1, 1};
 	voxel_step *= (ray_dir > 0) - (ray_dir < 0);
 
-    // Setup the voxel coords from the camera origin
+	// Setup the voxel coords from the camera origin
 	int3 voxel = convert_int3_rtn(*cam_pos);
 
 	//voxel = voxel + convert_int3(*cam_pos < 0.0f);
-    // Delta T is the units a ray must travel along an axis in order to
-    // traverse an integer split
+	// Delta T is the units a ray must travel along an axis in order to
+	// traverse an integer split
 	float3 delta_t = fabs(1.0f / ray_dir);
 
 	// Intersection T is the collection of the next intersection points
@@ -311,42 +314,234 @@ __kernel void raycaster(
 	float fog_distance = 0.0f;
 
 	bool shadow_ray = false;
+	int vox_dim = setting(OCTDIM);
+
+	struct TraversalState traversal_state;
+
+	traversal_state = get_oct_vox(
+			voxel,
+			octree_descriptor_buffer,
+			octree_attachment_lookup_buffer,
+			octree_attachment_buffer,
+			settings_buffer);
+
+	int jump_power = (int)log2((float)vox_dim) - traversal_state.scale;
+	int prev_jump_power = jump_power;
+
+	// TODO: DEBUG
+	int failsafe = 0;
+
 
 	// Andrew Woo's raycasting algo
-    while (distance_traveled < max_distance && bounce_count < 2) {
+	while (distance_traveled < max_distance && bounce_count < 2) {
 
-		// Fancy no branch version of the logic step
-		face_mask = intersection_t.xyz <= min(intersection_t.yzx, intersection_t.zxy);
-		intersection_t += delta_t * fabs(convert_float3(face_mask.xyz));
-		voxel.xyz += voxel_step.xyz * face_mask.xyz;
 
-		// Test for out of bounds contions, add fog
-		if (any(voxel >= *map_dim) || any(voxel < 0)){
-			voxel.xyz -= voxel_step.xyz * face_mask.xyz;
-			color_accumulator = mix(fog_color, voxel_color, 1.0f - max(distance_traveled / 700.0f, 0.0f));
-			color_accumulator.w *= 4;
-			break;
-		}
-		int vox_dim = setting(OCTDIM);
+		//   If we hit a voxel
+		if (setting(OCTENABLED) == 0 && voxel.x < (*map_dim).x/2 && voxel.y < (*map_dim).x/2 && voxel.z < (*map_dim).x/2){
+		//if (setting(OCTENABLED) == 0 && voxel.x < (*map_dim).x && voxel.y < (*map_dim).x && voxel.z < (*map_dim).x){
+		// 	// traversal_state = get_oct_vox(
+		// 	// 		voxel,
+		// 	// 		octree_descriptor_buffer,
+		// 	// 		octree_attachment_lookup_buffer,
+		// 	// 		octree_attachment_buffer,
+		// 	// 		settings_buffer);
+		// 	if (traversal_state.found){
+		// 		voxel_data = 5;
+		// 	} else {
+		// 		voxel_data = 0;
+		// 	}
+		//
 
-    //   If we hit a voxel
+				// Fancy no branch version of the logic step
+				face_mask = intersection_t.xyz <= min(intersection_t.yzx, intersection_t.zxy);
 
-		 if (setting(OCTENABLED) == 1 && voxel.x < (*map_dim).x && voxel.y < (*map_dim).x && voxel.z < (*map_dim).x){
-		 	if (get_oct_vox(
-		 		voxel,
-		 		octree_descriptor_buffer,
-		 		octree_attachment_lookup_buffer,
-		 		octree_attachment_buffer,
-		 		settings_buffer
-		 		)){
-		 			voxel_data = 5;
-		 		} else {
-		 			voxel_data = 0;
-		 		}
-		} else {
+
+				 intersection_t +=
+				 	delta_t * jump_power * fabs(convert_float3(face_mask.xyz));
+
+
+				int3 other_faces = face_mask.xyz ? 0 : 1;
+				intersection_t +=
+				 	delta_t * jump_power * fabs(convert_float3(other_faces.xyz))
+					- delta_t * prev_jump_power * fabs(convert_float3(other_faces.xyz));
+
+
+				voxel.xyz += voxel_step.xyz * jump_power * face_mask.xyz;
+
+				// Test for out of bounds contions, add fog
+				if (any(voxel >= *map_dim) || any(voxel < 0)){
+					voxel.xyz -= voxel_step.xyz * face_mask.xyz;
+					color_accumulator = mix(fog_color, voxel_color, 1.0f - max(distance_traveled / 700.0f, 0.0f));
+					color_accumulator.w *= 4;
+					break;
+				}
+
+				uchar prev_val = traversal_state.idx_stack[traversal_state.scale];
+				uchar this_face_mask = 0;
+				// Check the voxel face that we traversed
+				// and increment the idx in the idx stack
+				if (face_mask.x) {
+					this_face_mask = idx_set_x_mask;
+				}
+				else if (face_mask.y) {
+					this_face_mask = idx_set_y_mask;
+				}
+				else if (face_mask.z) {
+					this_face_mask = idx_set_z_mask;
+				}
+				traversal_state.idx_stack[traversal_state.scale] ^= this_face_mask;
+
+				// Mask index is the 1D index'd value of the idx for interaction with the valid / leaf masks
+				uchar mask_index = traversal_state.idx_stack[traversal_state.scale];
+
+				// Whether or not the next oct we want to enter in the current CD's valid mask is 1 or 0
+				bool is_valid = false;
+
+				// TODO: Rework this logic so we don't have this bodgy if
+				if (mask_index > prev_val)
+					is_valid = (traversal_state.parent_stack[traversal_state.parent_stack_position] >> 16) & mask_8[mask_index];
+
+				// Check to see if the idx increased or decreased
+				// If it decreased
+				//		Pop up the stack until the oct that the idx flip is valid and we landed on a valid oct
+
+				failsafe = 0;
+				while (mask_index < prev_val || !is_valid) {
+
+					jump_power *= 2;
+
+					// Keep track of the 0th edge of our current oct
+					traversal_state.oct_pos.x = floor((float)(voxel.x / 2)) * jump_power;
+					traversal_state.oct_pos.y = floor((float)(voxel.y / 2)) * jump_power;
+					traversal_state.oct_pos.z = floor((float)(voxel.z / 2)) * jump_power;
+
+					// Clear and pop the idx stack
+					traversal_state.idx_stack[traversal_state.scale] = 0;
+
+					// Scale is now set to the oct above. Be wary of this
+					traversal_state.scale--;
+
+					// Update the prev_val for our new idx
+					prev_val = traversal_state.idx_stack[traversal_state.scale];
+
+					// Clear and pop the parent stack, maybe off by one error?
+					traversal_state.parent_stack_index[traversal_state.parent_stack_position] = 0;
+					traversal_state.parent_stack[traversal_state.parent_stack_position] = 0;
+					traversal_state.parent_stack_position--;
+
+					// Set the current CD to the one on top of the stack
+					traversal_state.current_descriptor =
+						traversal_state.parent_stack[traversal_state.parent_stack_position];
+
+					// Apply the face mask to the new idx for the while check
+					traversal_state.idx_stack[traversal_state.scale] ^= this_face_mask;
+
+					// Get the mask index of the new idx and check the valid status
+					mask_index = traversal_state.idx_stack[traversal_state.scale];
+					is_valid = (traversal_state.parent_stack[traversal_state.parent_stack_position] >> 16) & mask_8[mask_index];
+
+					failsafe++;
+					if (failsafe > 10000)
+						break;
+				}
+
+				// At this point parent_stack[position] is at the CD of an oct with a
+				// valid oct at the leaf indicated by the current idx in the idx stack scale
+
+				failsafe = 0;
+				// While we haven't bottomed out and the oct we're looking at is valid
+				while (jump_power > 1 && is_valid) {
+
+					// If all went well and we found a valid non-leaf oct then we will traverse further down the hierarchy
+					traversal_state.scale++;
+					jump_power /= 2;
+
+					// Count the number of valid octs that come before and add it to the index to get the position
+					// Negate it by one as it counts itself
+					int count = popcount((uchar)(traversal_state.parent_stack[traversal_state.parent_stack_position] >> 16) & count_mask_8[mask_index]) - 1;
+
+
+		//TODO: REWORK THIS IF STATEMENT, PERF KILLER
+
+					// If this CD had the far bit set
+					if (far_bit_mask & octree_descriptor_buffer[traversal_state.parent_stack_index[traversal_state.parent_stack_position]]) {
+
+						// access the far point at which the head points too. Determine it's value, and add
+						// the count of the valid bits in the current CD to the index
+						uint far_pointer_index =
+							traversal_state.parent_stack_index[traversal_state.parent_stack_position] + // current index +
+							(traversal_state.parent_stack[traversal_state.parent_stack_position] & child_pointer_mask); // the relative prt to the far ptr
+
+						// Get the absolute ptr from the far ptr and add the count to get the CD that we want
+						traversal_state.parent_stack_index[traversal_state.parent_stack_position + 1] = octree_descriptor_buffer[far_pointer_index] + count;
+					}
+					// If this CD doesn't have the far bit set, access the element at which head points to
+					// and then add the specified number of indices to get to the correct child descriptor
+					else {
+						traversal_state.parent_stack_index[traversal_state.parent_stack_position + 1] =
+							traversal_state.parent_stack_index[traversal_state.parent_stack_position] + // The current index to this CD
+							(traversal_state.parent_stack[traversal_state.parent_stack_position] & child_pointer_mask) + count; // The relative dist + the number of bits that were valid
+					}
+
+					// Now that we have the index set we can increase our parent stack position to the next level and
+					// retrieve the value of its CD
+					traversal_state.parent_stack_position++;
+					traversal_state.parent_stack[traversal_state.parent_stack_position] = octree_descriptor_buffer[traversal_state.parent_stack_index[traversal_state.parent_stack_position]];
+
+					// Unlike the single shot DFS, it makes a bit more sense to have this at the tail of the while loop
+					// Do the logic steps to find which sub oct we step down into
+					if (voxel.x >= (jump_power / 2) + traversal_state.oct_pos.x) {
+
+						// Set our voxel position to the (0,0) of the correct oct
+						traversal_state.oct_pos.x += (jump_power / 2);
+
+						// Set the idx to represent the move
+						traversal_state.idx_stack[traversal_state.scale] |= idx_set_x_mask;
+
+					}
+					if (voxel.y >= (jump_power / 2) + traversal_state.oct_pos.y) {
+
+						traversal_state.oct_pos.y += (jump_power / 2);
+						traversal_state.idx_stack[traversal_state.scale] |= idx_set_y_mask;
+					}
+					if (voxel.z >= (jump_power / 2) + traversal_state.oct_pos.z) {
+
+						traversal_state.oct_pos.z += (jump_power / 2);
+						traversal_state.idx_stack[traversal_state.scale] |= idx_set_z_mask;
+					}
+
+				 	// Update the mask index with the new voxel we walked down to, and then check it's valid status
+					mask_index = traversal_state.idx_stack[traversal_state.scale];
+					is_valid = (traversal_state.parent_stack[traversal_state.parent_stack_position] >> 16) & mask_8[mask_index];
+
+					failsafe++;
+					if (failsafe > 100)
+						break;
+				}
+
+				// // Test for out of bounds contions, add fog
+				// if (traversal_state.scale == 1){
+				// 	//voxel.xyz -= voxel_step.xyz * face_mask.xyz;
+				// 	color_accumulator = mix((1.0f, 1.0f, 1.0f, 1.0f), (1.0f, 1.0f, 1.0f, 1.0f), 1.0f - max(distance_traveled / 700.0f, 0.0f));
+				// 	color_accumulator.w *= 4;
+				// 	break;
+				// }
+				voxel_data = map[voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z))];
+		 } else {
+			// Fancy no branch version of the logic step
+			face_mask = intersection_t.xyz <= min(intersection_t.yzx, intersection_t.zxy);
+			intersection_t += delta_t * fabs(convert_float3(face_mask.xyz));
+			voxel.xyz += voxel_step.xyz * face_mask.xyz;
+
+			// Test for out of bounds contions, add fog
+			if (any(voxel >= *map_dim) || any(voxel < 0)){
+				voxel.xyz -= voxel_step.xyz * face_mask.xyz;
+				color_accumulator = mix(fog_color, voxel_color, 1.0f - max(distance_traveled / 700.0f, 0.0f));
+				color_accumulator.w *= 4;
+				break;
+			}
 			voxel_data = map[voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z))];
 		}
-
 
 
 		if (voxel_data == 5 || voxel_data == 6) {
