@@ -11,12 +11,15 @@ public:
 
     ~GraphTimer();
 
+    static GraphTimer* get_instance();
+
     unsigned int create_line(std::string label);
     unsigned int delete_line(unsigned int idx);
 
     void start(unsigned int idx);
     void stop(unsigned int idx);
     void frame(unsigned int idx, double delta_time);
+    void count(unsigned int idx, int counter);
 
     void draw();
 
@@ -31,4 +34,7 @@ private:
     std::vector<int> counters;
     std::vector<std::string> labels;
 
+
+    // I actually think I might make this a singleton, along
+    static GraphTimer* instance;
 };

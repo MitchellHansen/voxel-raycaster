@@ -52,6 +52,9 @@ private:
 	std::vector<sf::Mouse::Button> held_mouse_buttons;
 
 
+    // TODO: Debug, remove this when finished
+    int graph_index = 0;
+
 private:
 	
 	static const std::vector<std::string> key_strings;

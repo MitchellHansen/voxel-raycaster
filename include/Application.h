@@ -72,13 +72,14 @@ private:
 	std::shared_ptr<CLCaster> raycaster;
 	std::shared_ptr<LightHandle> light_handle;
 	std::shared_ptr<LightController> light_controller;
+    GraphTimer fps;
 	Input input_handler;
 	std::shared_ptr<WindowHandler> window_handler;
 
 	// The sfml imgui wrapper I'm using requires Update be called with sf::Time
 	// Might modify it to also accept seconds
 	sf::Clock sf_delta_clock;
-	GraphTimer fps;
+
 
 	// vars for us to use with ImGUI
 	float light_color[4] = { 0, 0, 0, 0 };

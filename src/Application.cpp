@@ -13,9 +13,6 @@ Application::Application() {
 
 	ImGui::SFML::Init(*window);
 	window->resetGLStates();
-
-
-
 }
 
 Application::~Application() {
@@ -112,7 +109,7 @@ bool Application::game_loop() {
 
     int fps_idx = fps.create_line("FPS");
     int compute_fps_idx = fps.create_line("Compute");
-    int event_fps_idx = fps.create_line("Event");
+    int event_fps_idx = fps.create_line("Event Time");
 
 	while (true) {
 

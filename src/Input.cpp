@@ -1,8 +1,10 @@
-﻿#include "Input.h"
+﻿#include <GraphTimer.h>
+#include "Input.h"
 
 
 Input::Input() {
-
+    GraphTimer *t = GraphTimer::get_instance();
+    graph_index = t->create_line("Event Counter");
 }
 
 Input::~Input() {
@@ -20,6 +22,9 @@ void Input::consume_sf_events(sf::RenderWindow *window) {
 	}
 
 	transpose_sf_events(sf_event_queue);
+
+    GraphTimer *t = GraphTimer::get_instance();
+    t->count(graph_index, sf_event_queue.size());
 
 	sf_event_queue.clear();
 
