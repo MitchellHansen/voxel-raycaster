@@ -51,7 +51,7 @@ bool Application::init_clcaster() {
 	raycaster->assign_map(map);
 
 	camera = std::make_shared<Camera>(
-		sf::Vector3f(3.5f, 3.5f, 3.5f), // Starting position
+		sf::Vector3f(30.5f, 30.5f, 30.5f), // Starting position
 		sf::Vector2f(1.57f, 0.0f),      // Direction
 		window.get()
 	);

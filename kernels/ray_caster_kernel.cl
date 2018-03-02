@@ -302,7 +302,7 @@ __kernel void raycaster(
 	intersection_t -= delta_t * convert_float3(isless(intersection_t, 0));
 
 	int distance_traveled = 0;
-	int max_distance = 700;
+	int max_distance = 100;
 	uint bounce_count = 0;
 	int3 face_mask = { 0, 0, 0 };
 	int voxel_data = 0;
@@ -433,7 +433,7 @@ __kernel void raycaster(
 					is_valid = (traversal_state.parent_stack[traversal_state.parent_stack_position] >> 16) & mask_8[mask_index];
 
 					failsafe++;
-					if (failsafe > 10000)
+					if (failsafe > 20)
 						break;
 				}
 
@@ -507,30 +507,32 @@ __kernel void raycaster(
 					is_valid = (traversal_state.parent_stack[traversal_state.parent_stack_position] >> 16) & mask_8[mask_index];
 
 					failsafe++;
-					if (failsafe > 100)
+					if (failsafe > 20)
 						break;
 				}
 
-				intersection_t += delta_t * jump_power * fabs(convert_float3(face_mask.xyz));
+				// intersection_t += delta_t * jump_power * fabs(convert_float3(face_mask.xyz));
+			   //
+			   // //int3 other_faces = face_mask == 1 ? 1 : -1;
+ 		   	   // int3 other_faces = select((int3)(1,1,1), (int3)(0,0,0), (int3)(face_mask == 1));
+			   // //int3 added_diff = last_oct_pos + prev_jump_power - traversal_state.oct_pos;
+			   //
+			   // uint3 multiplier = (1, 1, 1);//convert_uint3(abs(traversal_state.oct_pos - last_oct_pos) * (1.0f/prev_jump_power));
+			   //
+			   // last_oct_pos = traversal_state.oct_pos;
+			   //
+			   // intersection_t -= delta_t * prev_jump_power * convert_float3(other_faces.xyz);
+			   // intersection_t += delta_t * convert_float3(multiplier) * jump_power * fabs(convert_float3(other_faces.xyz));
 
-			   //int3 other_faces = face_mask == 1 ? 1 : -1;
- 		   		int3 other_faces = select((int3)(1,1,1), (int3)(0,0,0), (int3)(face_mask == 1));
-			   //int3 added_diff = last_oct_pos + prev_jump_power - traversal_state.oct_pos;
 
-			   uint3 multiplier = abs(traversal_state.oct_pos - last_oct_pos) / prev_jump_power ;
 
-			   last_oct_pos = traversal_state.oct_pos;
-
-			   intersection_t -= delta_t * prev_jump_power * convert_float3(other_faces.xyz);
-			   intersection_t += delta_t * convert_float3(multiplier) * jump_power * fabs(convert_float3(other_faces.xyz));
-				// // Test for out of bounds contions, add fog
-				// if (traversal_state.scale == 1){
-				// 	//voxel.xyz -= voxel_step.xyz * face_mask.xyz;
-				// 	color_accumulator = mix((1.0f, 1.0f, 1.0f, 1.0f), (1.0f, 1.0f, 1.0f, 1.0f), 1.0f - max(distance_traveled / 700.0f, 0.0f));
-				// 	color_accumulator.w *= 4;
-				// 	break;
-				// }
-				voxel_data = map[voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z))];
+				if (traversal_state.scale == 1 && is_valid){
+					//voxel.xyz -= voxel_step.xyz * face_mask.xyz;
+					color_accumulator = mix((1.0f, 1.0f, 1.0f, 1.0f), (1.0f, 1.0f, 1.0f, 1.0f), 1.0f - max(distance_traveled / 700.0f, 0.0f));
+					color_accumulator.w *= 4;
+					break;
+				}
+				//voxel_data = map[voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z))];
 		 } else {
 			// Fancy no branch version of the logic step
 			face_mask = intersection_t.xyz <= min(intersection_t.yzx, intersection_t.zxy);
