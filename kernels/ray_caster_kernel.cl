@@ -327,14 +327,13 @@ __kernel void raycaster(
 
 	int jump_power = (int)log2((float)vox_dim) - traversal_state.scale;
 	int prev_jump_power = jump_power;
-
+	int3 last_oct_pos = (0);
 	// TODO: DEBUG
 	int failsafe = 0;
 
 
 	// Andrew Woo's raycasting algo
 	while (distance_traveled < max_distance && bounce_count < 2) {
-
 
 		//   If we hit a voxel
 		if (setting(OCTENABLED) == 0 && voxel.x < (*map_dim).x/2 && voxel.y < (*map_dim).x/2 && voxel.z < (*map_dim).x/2){
@@ -353,18 +352,9 @@ __kernel void raycaster(
 		//
 
 				// Fancy no branch version of the logic step
-				face_mask = intersection_t.xyz <= min(intersection_t.yzx, intersection_t.zxy);
+				face_mask = 1 + (intersection_t.xyz <= min(intersection_t.yzx, intersection_t.zxy));
 
-
-				 intersection_t +=
-				 	delta_t * jump_power * fabs(convert_float3(face_mask.xyz));
-
-
-				int3 other_faces = face_mask.xyz ? 0 : 1;
-				intersection_t +=
-				 	delta_t * jump_power * fabs(convert_float3(other_faces.xyz))
-					- delta_t * prev_jump_power * fabs(convert_float3(other_faces.xyz));
-
+				prev_jump_power = jump_power;
 
 				voxel.xyz += voxel_step.xyz * jump_power * face_mask.xyz;
 
@@ -375,6 +365,8 @@ __kernel void raycaster(
 					color_accumulator.w *= 4;
 					break;
 				}
+
+
 
 				uchar prev_val = traversal_state.idx_stack[traversal_state.scale];
 				uchar this_face_mask = 0;
@@ -519,6 +511,18 @@ __kernel void raycaster(
 						break;
 				}
 
+				intersection_t += delta_t * jump_power * fabs(convert_float3(face_mask.xyz));
+
+			   //int3 other_faces = face_mask == 1 ? 1 : -1;
+ 		   		int3 other_faces = select((int3)(1,1,1), (int3)(0,0,0), (int3)(face_mask == 1));
+			   //int3 added_diff = last_oct_pos + prev_jump_power - traversal_state.oct_pos;
+
+			   uint3 multiplier = abs(traversal_state.oct_pos - last_oct_pos) / prev_jump_power ;
+
+			   last_oct_pos = traversal_state.oct_pos;
+
+			   intersection_t -= delta_t * prev_jump_power * convert_float3(other_faces.xyz);
+			   intersection_t += delta_t * convert_float3(multiplier) * jump_power * fabs(convert_float3(other_faces.xyz));
 				// // Test for out of bounds contions, add fog
 				// if (traversal_state.scale == 1){
 				// 	//voxel.xyz -= voxel_step.xyz * face_mask.xyz;
