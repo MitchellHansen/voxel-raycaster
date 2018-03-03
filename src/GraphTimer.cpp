@@ -26,6 +26,7 @@ unsigned int GraphTimer::create_line(std::string label) {
 
 unsigned int GraphTimer::delete_line(unsigned int idx){
     fps_vectors.erase(fps_vectors.begin() + idx);
+	return 1;
 }
 
 void GraphTimer::start(unsigned int idx){

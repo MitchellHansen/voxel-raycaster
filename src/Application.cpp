@@ -35,7 +35,7 @@ bool Application::init_clcaster() {
     raycaster->add_to_settings_buffer("octree_dimensions", "OCTDIM", MAP_X);
 
     // TODO: ALLOW RVALUES FOR SETTINGS BUFFER
-    int64_t oct_enabled = 0;
+    uint64_t oct_enabled = 0;
     raycaster->add_to_settings_buffer("using_octree", "OCTENABLED", oct_enabled);
 
 	map = std::make_shared<Map>(MAP_X);
