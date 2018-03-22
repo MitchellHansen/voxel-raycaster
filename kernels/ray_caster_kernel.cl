@@ -124,7 +124,7 @@ struct TraversalState {
 	ulong current_descriptor_index;
 
 	int3 oct_pos;
-
+	int oct_size;
 	// ====== DEBUG =======
 	char found;
 
@@ -144,12 +144,14 @@ struct TraversalState get_oct_vox(
 	ts.current_descriptor_index = setting(OCTREE_ROOT_INDEX);
 	ts.current_descriptor = octree_descriptor_buffer[ts.current_descriptor_index];
 	ts.scale = 0;
+	ts.oct_size = 0;
 	ts.parent_stack_position = 0;
 	ts.found = false;
 	ts.parent_stack[0] = ts.current_descriptor;
 
 	// Set our initial dimension and the position at the corner of the oct to keep track of our position
 	int dimension = setting(OCTDIM);
+	ts.oct_size = dimension/2;
 	ts.oct_pos = zeroed_int3;
 
 	// While we are not at the required resolution
@@ -193,6 +195,8 @@ struct TraversalState get_oct_vox(
 
 		int mask_index = ts.idx_stack[ts.scale];
 
+
+
 		// Check to see if we are on a valid oct
 		if ((ts.current_descriptor >> 16) & mask_8[mask_index]) {
 
@@ -202,13 +206,13 @@ struct TraversalState get_oct_vox(
 				// If it is, then we cannot traverse further as CP's won't have been generated
 				ts.found = true;
 				return ts;
-				//return ts.found;
 			}
 
 			// If all went well and we found a valid non-leaf oct then we will traverse further down the hierarchy
 			ts.scale++;
 			ts.parent_stack_position++;
 			dimension /= 2;
+			ts.oct_size /= 2;
 
 			// Count the number of valid octs that come before and add it to the index to get the position
 			// Negate it by one as it counts itself
@@ -235,19 +239,14 @@ struct TraversalState get_oct_vox(
 			// If the oct was not valid, then no CP's exists any further
 			// This implicitly says that if it's non-valid then it must be a leaf!!
 
-			// It appears that the traversal is now working but I need
-			// to focus on how to now take care of the end condition.
-			// Currently it adds the last parent on the second to lowest
-			// oct CP. Not sure if thats correct
+			// Parent stack is only populated up to the current descriptors parent.
+			// So that would be the current voxels grandparent
 			ts.found = 0;
 			return ts;
-			//return ts.found;
 		}
 	}
-
 	ts.found = 1;
 	return ts;
-	//return ts.found;
 }
 
 // =========================================================================
@@ -300,25 +299,27 @@ __kernel void raycaster(
 	// Setup the voxel coords from the camera origin
 	// rtn = round towards negative
 	int3 voxel = convert_int3_rtn(*cam_pos);
+	int3 prev_voxel = voxel;
 
-	//voxel = voxel + convert_int3(*cam_pos < 0.0f);
 	// Delta T is the units a ray must travel along an axis in order to
 	// traverse an integer split
 	float3 delta_t = fabs(1.0f / ray_dir);
 
 	// Intersection T is the collection of the next intersection points
-	// for all 3 axis XYZ. We take the full negative cardinality when
-	// subtracting the floor, so we must transfer the sign over from
-	// the voxel step
-	float3 offset = delta_t * (floor(*cam_pos) - (*cam_pos));
-	float3 intersection_t = offset * convert_float3(voxel_step);
+	// for all 3 axis XYZ. We want to 'boost' the intersection_t start point up to
+	// the offset, so we get the -(difference) between the int voxel position and the
+	// float camera position.
+	float3 offset = delta_t * ((*cam_pos) - floor(*cam_pos));
 
-	// When we transfer the sign over, we get the correct direction of
-	// the offset, but we merely transposed over the value instead of mirroring
-	// it over the axis like we want. So here, isless returns a boolean if intersection_t
-	// is less than 0 which dictates whether or not we subtract the delta which in effect
-	// mirrors the offset
-	intersection_t -= delta_t * convert_float3(isless(intersection_t, 0));
+	// Now we apply the inverse of the ray sign. This gives us a negative
+	// offset for positive values and vis versa.
+	float3 intersection_t = offset * -convert_float3(voxel_step);
+
+	// For negative ray directions the positive value is the correct initial offset
+	// For positive rays we now just have to add the delta_t to the negative offset
+	// and that will give us the correct positive intersection_t. Don't forget to
+	// correct the stupid -1==true
+	intersection_t += delta_t * -1 * convert_float3(isless(intersection_t, 0));
 
 	int distance_traveled = 0;
 	int max_distance = 100;
@@ -344,7 +345,7 @@ __kernel void raycaster(
 			octree_attachment_buffer,
 			settings_buffer);
 
-	int jump_power = (int)pow((float)2, log2((float)vox_dim) - (float)traversal_state.scale);
+	int jump_power = traversal_state.oct_size;
 	int prev_jump_power = jump_power;
 	int3 last_oct_pos = (0);
 	// TODO: DEBUG
@@ -353,13 +354,13 @@ __kernel void raycaster(
 
 	// Andrew Woo's raycasting algo
 	while (distance_traveled < max_distance && bounce_count < 2) {
-		if (jump_power == 2){
-			color_accumulator = mix((1.0f, 1.0f, 1.0f, 1.0f), (1.0f, 1.0f, 1.0f, 1.0f), 1.0f - max(distance_traveled / 700.0f, 0.0f));
-			color_accumulator.w *= 4;
-			break;
-		}
+		// if (jump_power == 2){
+		// 	color_accumulator = mix((1.0f, 1.0f, 1.0f, 1.0f), (1.0f, 1.0f, 1.0f, 1.0f), 1.0f - max(distance_traveled / 700.0f, 0.0f));
+		// 	color_accumulator.w *= 4;
+		// 	break;
+		// }
 		//   If we hit a voxel
-		if (setting(OCTENABLED) == 0 && voxel.x < (*map_dim).x/2 && voxel.y < (*map_dim).x/2 && voxel.z < (*map_dim).x) {
+		if (setting(OCTENABLED) == 0 && voxel.x < (*map_dim).x && voxel.y < (*map_dim).x && voxel.z < (*map_dim).x) {
 
 			traversal_state = get_oct_vox(
 					voxel,
@@ -368,12 +369,16 @@ __kernel void raycaster(
 					octree_attachment_buffer,
 					settings_buffer);
 
+			intersection_t +=
+				convert_float3((traversal_state.oct_pos - voxel.xyz) * traversal_state.oct_size/2 + traversal_state.oct_size/2);
+
 			// True will result in a -1, e.g (0, 0, -1) so negate it to positive
 			face_mask = -1 * (intersection_t.xyz <= min(intersection_t.yzx, intersection_t.zxy));
 
 			prev_jump_power = jump_power;
+			prev_voxel = voxel;
 
-			voxel.xyz += voxel_step.xyz * jump_power * face_mask.xyz;
+			voxel.xyz += voxel_step.xyz * face_mask.xyz * convert_int3((traversal_state.oct_pos - voxel.xyz) + traversal_state.oct_size);
 
 			// Test for out of bounds contions, add fog
 			if (any(voxel >= *map_dim) || any(voxel < 0)){
@@ -418,9 +423,9 @@ __kernel void raycaster(
 				jump_power *= 2;
 
 				// Keep track of the 0th edge of our current oct
-				traversal_state.oct_pos.x = floor((float)(voxel.x / 2)) * jump_power;
-				traversal_state.oct_pos.y = floor((float)(voxel.y / 2)) * jump_power;
-				traversal_state.oct_pos.z = floor((float)(voxel.z / 2)) * jump_power;
+				traversal_state.oct_pos.x -= jump_power/2;
+				traversal_state.oct_pos.y -= jump_power/2;
+				traversal_state.oct_pos.z -= jump_power/2;
 
 				// Clear and pop the idx stack
 				traversal_state.idx_stack[traversal_state.scale] = 0;
@@ -497,23 +502,23 @@ __kernel void raycaster(
 
 				// Unlike the single shot DFS, it makes a bit more sense to have this at the tail of the while loop
 				// Do the logic steps to find which sub oct we step down into
-				if (voxel.x >= (jump_power / 2) + traversal_state.oct_pos.x) {
+				if (voxel.x >= (jump_power * 2) + traversal_state.oct_pos.x) {
 
 					// Set our voxel position to the (0,0) of the correct oct
-					traversal_state.oct_pos.x += (jump_power / 2);
+					traversal_state.oct_pos.x += (jump_power * 2);
 
 					// Set the idx to represent the move
 					traversal_state.idx_stack[traversal_state.scale] |= idx_set_x_mask;
 
 				}
-				if (voxel.y >= (jump_power / 2) + traversal_state.oct_pos.y) {
+				if (voxel.y >= (jump_power * 2) + traversal_state.oct_pos.y) {
 
-					traversal_state.oct_pos.y += (jump_power / 2);
+					traversal_state.oct_pos.y += (jump_power * 2);
 					traversal_state.idx_stack[traversal_state.scale] |= idx_set_y_mask;
 				}
-				if (voxel.z >= (jump_power / 2) + traversal_state.oct_pos.z) {
+				if (voxel.z >= (jump_power * 2) + traversal_state.oct_pos.z) {
 
-					traversal_state.oct_pos.z += (jump_power / 2);
+					traversal_state.oct_pos.z += (jump_power * 2);
 					traversal_state.idx_stack[traversal_state.scale] |= idx_set_z_mask;
 				}
 
@@ -528,7 +533,6 @@ __kernel void raycaster(
 
 			// Add the delta for the jump power and the traversed face
 			intersection_t += delta_t * jump_power * fabs(convert_float3(face_mask.xyz));
-
 
 			// Get the other faces
 			int3 other_faces = select((int3)(1,1,1), (int3)(0,0,0), (int3)(face_mask == 1));
@@ -552,7 +556,12 @@ __kernel void raycaster(
 				break;
 			}
 			//voxel_data = map[voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z))];
-		} else {
+		}
+
+// =======================================================================
+//
+// =======================================================================
+		else {
 
 			// True will result in a -1, e.g (0, 0, -1) so negate it to positive
 			face_mask = -1 * (intersection_t.xyz <= min(intersection_t.yzx, intersection_t.zxy));
@@ -568,7 +577,9 @@ __kernel void raycaster(
 			}
 			voxel_data = map[voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z))];
 		}
-
+// =======================================================================
+//
+// =======================================================================
 
 		if (voxel_data == 5 || voxel_data == 6) {
 

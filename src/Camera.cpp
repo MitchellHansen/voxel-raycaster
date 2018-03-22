@@ -54,9 +54,9 @@ int Camera::add_relative_impulse(DIRECTION impulse_direction, float speed) {
 
 	}
 
-	float val = movement.z;
+	//float val = movement.z;
 	movement += SphereToCart(dir) * speed;
-	movement.z = val;
+	//movement.z = val;
 
 	return 1;
 }
@@ -125,14 +125,14 @@ int Camera::update(double delta_time) {
 
     movement.x *= static_cast<float>(friction_coefficient * delta_time * multiplier);
     movement.y *= static_cast<float>(friction_coefficient * delta_time * multiplier);
-
-	if (position.z < 3.0f){
-		position.z = 3.0f;
-		movement.z = -0.1;
-	} else {
-		// gravity
-		movement.z -= 0.7f * delta_time;
-	}
+	movement.z *= static_cast<float>(friction_coefficient * delta_time * multiplier);
+// 	if (position.z < 3.0f){
+// 		position.z = 3.0f;
+// 		movement.z = -0.1;
+// 	} else {
+// 		// gravity
+// 		movement.z -= 0.7f * delta_time;
+// 	}
 	return 1;
 }
 

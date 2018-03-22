@@ -239,9 +239,6 @@ bool CLCaster::create_viewport(int width, int height, float v_fov, float h_fov) 
 
 	// And an array of vectors describing the way the "lens" of our
 	// camera works
-
-	// This could be modified to make some odd looking camera lenses
-
 	viewport_matrix = new sf::Vector4f[width * height * 4];
 
 	for (int y = -view_res.y / 2; y < view_res.y / 2; y++) {
@@ -258,9 +255,9 @@ bool CLCaster::create_viewport(int width, int height, float v_fov, float h_fov) 
 				static_cast<float>(ray.z * cos(1.57) - ray.x * sin(1.57))
 			);
 
-            ray.y += (rand() % 1000) / 100000.0;
-            ray.x += (rand() % 1000) / 100000.0;
-            ray.z += (rand() % 1000) / 100000.0;
+//             ray.y += (rand() % 1000) / 100000.0;
+//             ray.x += (rand() % 1000) / 100000.0;
+//             ray.z += (rand() % 1000) / 100000.0;
 
 			ray = Normalize(ray);
 			int index = (x + view_res.x / 2) + view_res.x * (y + view_res.y / 2);
