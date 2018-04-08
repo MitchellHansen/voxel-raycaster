@@ -16,7 +16,7 @@ ArrayMap::ArrayMap(sf::Vector3i dimensions) {
 
 	for (int x = 0; x < dimensions.x; x++) {
 		for (int y = 0; y < dimensions.y; y++) {
-			for (int z = 0; z < 1; z++) {
+			for (int z = 0; z < dimensions.z; z++) {
 				setVoxel(sf::Vector3i(x, y, z), 5);
 			}
 		}
