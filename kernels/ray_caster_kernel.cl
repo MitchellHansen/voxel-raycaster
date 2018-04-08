@@ -347,6 +347,9 @@ __kernel void raycaster(
 	bool shadow_ray = false;
 	int vox_dim = setting(OCTDIM);
 
+
+	int failsafe = 0;
+
 	struct TraversalState traversal_state;
 
 	traversal_state = get_oct_vox(
@@ -371,6 +374,13 @@ __kernel void raycaster(
 		// 	break;
 		// }
 		//   If we hit a voxel
+		// Test for out of bounds contions, add fog
+		if (any(voxel >= *map_dim) || any(voxel < 0)){
+			voxel.xyz -= voxel_step.xyz * jump_power * face_mask.xyz;
+			color_accumulator = fog_color;// mix(fog_color, voxel_color, 1.0f);// - max(distance_traveled / 10.0f, 0.0f));
+			color_accumulator.w = 1.0f;
+			break;
+		}
 		if (setting(OCTENABLED) == 0 && voxel.x < (*map_dim).x && voxel.y < (*map_dim).x && voxel.z < (*map_dim).x) {
 
 			// True will result in a -1, e.g (0, 0, -1) so negate it to positive
@@ -379,13 +389,15 @@ __kernel void raycaster(
 			prev_jump_power = jump_power;
 			prev_voxel = voxel;
 
-			voxel.xyz += voxel_step.xyz * face_mask.xyz * convert_int3((traversal_state.oct_pos - voxel.xyz) + traversal_state.resolution);
+			// not working, wish I would have commented!!!
+			//voxel.xyz += voxel_step.xyz * face_mask.xyz * convert_int3((traversal_state.oct_pos - voxel.xyz) + traversal_state.resolution);
+			voxel.xyz += voxel_step.xyz * face_mask.xyz * traversal_state.resolution;
 
 			// Test for out of bounds contions, add fog
 			if (any(voxel >= *map_dim) || any(voxel < 0)){
 				voxel.xyz -= voxel_step.xyz * jump_power * face_mask.xyz;
-				color_accumulator = mix(fog_color, voxel_color, 1.0f - max(distance_traveled / 700.0f, 0.0f));
-				color_accumulator.w *= 4;
+				color_accumulator = fog_color;// mix(fog_color, voxel_color, 1.0f);// - max(distance_traveled / 10.0f, 0.0f));
+				color_accumulator.w = 1.0f;
 				break;
 			}
 
@@ -418,6 +430,7 @@ __kernel void raycaster(
 			if (mask_index > prev_val) // TODO: Rework this logic so we don't have this bodgy if
 				is_valid = (traversal_state.parent_stack[traversal_state.parent_stack_position] >> 16) & mask_8[mask_index];
 
+			failsafe = 0;
 			while (mask_index < prev_val || !is_valid) {
 
 				// Clear and pop the idx stack
@@ -435,15 +448,11 @@ __kernel void raycaster(
 				// Update the prev_val for our new idx
 				prev_val = traversal_state.idx_stack[traversal_state.scale];
 
-				//traversal_state.oct_pos -= select((int3)0, (int3)jump_power, (int3)(prev_val & idx_set_x_mask, prev_val & idx_set_y_mask, prev_val & idx_set_z_mask));
-				// Keep track of the 0th edge of our current oct
-				// TODO: Transfer over to selects
-				if (prev_val & idx_set_x_mask)
-					traversal_state.oct_pos.x -= jump_power;
-				if (prev_val & idx_set_y_mask)
-					traversal_state.oct_pos.y -= jump_power;
-				if (prev_val & idx_set_z_mask)
-					traversal_state.oct_pos.z -= jump_power;
+				// Keep track of the 0th edge of our current oct, select take the dumb MSB truth value for vector types
+				// so we just gotta do this component wise, dumb
+				traversal_state.oct_pos.x -= select(0, jump_power, (prev_val & idx_set_x_mask));
+				traversal_state.oct_pos.y -= select(0, jump_power, (prev_val & idx_set_y_mask));
+				traversal_state.oct_pos.z -= select(0, jump_power, (prev_val & idx_set_z_mask));
 
 				// Set the current CD to the one on top of the stack
 				traversal_state.current_descriptor =
@@ -455,13 +464,16 @@ __kernel void raycaster(
 				// Get the mask index of the new idx and check the valid status
 				mask_index = traversal_state.idx_stack[traversal_state.scale];
 				is_valid = (traversal_state.parent_stack[traversal_state.parent_stack_position] >> 16) & mask_8[mask_index];
-
+				failsafe++;
+				if (failsafe > 50)
+					break;
 			}
 
 			// At this point parent_stack[position] is at the CD of an oct with a
 			// valid oct at the leaf indicated by the current idx in the idx stack scale
 
 			// While we haven't bottomed out and the oct we're looking at is valid
+			failsafe = 0;
 			while (jump_power > 1 && is_valid) {
 
 				// If all went well and we found a valid non-leaf oct then we will traverse further down the hierarchy
@@ -526,6 +538,10 @@ __kernel void raycaster(
 			 	// Update the mask index with the new voxel we walked down to, and then check it's valid status
 				mask_index = traversal_state.idx_stack[traversal_state.scale];
 				is_valid = (traversal_state.parent_stack[traversal_state.parent_stack_position] >> 16) & mask_8[mask_index];
+
+				failsafe++;
+				if (failsafe > 50)
+					break;
 			}
 
 			// Add the delta for the jump power and the traversed face
@@ -540,10 +556,10 @@ __kernel void raycaster(
 			last_oct_pos = traversal_state.oct_pos;
 
 			// Go back to the beginning intersection t's for the non traversed faces
-			intersection_t -= delta_t * prev_jump_power * convert_float3(other_faces.xyz);
+			//intersection_t -= delta_t * prev_jump_power * convert_float3(other_faces.xyz);
 
 			// add back the intersection for our current jump power
-			intersection_t += delta_t * convert_float3(multiplier) * jump_power * fabs(convert_float3(other_faces.xyz));
+			//intersection_t += delta_t * convert_float3(multiplier) * jump_power * fabs(convert_float3(other_faces.xyz));
 
 			// if (traversal_state.scale == 1 && is_valid){
 			// 	voxel_data = 5;
