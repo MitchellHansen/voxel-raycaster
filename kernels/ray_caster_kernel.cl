@@ -178,26 +178,14 @@ struct TraversalState get_oct_vox(
 		ts.idx_stack[ts.scale] = 0;
 
 		//	Do the logic steps to find which sub oct we step down into
-		if (position.x >= (dimension / 2) + ts.oct_pos.x) {
+	    uchar3 thing = select((uchar3)(0, 0, 0),
+							   (uchar3)(idx_set_x_mask, idx_set_y_mask, idx_set_z_mask),
+							   convert_char3(position >= (int3)(dimension/2) + ts.oct_pos));
 
-			// Set our voxel position to the (0,0) of the correct oct
-		//	ts.oct_pos.x += (dimension / 2);
+		ts.idx_stack[ts.scale] = thing.x | thing.y | thing.z;
 
-			// Set the idx to represent the move
-			ts.idx_stack[ts.scale] |= idx_set_x_mask;
-
-		}
-		if (position.y >= (dimension / 2) + ts.oct_pos.y) {
-
-		//	ts.oct_pos.y += (dimension / 2);
-			ts.idx_stack[ts.scale] |= idx_set_y_mask;
-
-		}
-		if (position.z >= (dimension / 2) + ts.oct_pos.z) {
-
-		//	ts.oct_pos.z += (dimension / 2);
-			ts.idx_stack[ts.scale] |= idx_set_z_mask;
-		}
+		// Set our voxel position to the (0,0) of the correct oct
+		ts.oct_pos += select((int3)(0), (int3)(dimension/2), position >= (int3)(dimension/2) + ts.oct_pos);
 
 		int mask_index = ts.idx_stack[ts.scale];
 
@@ -217,10 +205,8 @@ struct TraversalState get_oct_vox(
 			// If all went well and we found a valid non-leaf oct then we will traverse further down the hierarchy
 			ts.scale++;
 			ts.parent_stack_position++;
-			ts.oct_pos += select((int3)(0), (int3)(dimension/2), position >= (int3)(dimension/2) + ts.oct_pos);
 			dimension /= 2;
 			ts.resolution /= 2;
-
 
 			// Count the number of valid octs that come before and add it to the index to get the position
 			// Negate it by one as it counts itself
@@ -251,7 +237,6 @@ struct TraversalState get_oct_vox(
 
 			// Parent stack is only populated up to the current descriptors parent.
 			// So that would be the current voxels grandparent
-			ts.oct_pos += select((int3)(0), (int3)(dimension/2), position >= (int3)(dimension/2) + ts.oct_pos);
 			ts.found = 0;
 			return ts;
 		}
@@ -333,7 +318,7 @@ __kernel void raycaster(
 	intersection_t += delta_t * -1 * convert_float3(isless(intersection_t, 0));
 
 	int distance_traveled = 0;
-	int max_distance = 100;
+	int max_distance = 10;
 	uint bounce_count = 0;
 	int3 face_mask = { 0, 0, 0 };
 	int voxel_data = 0;
@@ -390,8 +375,8 @@ __kernel void raycaster(
 			prev_voxel = voxel;
 
 			// not working, wish I would have commented!!!
-			//voxel.xyz += voxel_step.xyz * face_mask.xyz * convert_int3((traversal_state.oct_pos - voxel.xyz) + traversal_state.resolution);
-			voxel.xyz += voxel_step.xyz * face_mask.xyz * traversal_state.resolution;
+			voxel.xyz += voxel_step.xyz * face_mask.xyz * convert_int3((traversal_state.oct_pos - voxel.xyz) + traversal_state.resolution);
+			//voxel.xyz += voxel_step.xyz * face_mask.xyz * traversal_state.resolution;
 
 			// Test for out of bounds contions, add fog
 			if (any(voxel >= *map_dim) || any(voxel < 0)){
@@ -465,7 +450,7 @@ __kernel void raycaster(
 				mask_index = traversal_state.idx_stack[traversal_state.scale];
 				is_valid = (traversal_state.parent_stack[traversal_state.parent_stack_position] >> 16) & mask_8[mask_index];
 				failsafe++;
-				if (failsafe > 50)
+				if (failsafe > 10)
 					break;
 			}
 
@@ -540,7 +525,7 @@ __kernel void raycaster(
 				is_valid = (traversal_state.parent_stack[traversal_state.parent_stack_position] >> 16) & mask_8[mask_index];
 
 				failsafe++;
-				if (failsafe > 50)
+				if (failsafe > 10)
 					break;
 			}
 
