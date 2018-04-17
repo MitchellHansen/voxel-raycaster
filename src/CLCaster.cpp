@@ -768,7 +768,7 @@ bool CLCaster::compile_kernel(std::string kernel_source, bool is_path, std::stri
         build_string_stream << " -D" << define.first << "=" << define.second;
     }
 
-	build_string_stream << " -cl-finite-math-only -cl-fast-relaxed-math -cl-unsafe-math-optimizations -cl-opt-disable";
+	build_string_stream << " -cl-finite-math-only -cl-fast-relaxed-math -cl-unsafe-math-optimizations";
 
     std::string build_string = build_string_stream.str();
 

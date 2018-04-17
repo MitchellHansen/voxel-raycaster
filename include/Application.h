@@ -42,12 +42,12 @@ class Application {
 
 public:
 
-// 	static const int WINDOW_X = 1366;
-// 	static const int WINDOW_Y = 768;
-//	static const int WINDOW_X = 400;
-//	static const int WINDOW_Y = 400;
-    static const int WINDOW_X = 5;
-    static const int WINDOW_Y = 5;
+ 	static const int WINDOW_X = 1366;
+ 	static const int WINDOW_Y = 768;
+//	static const int WINDOW_X = 500;
+//	static const int WINDOW_Y = 500;
+//    static const int WINDOW_X = 5;
+//    static const int WINDOW_Y = 5;
 	static const int MAP_X;
 	static const int MAP_Y;
 	static const int MAP_Z;

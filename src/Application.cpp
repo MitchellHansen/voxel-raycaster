@@ -1,8 +1,8 @@
 #include "Application.h"
 
-const int Application::MAP_X = 16;
-const int Application::MAP_Y = 16;
-const int Application::MAP_Z = 16;
+const int Application::MAP_X = 32;
+const int Application::MAP_Y = 32;
+const int Application::MAP_Z = 32;
 
 Application::Application() {
 
