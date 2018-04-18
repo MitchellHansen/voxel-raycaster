@@ -176,14 +176,14 @@ struct TraversalState get_oct_vox(
 	while (dimension > 1) {
 
 		//	Do the logic steps to find which sub oct we step down into
-	    uchar3 thing = select((uchar3)(0, 0, 0),
+	    uchar3 masks = select((uchar3)(0, 0, 0),
 							   (uchar3)(idx_set_x_mask, idx_set_y_mask, idx_set_z_mask),
 							   convert_char3(position >= (int3)(dimension/2) + ts.oct_pos));
 
 		// So we can be a little bit tricky here and increment our
    		// array index that holds our masks as we build the idx.
    		// Adding 1 for X, 2 for Y, and 4 for Z
-		ts.idx_stack[ts.scale] = thing.x | thing.y | thing.z;
+		ts.idx_stack[ts.scale] = masks.x | masks.y | masks.z;
 
 		// Set our voxel position to the (0,0) of the correct oct by rerunning the logic step
 		ts.oct_pos = ts.sub_oct_pos;
@@ -334,9 +334,6 @@ __kernel void raycaster(
 	bool shadow_ray = false;
 	int vox_dim = setting(OCTDIM);
 
-
-	int failsafe = 0;
-
 	struct TraversalState traversal_state;
 
 	traversal_state = get_oct_vox(
@@ -397,7 +394,6 @@ __kernel void raycaster(
 							(bool)(traversal_state.parent_stack[traversal_state.parent_stack_position] >> 16) & mask_8[mask_index],
 							mask_index > prev_val);
 
-			failsafe = 0;
 			while ((mask_index < prev_val || !is_valid) && traversal_state.scale >= 1) {
 
 				// Clear and pop the idx stack
@@ -435,9 +431,6 @@ __kernel void raycaster(
 				// Get the mask index of the new idx and check the valid status
 				mask_index = traversal_state.idx_stack[traversal_state.scale];
 				is_valid = (traversal_state.parent_stack[traversal_state.parent_stack_position] >> 16) & mask_8[mask_index];
-				failsafe++;
-				if (failsafe > 10)
-					break;
 			}
 
 
@@ -445,12 +438,6 @@ __kernel void raycaster(
 			// valid oct at the leaf indicated by the current idx in the idx stack scale
 
 			// While we haven't bottomed out and the oct we're looking at is valid
-			failsafe = 0;
-			if (jump_power == 8 && is_valid)
-				failsafe = 5;
-			if (jump_power > 1 && is_valid)
-				failsafe = 1;
-
 			while (jump_power > 1 && is_valid) {
 
 				// If all went well and we found a valid non-leaf oct then we will traverse further down the hierarchy
@@ -500,10 +487,6 @@ __kernel void raycaster(
 				is_valid = (traversal_state.parent_stack[traversal_state.parent_stack_position] >> 16) & mask_8[mask_index];
 
 				traversal_state.scale++;
-
-				failsafe++;
-				if (failsafe > 10)
-					break;
 			}
 			traversal_state.sub_oct_pos = traversal_state.oct_pos;
 
@@ -519,8 +502,6 @@ __kernel void raycaster(
 			// Set our voxel position to the (0,0) of the correct oct by rerunning the logic step
 			traversal_state.sub_oct_pos += select((int3)(0), (int3)(jump_power), voxel >= (int3)(jump_power) + traversal_state.oct_pos);
 
-
-			traversal_state = traversal_state;
 			// Add the delta for the jump power and the traversed face
 			intersection_t += delta_t * jump_power * fabs(convert_float3(face_mask.xyz));
 
