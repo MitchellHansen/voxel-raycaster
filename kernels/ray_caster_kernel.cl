@@ -176,14 +176,14 @@ struct TraversalState get_oct_vox(
 	while (dimension > 1) {
 
 		//	Do the logic steps to find which sub oct we step down into
-	    uchar3 masks = select((uchar3)(0, 0, 0),
+	    uchar3 thing = select((uchar3)(0, 0, 0),
 							   (uchar3)(idx_set_x_mask, idx_set_y_mask, idx_set_z_mask),
 							   convert_char3(position >= (int3)(dimension/2) + ts.oct_pos));
 
 		// So we can be a little bit tricky here and increment our
    		// array index that holds our masks as we build the idx.
    		// Adding 1 for X, 2 for Y, and 4 for Z
-		ts.idx_stack[ts.scale] = masks.x | masks.y | masks.z;
+		ts.idx_stack[ts.scale] = thing.x | thing.y | thing.z;
 
 		// Set our voxel position to the (0,0) of the correct oct by rerunning the logic step
 		ts.oct_pos = ts.sub_oct_pos;
@@ -320,7 +320,7 @@ __kernel void raycaster(
 	intersection_t += delta_t * -1 * convert_float3(isless(intersection_t, 0));
 
 	int distance_traveled = 0;
-	int max_distance = 80;
+	int max_distance = 20;
 	uint bounce_count = 0;
 	int3 face_mask = { 0, 0, 0 };
 	int voxel_data = 0;
@@ -356,6 +356,7 @@ __kernel void raycaster(
 	// Andrew Woo's raycasting algo
 	while (distance_traveled < max_distance && bounce_count < 2) {
 
+		if (setting(OCTENABLED) == 0) {
 
 			// True will result in a -1, e.g (0, 0, -1) so negate it to positive
 			face_mask = -1 * (intersection_t.xyz <= min(intersection_t.yzx, intersection_t.zxy));
@@ -370,7 +371,7 @@ __kernel void raycaster(
 			// Test for out of bounds contions, add fog
 			if (any(voxel >= *map_dim) || any(voxel < 0)){
 				voxel.xyz -= voxel_step.xyz * jump_power * face_mask.xyz;
-				color_accumulator = mix(fog_color,  (1.0f,0.3f,0.3f,1.0f), 1.0f) - max(distance_traveled / 100.0f, 0.0f);
+				color_accumulator = mix(fog_color,  (1.0f,0.3f,0.3f,1.0f), 1.0f) - max(distance_traveled / 8.0f, 0.0f);
 				color_accumulator.w = 1.0f;
 				break;
 			}
@@ -378,8 +379,9 @@ __kernel void raycaster(
 			uchar prev_val = traversal_state.idx_stack[traversal_state.scale];
 			uchar this_face_mask = 0;
 
-		    uchar3 tmp = select((uchar3)(0), (uchar3)(idx_set_x_mask,idx_set_y_mask,idx_set_z_mask), convert_uchar3(face_mask == (1,1,1)));
-		    this_face_mask = tmp.x | tmp.y | tmp.z;
+			// Check the voxel face that we traversed
+			uchar3 tmp = select((uchar3)(0), (uchar3)(idx_set_x_mask,idx_set_y_mask,idx_set_z_mask), convert_uchar3(face_mask == (1,1,1)));
+			this_face_mask = tmp.x | tmp.y | tmp.z;
 
 			// and increment the idx in the idx stack
 			traversal_state.idx_stack[traversal_state.scale] ^= this_face_mask;
@@ -395,6 +397,7 @@ __kernel void raycaster(
 							(bool)(traversal_state.parent_stack[traversal_state.parent_stack_position] >> 16) & mask_8[mask_index],
 							mask_index > prev_val);
 
+			failsafe = 0;
 			while ((mask_index < prev_val || !is_valid) && traversal_state.scale >= 1) {
 
 				// Clear and pop the idx stack
@@ -432,6 +435,9 @@ __kernel void raycaster(
 				// Get the mask index of the new idx and check the valid status
 				mask_index = traversal_state.idx_stack[traversal_state.scale];
 				is_valid = (traversal_state.parent_stack[traversal_state.parent_stack_position] >> 16) & mask_8[mask_index];
+				failsafe++;
+				if (failsafe > 10)
+					break;
 			}
 
 
@@ -439,7 +445,13 @@ __kernel void raycaster(
 			// valid oct at the leaf indicated by the current idx in the idx stack scale
 
 			// While we haven't bottomed out and the oct we're looking at is valid
-			while((jump_power > 1 || jump_power == 8 ) && is_valid) {
+			failsafe = 0;
+			if (jump_power == 8 && is_valid)
+				failsafe = 5;
+			if (jump_power > 1 && is_valid)
+				failsafe = 1;
+
+			while (jump_power > 1 && is_valid) {
 
 				// If all went well and we found a valid non-leaf oct then we will traverse further down the hierarchy
 
@@ -476,18 +488,9 @@ __kernel void raycaster(
 				// Unlike the single shot DFS, we inherited a valid idx from the upwards traversal. So now we must
 				// set the idx at the tail end of this for loop
 				// Do the logic steps to find which sub oct we step down into
-
-				//	Do the logic steps to find which sub oct we step down into
 				uchar3 masks = select((uchar3)(0, 0, 0),
-									   (uchar3)(idx_set_x_mask, idx_set_y_mask, idx_set_z_mask),
-									   convert_char3(voxel >= (int3)(jump_power) + traversal_state.oct_pos));
-
-				// So we can be a little bit tricky here and increment our
-				// array index that holds our masks as we build the idx.
-				// Adding 1 for X, 2 for Y, and 4 for Z
-				traversal_state.idx_stack[traversal_state.scale] = masks.x | masks.y | masks.z;
-
-				// Set our voxel position to the (0,0) of the correct oct by rerunning the logic step
+							   (uchar3)(idx_set_x_mask, idx_set_y_mask, idx_set_z_mask),
+							   convert_char3(voxel >= (int3)(jump_power) + traversal_state.oct_pos));
 				traversal_state.oct_pos += select((int3)(0), (int3)(jump_power), voxel >= (int3)(jump_power) + traversal_state.oct_pos);
 
 				jump_power /= 2;
@@ -498,8 +501,10 @@ __kernel void raycaster(
 
 				traversal_state.scale++;
 
+				failsafe++;
+				if (failsafe > 10)
+					break;
 			}
-
 			traversal_state.sub_oct_pos = traversal_state.oct_pos;
 
 			uchar3 masks = select((uchar3)(0, 0, 0),
@@ -514,6 +519,8 @@ __kernel void raycaster(
 			// Set our voxel position to the (0,0) of the correct oct by rerunning the logic step
 			traversal_state.sub_oct_pos += select((int3)(0), (int3)(jump_power), voxel >= (int3)(jump_power) + traversal_state.oct_pos);
 
+
+			traversal_state = traversal_state;
 			// Add the delta for the jump power and the traversed face
 			intersection_t += delta_t * jump_power * fabs(convert_float3(face_mask.xyz));
 
@@ -540,168 +547,168 @@ __kernel void raycaster(
 			// 	break;
 			// }
 			//voxel_data = map[voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z))];
-
+		}
 
 // =======================================================================
 //
 // =======================================================================
-		// else {
-		//
-		// 	// True will result in a -1, e.g (0, 0, -1) so negate it to positive
-		// 	face_mask = -1 * (intersection_t.xyz <= min(intersection_t.yzx, intersection_t.zxy));
-		// 	intersection_t += delta_t * convert_float3(face_mask.xyz);
-		// 	voxel.xyz += voxel_step.xyz * face_mask.xyz;
-		//
-		// 	// Test for out of bounds contions, add fog
-		// 	if (any(voxel >= *map_dim) || any(voxel < 0)){
-		// 		voxel.xyz -= voxel_step.xyz * face_mask.xyz;
-		// 		color_accumulator = mix(fog_color, voxel_color, 1.0f - max(distance_traveled / 700.0f, 0.0f));
-		// 		color_accumulator.w *= 4;
-		// 		break;
-		// 	}
-		// 	voxel_data = map[voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z))];
-		// }
+		else {
+
+			// True will result in a -1, e.g (0, 0, -1) so negate it to positive
+			face_mask = -1 * (intersection_t.xyz <= min(intersection_t.yzx, intersection_t.zxy));
+			intersection_t += delta_t * convert_float3(face_mask.xyz);
+			voxel.xyz += voxel_step.xyz * face_mask.xyz;
+
+			// Test for out of bounds contions, add fog
+			if (any(voxel >= *map_dim) || any(voxel < 0)){
+				voxel.xyz -= voxel_step.xyz * face_mask.xyz;
+				color_accumulator = mix(fog_color, voxel_color, 1.0f - max(distance_traveled / 700.0f, 0.0f));
+				color_accumulator.w *= 4;
+				break;
+			}
+			voxel_data = map[voxel.x + (*map_dim).x * (voxel.y + (*map_dim).z * (voxel.z))];
+		}
 // =======================================================================
 //
 // =======================================================================
 
-		// if (voxel_data == 5 || voxel_data == 6) {
-		//
-		// 	// Determine where on the 2d plane the ray intersected
-		// 	face_position = zeroed_float3;
-		// 	tile_face_position = zeroed_float2;
-		//
-		// 	// Collect the sign of the face hit for ray redirection
-		// 	sign = (1.0f, 1.0f, 1.0f);
-		//
-		// 	// First determine the percent of the way the ray is towards the next intersection_t
-		// 	// in relation to the xyz position on the plane
-		// 	if (face_mask.x == 1) {
-		//
-		// 		sign.x *= -1.0;
-		//
-		// 		// the next intersection for this plane - the last intersection of the passed plane / delta of this plane
-		// 		// basically finds how far in on the other 2 axis we are when the ray traversed the plane
-		// 		float z_percent = (intersection_t.z - (intersection_t.x - delta_t.x)) / delta_t.z;
-		// 		float y_percent = (intersection_t.y - (intersection_t.x - delta_t.x)) / delta_t.y;
-		//
-		// 		// Since we intersected face x, we know that we are at the face (1.0)
-		// 		// I think the 1.001f rendering bug is the ray thinking it's within the voxel
-		// 		// even though it's sitting on the very edge
-		// 		face_position = (float3)(1.00001f, y_percent, z_percent);
-		// 		tile_face_position = face_position.yz;
-		// 	}
-		// 	else if (face_mask.y == 1) {
-		//
-		// 		sign.y *= -1.0;
-		// 		float x_percent = (intersection_t.x - (intersection_t.y - delta_t.y)) / delta_t.x;
-		// 		float z_percent = (intersection_t.z - (intersection_t.y - delta_t.y)) / delta_t.z;
-		// 		face_position = (float3)(x_percent, 1.00001f, z_percent);
-		// 		tile_face_position = face_position.xz;
-		// 	}
-		//
-		// 	else if (face_mask.z == 1) {
-		//
-		// 		sign.z *= -1.0;
-		// 		float x_percent = (intersection_t.x - (intersection_t.z - delta_t.z)) / delta_t.x;
-		// 		float y_percent = (intersection_t.y - (intersection_t.z - delta_t.z)) / delta_t.y;
-		// 		face_position = (float3)(x_percent, y_percent, 1.00001f);
-		// 		tile_face_position = face_position.xy;
-		//
-		// 	}
-		//
-		// 	// Because the raycasting process is agnostic to the quadrant
-		// 	// it's working in, we need to transpose the sign over to the face positions.
-		// 	// If we don't it will think that it is always working in the (1, 1, 1) quadrant
-		// 	// and will just "copy" the quadrant. This includes shadows as they use the face_position
-		// 	// in order to cast the intersection ray!!
-		//
-		// 	face_position.x = select((face_position.x), (-face_position.x + 1.0f), (int)(ray_dir.x > 0));
-		// 	tile_face_position.x = select((tile_face_position.x), (-tile_face_position.x + 1.0f), (int)(ray_dir.x < 0));
-		//
-		// 	if (ray_dir.y > 0){
-		// 		face_position.y =  -face_position.y + 1;
-		// 	} else {
-		// 		tile_face_position.x = 1.0 - tile_face_position.x;
-		//
-		// 		// We run into the Hairy ball problem, so we need to define
-		// 		// a special case for the zmask
-		// 		if (face_mask.z == 1) {
-		// 			tile_face_position.x = 1.0f - tile_face_position.x;
-		// 			tile_face_position.y = 1.0f - tile_face_position.y;
-		// 		}
-		// 	}
-		//
-		// 	face_position.z = select((face_position.z), (-face_position.z + 1.0f), -1 * (int)(ray_dir.z > 0));
-		// 	tile_face_position.y = select((tile_face_position.y), (-tile_face_position.y + 1.0f), -1 * (int)(ray_dir.z < 0));
-		//
-		// 	// Now we detect what type of of voxel we intersected and decide whether
-		// 	// to bend the ray, send out a light intersection ray, or add texture color
-		//
-		// 	// TEXTURE HIT + SHADOW RAY REDIRECTION
-		// 	if (voxel_data == 5 && !shadow_ray){
-		//
-		// 		shadow_ray = true;
-		// 		voxel_color.xyz += (float3)read_imagef(
-		// 				 texture_atlas,
-		// 				 convert_int2(tile_face_position * convert_float2(*atlas_dim / *tile_dim)) +
-		// 				 convert_int2((float2)(5, 0) * convert_float2(*atlas_dim / *tile_dim))
-		// 		).xyz/2;
-		//
-		// 		color_accumulator = view_light(
-		// 					voxel_color,
-		// 					(convert_float3(voxel) + face_position) - (float3)(lights[4], lights[5], lights[6]),
-		// 					(float4)(lights[0], lights[1], lights[2], lights[3]),
-		// 					(convert_float3(voxel) + face_position) - (*cam_pos),
-		// 					face_mask * voxel_step
-		// 		);
-		//
-		// 		fog_distance = distance_traveled;
-		// 		max_distance = distance_traveled + fast_distance(convert_float3(voxel), (float3)(lights[4], lights[5], lights[6]));
-		//
-		// 		float3 hit_pos = convert_float3(voxel) + face_position;
-		// 		ray_dir = normalize((float3)(lights[4], lights[5], lights[6]) - hit_pos);
-		// 		if (any(ray_dir == zeroed_float3))
-		// 			return;
-		//
-		// 		voxel -= voxel_step * face_mask;
-		// 		voxel_step = ( -1, -1, -1 ) * ((ray_dir > 0) - (ray_dir < 0));
-		//
-		// 		delta_t = fabs(1.0f / ray_dir);
-		// 		intersection_t = delta_t * ((hit_pos) - floor(hit_pos)) * convert_float3(voxel_step);
-		// 		intersection_t += delta_t * -convert_float3(isless(intersection_t, 0));
-		//
-		// 	// REFLECTION
-		// 	} else if (voxel_data == 6 && !shadow_ray) {
-		//
-		// 		voxel_color.xyz += (float3)read_imagef(
-		// 				 texture_atlas,
-		// 				 convert_int2(tile_face_position * convert_float2(*atlas_dim / *tile_dim)) +
-		// 				 convert_int2((float2)(3, 4) * convert_float2(*atlas_dim / *tile_dim))
-		// 		).xyz/4;
-		//
-		// 		voxel_color.w -= 0.0f;
-		//
-		// 		float3 hit_pos = convert_float3(voxel) + face_position;
-		// 		ray_dir *= sign;
-		// 		if (any(ray_dir == zeroed_float3))
-		// 			return;
-		//
-		// 		voxel -= voxel_step * face_mask;
-		// 		voxel_step = ( -1, -1, -1 ) * (ray_dir > 0) - (ray_dir < 0);
-		//
-		// 		delta_t = fabs(1.0f / ray_dir);
-		// 		intersection_t = delta_t * ((hit_pos)-floor(hit_pos)) * convert_float3(voxel_step);
-		// 		intersection_t += delta_t * -convert_float3(isless(intersection_t, 0));
-		//
-		// 		bounce_count += 1;
-		//
-		// 	// SHADOW RAY HIT
-		// 	} else {
-		// 		color_accumulator.w = 0.1f;
-		// 		break;
-		// 	}
-		// }
+		if (voxel_data == 5 || voxel_data == 6) {
+
+			// Determine where on the 2d plane the ray intersected
+			face_position = zeroed_float3;
+			tile_face_position = zeroed_float2;
+
+			// Collect the sign of the face hit for ray redirection
+			sign = (1.0f, 1.0f, 1.0f);
+
+			// First determine the percent of the way the ray is towards the next intersection_t
+			// in relation to the xyz position on the plane
+			if (face_mask.x == 1) {
+
+				sign.x *= -1.0;
+
+				// the next intersection for this plane - the last intersection of the passed plane / delta of this plane
+				// basically finds how far in on the other 2 axis we are when the ray traversed the plane
+				float z_percent = (intersection_t.z - (intersection_t.x - delta_t.x)) / delta_t.z;
+				float y_percent = (intersection_t.y - (intersection_t.x - delta_t.x)) / delta_t.y;
+
+				// Since we intersected face x, we know that we are at the face (1.0)
+				// I think the 1.001f rendering bug is the ray thinking it's within the voxel
+				// even though it's sitting on the very edge
+				face_position = (float3)(1.00001f, y_percent, z_percent);
+				tile_face_position = face_position.yz;
+			}
+			else if (face_mask.y == 1) {
+
+				sign.y *= -1.0;
+				float x_percent = (intersection_t.x - (intersection_t.y - delta_t.y)) / delta_t.x;
+				float z_percent = (intersection_t.z - (intersection_t.y - delta_t.y)) / delta_t.z;
+				face_position = (float3)(x_percent, 1.00001f, z_percent);
+				tile_face_position = face_position.xz;
+			}
+
+			else if (face_mask.z == 1) {
+
+				sign.z *= -1.0;
+				float x_percent = (intersection_t.x - (intersection_t.z - delta_t.z)) / delta_t.x;
+				float y_percent = (intersection_t.y - (intersection_t.z - delta_t.z)) / delta_t.y;
+				face_position = (float3)(x_percent, y_percent, 1.00001f);
+				tile_face_position = face_position.xy;
+
+			}
+
+			// Because the raycasting process is agnostic to the quadrant
+			// it's working in, we need to transpose the sign over to the face positions.
+			// If we don't it will think that it is always working in the (1, 1, 1) quadrant
+			// and will just "copy" the quadrant. This includes shadows as they use the face_position
+			// in order to cast the intersection ray!!
+
+			face_position.x = select((face_position.x), (-face_position.x + 1.0f), (int)(ray_dir.x > 0));
+			tile_face_position.x = select((tile_face_position.x), (-tile_face_position.x + 1.0f), (int)(ray_dir.x < 0));
+
+			if (ray_dir.y > 0){
+				face_position.y =  -face_position.y + 1;
+			} else {
+				tile_face_position.x = 1.0 - tile_face_position.x;
+
+				// We run into the Hairy ball problem, so we need to define
+				// a special case for the zmask
+				if (face_mask.z == 1) {
+					tile_face_position.x = 1.0f - tile_face_position.x;
+					tile_face_position.y = 1.0f - tile_face_position.y;
+				}
+			}
+
+			face_position.z = select((face_position.z), (-face_position.z + 1.0f), -1 * (int)(ray_dir.z > 0));
+			tile_face_position.y = select((tile_face_position.y), (-tile_face_position.y + 1.0f), -1 * (int)(ray_dir.z < 0));
+
+			// Now we detect what type of of voxel we intersected and decide whether
+			// to bend the ray, send out a light intersection ray, or add texture color
+
+			// TEXTURE HIT + SHADOW RAY REDIRECTION
+			if (voxel_data == 5 && !shadow_ray){
+
+				shadow_ray = true;
+				voxel_color.xyz += (float3)read_imagef(
+						 texture_atlas,
+						 convert_int2(tile_face_position * convert_float2(*atlas_dim / *tile_dim)) +
+						 convert_int2((float2)(5, 0) * convert_float2(*atlas_dim / *tile_dim))
+				).xyz/2;
+
+				color_accumulator = view_light(
+							voxel_color,
+							(convert_float3(voxel) + face_position) - (float3)(lights[4], lights[5], lights[6]),
+							(float4)(lights[0], lights[1], lights[2], lights[3]),
+							(convert_float3(voxel) + face_position) - (*cam_pos),
+							face_mask * voxel_step
+				);
+
+				fog_distance = distance_traveled;
+				max_distance = distance_traveled + fast_distance(convert_float3(voxel), (float3)(lights[4], lights[5], lights[6]));
+
+				float3 hit_pos = convert_float3(voxel) + face_position;
+				ray_dir = normalize((float3)(lights[4], lights[5], lights[6]) - hit_pos);
+				if (any(ray_dir == zeroed_float3))
+					return;
+
+				voxel -= voxel_step * face_mask;
+				voxel_step = ( -1, -1, -1 ) * ((ray_dir > 0) - (ray_dir < 0));
+
+				delta_t = fabs(1.0f / ray_dir);
+				intersection_t = delta_t * ((hit_pos) - floor(hit_pos)) * convert_float3(voxel_step);
+				intersection_t += delta_t * -convert_float3(isless(intersection_t, 0));
+
+			// REFLECTION
+			} else if (voxel_data == 6 && !shadow_ray) {
+
+				voxel_color.xyz += (float3)read_imagef(
+						 texture_atlas,
+						 convert_int2(tile_face_position * convert_float2(*atlas_dim / *tile_dim)) +
+						 convert_int2((float2)(3, 4) * convert_float2(*atlas_dim / *tile_dim))
+				).xyz/4;
+
+				voxel_color.w -= 0.0f;
+
+				float3 hit_pos = convert_float3(voxel) + face_position;
+				ray_dir *= sign;
+				if (any(ray_dir == zeroed_float3))
+					return;
+
+				voxel -= voxel_step * face_mask;
+				voxel_step = ( -1, -1, -1 ) * (ray_dir > 0) - (ray_dir < 0);
+
+				delta_t = fabs(1.0f / ray_dir);
+				intersection_t = delta_t * ((hit_pos)-floor(hit_pos)) * convert_float3(voxel_step);
+				intersection_t += delta_t * -convert_float3(isless(intersection_t, 0));
+
+				bounce_count += 1;
+
+			// SHADOW RAY HIT
+			} else {
+				color_accumulator.w = 0.1f;
+				break;
+			}
+		}
 
 		// At the bottom of the while loop, add one to the distance ticker
 		distance_traveled++;
