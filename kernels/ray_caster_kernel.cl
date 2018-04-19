@@ -175,6 +175,8 @@ struct TraversalState get_oct_vox(
 	//				Break
 	while (dimension > 1) {
 
+		ts.oct_pos = ts.sub_oct_pos;
+
 		//	Do the logic steps to find which sub oct we step down into
 	    uchar3 masks = select((uchar3)(0, 0, 0),
 							   (uchar3)(idx_set_x_mask, idx_set_y_mask, idx_set_z_mask),
@@ -186,7 +188,6 @@ struct TraversalState get_oct_vox(
 		ts.idx_stack[ts.scale] = masks.x | masks.y | masks.z;
 
 		// Set our voxel position to the (0,0) of the correct oct by rerunning the logic step
-		ts.oct_pos = ts.sub_oct_pos;
 		ts.sub_oct_pos += select((int3)(0), (int3)(dimension/2), position >= (int3)(dimension/2) + ts.oct_pos);
 
 		int mask_index = ts.idx_stack[ts.scale];
@@ -203,6 +204,8 @@ struct TraversalState get_oct_vox(
 				// Early exit, dimension and resolution are not updated
 				return ts;
 			}
+
+
 
 			// If all went well and we found a valid non-leaf oct then we will traverse further down the hierarchy
 			ts.scale++;
@@ -376,7 +379,7 @@ __kernel void raycaster(
 			uchar prev_val = traversal_state.idx_stack[traversal_state.scale];
 			uchar this_face_mask = 0;
 
-			// Check the voxel face that we traversed
+			// Check the voxel face that we traversed, do a select to OR the value out of the three masks
 			uchar3 tmp = select((uchar3)(0), (uchar3)(idx_set_x_mask,idx_set_y_mask,idx_set_z_mask), convert_uchar3(face_mask == (1,1,1)));
 			this_face_mask = tmp.x | tmp.y | tmp.z;
 
@@ -386,15 +389,23 @@ __kernel void raycaster(
 			// Mask index is the 1D index'd value of the idx for interaction with the valid / leaf masks
 			uchar mask_index = traversal_state.idx_stack[traversal_state.scale];
 
+			// If facemask sign is positive, mask_index > prev_val
+			// if negative                   mask_index < prev_val
+			int3 signed_face_mask = face_mask * voxel_step;
+			bool mask_tripped = (mask_index > prev_val) * ((signed_face_mask.x + signed_face_mask.y + signed_face_mask.z) == -1) +
+								(mask_index < prev_val) * ((signed_face_mask.x + signed_face_mask.y + signed_face_mask.z) == 1);
+
 			// Whether or not the next oct we want to enter in the current CD's valid mask is 1 or 0
 			// Check to see if the idx increased or decreased
 			// If it decreased, thus invalid
 			//		Pop up the stack until the oct that the idx flip is valid and we landed on a valid oct
 			bool is_valid = select(false,
 							(bool)(traversal_state.parent_stack[traversal_state.parent_stack_position] >> 16) & mask_8[mask_index],
-							mask_index > prev_val);
+							mask_tripped == false);
 
-			while ((mask_index < prev_val || !is_valid) && traversal_state.scale >= 1) {
+
+
+			while ((mask_tripped || !is_valid) && traversal_state.scale >= 1) {
 
 				// Clear and pop the idx stack
 				traversal_state.idx_stack[traversal_state.scale] = 0;
@@ -412,6 +423,10 @@ __kernel void raycaster(
 				// track of the sub_oct we're coming from
 				//traversal_state.sub_oct_pos = traversal_state.oct_pos;
 
+				// Update the prev_val for our new idx
+				prev_val = traversal_state.idx_stack[traversal_state.scale];
+
+				// Use the prev val to subtract out the sub oct we were in to get to our oct pos
 				// select take the dumb MSB truth value for vector types
 				// so we just gotta do this component wise, dumb
 				traversal_state.oct_pos.x -= select(0, jump_power, (prev_val & idx_set_x_mask));
@@ -422,15 +437,19 @@ __kernel void raycaster(
 				traversal_state.current_descriptor =
 					traversal_state.parent_stack[traversal_state.parent_stack_position];
 
-				// Update the prev_val for our new idx
-				prev_val = traversal_state.idx_stack[traversal_state.scale];
-
 				// Apply the face mask to the new idx for the while check
 				traversal_state.idx_stack[traversal_state.scale] ^= this_face_mask;
 
 				// Get the mask index of the new idx and check the valid status
 				mask_index = traversal_state.idx_stack[traversal_state.scale];
 				is_valid = (traversal_state.parent_stack[traversal_state.parent_stack_position] >> 16) & mask_8[mask_index];
+
+// TODO : SOMETHING WEIRD GOING ON HERE. Line skipping and forgetful while loop. Might be this statement
+
+				// Check to see if the mask tripped, this will override the is_valid on the while loop
+				mask_tripped = (mask_index > prev_val) * ((signed_face_mask.x + signed_face_mask.y + signed_face_mask.z) == -1) +
+									(mask_index < prev_val) * ((signed_face_mask.x + signed_face_mask.y + signed_face_mask.z) == 1);
+
 			}
 
 

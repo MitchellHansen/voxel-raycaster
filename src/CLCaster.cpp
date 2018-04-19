@@ -4,8 +4,8 @@
 CLCaster::CLCaster() {}
 CLCaster::~CLCaster() {
 
-    delete[] viewport_matrix;
-    delete[] viewport_image;
+    //delete[] viewport_matrix;
+    //delete[] viewport_image;
 
 	camera.reset();
 	map.reset();

@@ -1,8 +1,8 @@
 #include "Application.h"
 
-const int Application::MAP_X = 32;
-const int Application::MAP_Y = 32;
-const int Application::MAP_Z = 32;
+const int Application::MAP_X = 16;
+const int Application::MAP_Y = 16;
+const int Application::MAP_Z = 16;
 
 Application::Application() {
 
@@ -52,8 +52,8 @@ bool Application::init_clcaster() {
 
 
 	camera = std::make_shared<Camera>(
-		sf::Vector3f(3.8f, 3.4f, 2.6f), // Starting position
-		sf::Vector2f(1.56f, .81f),      // Direction
+		sf::Vector3f(2.34f, 2.5f, 7.17f), // Starting position
+		sf::Vector2f(2.424f, 3.141f),      // Direction
 		window.get()
 	);
 	raycaster->assign_camera(camera);
