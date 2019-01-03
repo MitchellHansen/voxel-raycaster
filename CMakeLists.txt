@@ -8,64 +8,35 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(PNAME VoxelRaycaster)
 project(${PNAME})
 
-set(OpenGL_GL_PREFERENCE "LEGACY")
-
-# Set up variables, and find SFML
-if (WIN32)
-    set(SFML_ROOT root CACHE STRING "User specified path")
-    set(SFML_INCLUDE_DIR ${SFML_ROOT}/include)
-endif()
-
 # You're probably going to need to change these paths
 if (UNIX)
-	set(OpenCL_INCLUDE_DIR /usr/include/CL)
-	set(OpenCL_LIBRARY /usr/lib/x86_64-linux-gnu/libOpenCL.so.1)
     set(Vulkan_INCLUDE_DIR /home/mrh/vulkan-sdk/x86_64/include)
     set(Vulkan_LIBRARY /home/mrh/vulkan-sdk/source/lib/libvulkan.so)
 endif (UNIX)
 
-set(SFML_COMPONENTS graphics window system network audio)
+
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
-find_package(SFML 2.1 COMPONENTS ${SFML_COMPONENTS} REQUIRED)
-message(STATUS "SFML found: ${SFML_FOUND}")
-
-# Find OpenCL
-find_package( OpenCL REQUIRED )
-message(STATUS "OpenCL found: ${OPENCL_FOUND}")
-
-# Find OpenGL
-find_package( OpenGL REQUIRED)
-message(STATUS "OpenGL found: ${OPENGL_FOUND}")
 
 find_package(Vulkan)
 message(STATUS "Vulkan found: ${VULKAN_FOUND}")
 
-
 # Windows requires us to use GLEW to link the GL shit
 if (WIN32)
-	# Find GLEW
 	find_package(GLEW REQUIRED)
 	message(STATUS "GLEW found: ${GLEW_FOUND}")
 endif()
 
 # beignet only supports EGL and not GLX for the cl_khr_gl_sharing extension
 if (UNIX)
-	# Find X11
 	find_package(X11 REQUIRED)
 	message(STATUS "XSS found: ${X11_FOUND}")
-#    find_package(EGL REQUIRED)
-#message(STATUS "EGL found: ${EGL_FOUND}")
 endif (UNIX)
 
-# Include the directories for the main program, GL, CL and SFML's headers
-include_directories(${SFML_INCLUDE_DIR})
-include_directories(${OpenCL_INCLUDE_DIRS})
-include_directories(${OpenGL_INCLUDE_DIRS})
+# Include the directories for the main program
 include_directories(${Vulkan_INCLUDE_DIR})
 
 if (UNIX)
 	include_directories(${X11_INCLUDE_DIR})
-    #    include_directories(${EGL_INCLUDE_DIRS})
 endif()
 include_directories(include)
 
@@ -141,15 +112,10 @@ foreach (source IN ITEMS ${SHADERS})
 	endif()
 endforeach()
 
-# Link CL, GL, and SFML
-target_link_libraries (${PNAME} ${SFML_LIBRARIES} ${SFML_DEPENDENCIES})
-target_link_libraries (${PNAME} ${OpenCL_LIBRARY})
-target_link_libraries (${PNAME} ${OPENGL_LIBRARIES})
 target_link_libraries (${PNAME} ${Vulkan_LIBRARY})
 
 if (UNIX)
 	target_link_libraries (${PNAME} ${X11_LIBRARIES})
-    #    target_link_libraries (${PNAME} ${EGL_LIBRARIES})
 endif()
 
 if (WIN32)

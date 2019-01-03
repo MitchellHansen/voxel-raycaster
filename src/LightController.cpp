@@ -6,7 +6,7 @@ LightController::LightController(std::shared_ptr<CLCaster> raycaster) : packed_d
 	std::iota(open_list.begin(), open_list.end(), 0);
 
 	//
-	raycaster->assign_lights(&packed_data_array);
+//	raycaster->assign_lights(&packed_data_array);
 	
 }
 

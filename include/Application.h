@@ -4,8 +4,6 @@
 #define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 
 #ifdef linux
-#include <CL/cl.h>
-#include <CL/opencl.h>
 
 #elif defined _WIN32
 // Good lord, windows.h overwrote the std::min() max() definitions
@@ -71,7 +69,7 @@ private:
 	std::shared_ptr<sf::RenderWindow> window;
 	std::shared_ptr<Map> map;
 	std::shared_ptr<Camera> camera;
-	std::shared_ptr<CLCaster> raycaster;
+	//std::shared_ptr<CLCaster> raycaster;
 	std::shared_ptr<LightHandle> light_handle;
 	std::shared_ptr<LightController> light_controller;
     GraphTimer fps;

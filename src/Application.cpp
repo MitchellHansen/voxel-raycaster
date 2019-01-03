@@ -26,65 +26,65 @@ Application::~Application() {
 
 bool Application::init_clcaster() {
 
-	// Start up the raycaster
-	raycaster = std::make_shared<CLCaster>();
-
-	if (!raycaster->init())
-		abort();
-
-    raycaster->add_to_settings_buffer("octree_dimensions", "OCTDIM", MAP_X);
-
-    // TODO: ALLOW RVALUES FOR SETTINGS BUFFER
-    uint64_t oct_enabled = 0;
-    raycaster->add_to_settings_buffer("using_octree", "OCTENABLED", oct_enabled);
-
-	map = std::make_shared<Map>(MAP_X);
-
-    // TODO: Implement this
-    sf::Image bitmap = map->GenerateHeightBitmap(sf::Vector3i(MAP_X, MAP_Y, MAP_Z));
-	map->ApplyHeightmap(bitmap);
-	
-	//map->octree.CastRayOctree(sf::Vector2f(1.57f, 0.0001f), sf::Vector3f(0.5f, 0.5f, 0.5f));
-
-    // TODO: Consolidate this to one call
-	raycaster->assign_octree(map);
-	raycaster->assign_map(map);
-
-
-	camera = std::make_shared<Camera>(
-		sf::Vector3f(2.34f, 2.5f, 7.17f), // Starting position
-		sf::Vector2f(2.424f, 3.141f),      // Direction
-		window.get()
-	);
-	raycaster->assign_camera(camera);
-
-	// Generate and send the viewport to the GPU. Also creates the viewport texture
-	raycaster->create_viewport(WINDOW_X, WINDOW_Y, 0.625f * 90.0f, 90.0f);
-
-	// Initialize the light controller and link it to the GPU
-    // TODO: Bad behaviour when raycaster has errors!!!!
-	light_controller = std::make_shared<LightController>(raycaster);
-
-	// Create a light prototype, send it to the controller, and get the handle back
-	LightPrototype prototype(
-		sf::Vector3f(10, 10.0f, 10.0f),
-		sf::Vector3f(-1.0f, -1.0f, -1.5f),
-		sf::Vector4f(0.01f, 0.01f, 0.01f, 0.2f)
-	);
-	light_handle = light_controller->create_light(prototype);
-
-	// Load in the spritesheet texture
-	if (!spritesheet.loadFromFile("../assets/textures/minecraft_tiles.png"))
-		Logger::log("Failed to load spritesheet from file", Logger::LogLevel::WARN);
-	raycaster->create_texture_atlas(&spritesheet, sf::Vector2i(16, 16));
-
-	// Compiles the kernel, Checks to see if proper data was uploaded, then sets the kernel args
-	// ALL DATA LOADING MUST BE FINISHED
-	if (!raycaster->validate()) {
-		abort();
-	};
-
-	return true;
+//	// Start up the raycaster
+//	raycaster = std::make_shared<CLCaster>();
+//
+//	if (!raycaster->init())
+//		abort();
+//
+//    raycaster->add_to_settings_buffer("octree_dimensions", "OCTDIM", MAP_X);
+//
+//    // TODO: ALLOW RVALUES FOR SETTINGS BUFFER
+//    uint64_t oct_enabled = 0;
+//    raycaster->add_to_settings_buffer("using_octree", "OCTENABLED", oct_enabled);
+//
+//	map = std::make_shared<Map>(MAP_X);
+//
+//    // TODO: Implement this
+//    sf::Image bitmap = map->GenerateHeightBitmap(sf::Vector3i(MAP_X, MAP_Y, MAP_Z));
+//	map->ApplyHeightmap(bitmap);
+//
+//	//map->octree.CastRayOctree(sf::Vector2f(1.57f, 0.0001f), sf::Vector3f(0.5f, 0.5f, 0.5f));
+//
+//    // TODO: Consolidate this to one call
+//	raycaster->assign_octree(map);
+//	raycaster->assign_map(map);
+//
+//
+//	camera = std::make_shared<Camera>(
+//		sf::Vector3f(2.34f, 2.5f, 7.17f), // Starting position
+//		sf::Vector2f(2.424f, 3.141f),      // Direction
+//		window.get()
+//	);
+//	raycaster->assign_camera(camera);
+//
+//	// Generate and send the viewport to the GPU. Also creates the viewport texture
+//	raycaster->create_viewport(WINDOW_X, WINDOW_Y, 0.625f * 90.0f, 90.0f);
+//
+//	// Initialize the light controller and link it to the GPU
+//    // TODO: Bad behaviour when raycaster has errors!!!!
+//	light_controller = std::make_shared<LightController>(raycaster);
+//
+//	// Create a light prototype, send it to the controller, and get the handle back
+//	LightPrototype prototype(
+//		sf::Vector3f(10, 10.0f, 10.0f),
+//		sf::Vector3f(-1.0f, -1.0f, -1.5f),
+//		sf::Vector4f(0.01f, 0.01f, 0.01f, 0.2f)
+//	);
+//	light_handle = light_controller->create_light(prototype);
+//
+//	// Load in the spritesheet texture
+//	if (!spritesheet.loadFromFile("../assets/textures/minecraft_tiles.png"))
+//		Logger::log("Failed to load spritesheet from file", Logger::LogLevel::WARN);
+//	raycaster->create_texture_atlas(&spritesheet, sf::Vector2i(16, 16));
+//
+//	// Compiles the kernel, Checks to see if proper data was uploaded, then sets the kernel args
+//	// ALL DATA LOADING MUST BE FINISHED
+//	if (!raycaster->validate()) {
+//		abort();
+//	};
+//
+//	return true;
 }
 
 bool Application::init_events() {
@@ -149,14 +149,14 @@ bool Application::game_loop() {
 
 			// Run the raycast
             fps.start(compute_fps_idx);
-			if (!raycaster->compute()) {
-				abort();
-			};
+//			if (!raycaster->compute()) {
+//				abort();
+//			};
             fps.stop(compute_fps_idx);
 		}
 
 		// Let the raycaster draw it screen buffer
-		raycaster->draw(window.get());
+		//raycaster->draw(window.get());
 
 		// Give the frame counter the frame time and draw the average frame time
 		fps.frame(fps_idx, delta_time);
