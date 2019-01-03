@@ -98,7 +98,6 @@ bool CLCaster::release_map() {
 	return true;
 }
 
-
 bool CLCaster::assign_octree(std::shared_ptr<Map> map) {
 
 	this->map = map;
@@ -114,7 +113,6 @@ bool CLCaster::assign_octree(std::shared_ptr<Map> map) {
 
 	return true;
 }
-
 
 bool CLCaster::release_octree()
 {
@@ -343,7 +341,6 @@ bool CLCaster::debug_quick_recompile() {
 
 }
 
-
 void CLCaster::render_gui() {
 	
 	ImGui::Begin("CLCaster");
@@ -409,11 +406,9 @@ void CLCaster::render_gui() {
 	ImGui::End();
 }
 
-
 void CLCaster::update_gui() {
 	rendering = true;
 }
-
 
 void CLCaster::event_handler(VrEventPublisher *publisher, std::unique_ptr<vr::Event> event) {
 
@@ -949,6 +944,8 @@ bool CLCaster::run_kernel(std::string kernel_name, const int work_dim_x, const i
 
 	cl_kernel kernel = kernel_map.at(kernel_name);
 
+	glFinish();
+
 	error = clEnqueueAcquireGLObjects(getCommandQueue(), 1, &buffer_map.at("image"), 0, 0, 0);
 
 	if (cl_assert(error)) {
@@ -967,6 +964,15 @@ bool CLCaster::run_kernel(std::string kernel_name, const int work_dim_x, const i
 		return false;
 	}
 
+//    // What if errors out and gl objects are never released?
+//    error = clEnqueueReleaseGLObjects(getCommandQueue(), 1, &buffer_map.at("image"), 0, NULL, NULL);
+//
+//    if (cl_assert(error)) {
+//        Logger::log("Failed at clEnqueueReleaseGLObjects() :" + cl_err_lookup(error), Logger::LogLevel::ERROR, __LINE__, __FILE__);
+//        return false;
+//    }
+
+
 	error = clFinish(getCommandQueue());
 
 	if (cl_assert(error)) {
@@ -974,13 +980,6 @@ bool CLCaster::run_kernel(std::string kernel_name, const int work_dim_x, const i
 		return false;
 	}
 
-	// What if errors out and gl objects are never released?
-	error = clEnqueueReleaseGLObjects(getCommandQueue(), 1, &buffer_map.at("image"), 0, NULL, NULL);
-
-	if (cl_assert(error)) {
-		Logger::log("Failed at clEnqueueReleaseGLObjects() :" + cl_err_lookup(error), Logger::LogLevel::ERROR, __LINE__, __FILE__);
-		return false;
-	}
 
 
 	return true;
@@ -1015,8 +1014,6 @@ bool CLCaster::cl_assert(int error_code) {
 	else
 		return true;
 }
-
-
 
 void CLCaster::set_define(std::string name, std::string value) {
 	defines_map[name] = value;
@@ -1107,7 +1104,6 @@ bool CLCaster::overwrite_setting(std::string settings_name, int64_t *value) {
     }
     return success;
 }
-
 
 std::string CLCaster::cl_err_lookup(int error_code) {
 
@@ -1309,7 +1305,6 @@ std::string CLCaster::cl_err_lookup(int error_code) {
 
 }
 
-
 /*
  * ==================================================
  *
@@ -1317,7 +1312,6 @@ std::string CLCaster::cl_err_lookup(int error_code) {
  *
  * ==================================================
  */
-
 
 CLCaster::device::device(cl_device_id device_id, cl_platform_id platform_id) {
 
@@ -1352,7 +1346,6 @@ CLCaster::device::device(cl_device_id device_id, cl_platform_id platform_id) {
 		cl_gl_sharing = true;
 	}
 }
-
 
 CLCaster::device::device(const device& d) {
 

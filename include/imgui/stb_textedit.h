@@ -252,11 +252,11 @@
 // as possible. (For example, to locate the mouse pointer in the text, we
 // could define functions that return the X and Y positions of characters
 // and binary search Y and then X, but if we're doing dynamic layout this
-// will run the layout algorithm many times, so instead we manually search
+// will init the layout algorithm many times, so instead we manually search
 // forward in one pass. Similar logic applies to e.g. up-arrow and
 // down-arrow movement.)
 //
-// If it's run in a widget that *has* cached the layout, then this is less
+// If it's init in a widget that *has* cached the layout, then this is less
 // efficient, but it's not horrible on modern computers. But you wouldn't
 // want to edit million-line files with it.
 

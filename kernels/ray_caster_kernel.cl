@@ -631,7 +631,7 @@ __kernel void raycaster(
 			} else {
 				tile_face_position.x = 1.0 - tile_face_position.x;
 
-				// We run into the Hairy ball problem, so we need to define
+				// We init into the Hairy ball problem, so we need to define
 				// a special case for the zmask
 				if (face_mask.z == 1) {
 					tile_face_position.x = 1.0f - tile_face_position.x;

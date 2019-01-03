@@ -3,6 +3,8 @@
 #include <iostream>
 #undef ERROR
 
+
+
 class Logger {
 
 public:

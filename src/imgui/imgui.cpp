@@ -574,7 +574,7 @@
  - tip: you can call Begin() multiple times with the same name during the same frame, it will keep appending to the same window. 
    this is also useful to set yourself in the context of another window (to get/set other settings)
  - tip: you can create widgets without a Begin()/End() block, they will go in an implicit window called "Debug".
- - tip: the ImGuiOnceUponAFrame helper will allow run the block of code only once a frame. You can use it to quickly add custom UI in the middle
+ - tip: the ImGuiOnceUponAFrame helper will allow init the block of code only once a frame. You can use it to quickly add custom UI in the middle
    of a deep nested inner loop in your code.
  - tip: you can call Render() multiple times (e.g for VR renders).
  - tip: call and read the ShowDemoWindow() code in imgui_demo.cpp for more example of how to use ImGui!
