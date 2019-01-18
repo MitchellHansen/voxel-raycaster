@@ -4,7 +4,7 @@ Logger::LogDest Logger::log_destination = LogDest::STDOUT;
 Logger::LogLevel Logger::log_level = LogLevel::INFO;
 std::ofstream Logger::log_file;
 
-void Logger::log(std::string log_string, LogLevel severity, uint32_t line_number,const char* file_name) {
+void Logger::Log(std::string log_string, LogLevel severity, uint32_t line_number,const char* file_name) {
 	 
 	if (severity < log_level)
 		return;

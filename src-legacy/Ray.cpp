@@ -1,4 +1,4 @@
-#include <Ray.h>
+#include "../include-legacy/Ray.h"
 
 Ray::Ray(
         Map *map,

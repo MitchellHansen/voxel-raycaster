@@ -1,5 +1,5 @@
-﻿#include <GraphTimer.h>
-#include "Input.h"
+﻿#include "../include-legacy/GraphTimer.h"
+#include "../include-legacy/Input.h"
 
 
 Input::Input() {

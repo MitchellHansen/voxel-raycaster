@@ -1,6 +1,6 @@
 #include <imgui/imgui.h>
-#include "LightHandle.h"
-#include "LightController.h"
+#include "../include-legacy/LightHandle.h"
+#include "../include-legacy/LightController.h"
 
 
 LightHandle::LightHandle(LightController *const light_controller, unsigned int light_id, LightPrototype light_prototype, PackedData *const data_reference) :

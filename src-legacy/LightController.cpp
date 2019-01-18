@@ -1,4 +1,4 @@
-#include "LightController.h"
+#include "../include-legacy/LightController.h"
 
 LightController::LightController(std::shared_ptr<CLCaster> raycaster) : packed_data_array(reserved_count), open_list(reserved_count) {
 

@@ -6,22 +6,22 @@ const int Application::MAP_Z = 16;
 
 Application::Application() {
 
-	window = std::make_shared<sf::RenderWindow>(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
-	window->setMouseCursorVisible(false);
-	window->setKeyRepeatEnabled(false);
-	window->setVerticalSyncEnabled(false);
-
-	ImGui::SFML::Init(*window);
-	window->resetGLStates();
+//	window = std::make_shared<sf::RenderWindow>(sf::VideoMode(WINDOW_X, WINDOW_Y), "SFML");
+//	window->setMouseCursorVisible(false);
+//	window->setKeyRepeatEnabled(false);
+//	window->setVerticalSyncEnabled(false);
+//
+//	ImGui::SFML::Init(*window);
+//	window->resetGLStates();
 }
 
 Application::~Application() {
 
-    if (window.unique())
-        window.reset();
-    else {
-        Logger::log("Can't release window, shared_ptr count : " + window.use_count(), Logger::LogLevel::WARN);
-    }
+//    if (window.unique())
+//        window.reset();
+//    else {
+//        Logger::log("Can't release window, shared_ptr count : " + window.use_count(), Logger::LogLevel::WARN);
+//    }
 }
 
 bool Application::init_clcaster() {
@@ -89,40 +89,43 @@ bool Application::init_clcaster() {
 
 bool Application::init_events() {
 
-	// Link the camera to the input handler
-	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyHeld);
-	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyPressed);
-	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::MouseMoved);
-	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::MouseButtonPressed);
-
-	// Start up a window handler which subscribes to input and listens for window closed events
-	window_handler = std::make_shared<WindowHandler>(WindowHandler(window.get()));
-	window_handler->subscribe_to_publisher(&input_handler, vr::Event::EventType::Closed);
-	window_handler->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyPressed);
-
-	//raycaster->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyPressed);
-	//camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::JoystickMoved);
-	
+//	// Link the camera to the input handler
+//	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyHeld);
+//	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyPressed);
+//	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::MouseMoved);
+//	camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::MouseButtonPressed);
+//
+//	// Start up a window handler which subscribes to input and listens for window closed events
+//	window_handler = std::make_shared<WindowHandler>(WindowHandler(window.get()));
+//	window_handler->subscribe_to_publisher(&input_handler, vr::Event::EventType::Closed);
+//	window_handler->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyPressed);
+//
+//	//raycaster->subscribe_to_publisher(&input_handler, vr::Event::EventType::KeyPressed);
+//	//camera->subscribe_to_publisher(&input_handler, vr::Event::EventType::JoystickMoved);
+//
 	return true;
 }
 
 bool Application::game_loop() {
 
-    int fps_idx = fps.create_line("FPS");
-    int compute_fps_idx = fps.create_line("Compute");
-    int event_fps_idx = fps.create_line("Event Time");
+//    int fps_idx = fps.create_line("FPS");
+//    int compute_fps_idx = fps.create_line("Compute");
+//    int event_fps_idx = fps.create_line("Event Time");
+
 
 	while (true) {
 
 		// Have the input handler empty the event stack, generate events for held keys, and then dispatch the events to listeners
-        fps.start(event_fps_idx);
-        input_handler.consume_sf_events(window.get());
-        input_handler.handle_held_keys();
-		input_handler.dispatch_events();
-        fps.stop(event_fps_idx);
 
-		if (!window->isOpen())
-			break;
+		//fps.start(event_fps_idx);
+        //input_handler.consume_sf_events(window.get());
+        //input_handler.handle_held_keys();
+		//input_handler.dispatch_events();
+        //fps.stop(event_fps_idx);
+
+//		if (!window->isOpen())
+//			break;
+
 		// Time keeping
 		elapsed_time = elap_time();
 		delta_time = elapsed_time - current_time;
@@ -132,79 +135,79 @@ bool Application::game_loop() {
 		accumulator_time += delta_time;
 		while ((accumulator_time - step_size) >= step_size) {
 			accumulator_time -= step_size;
-			
 			// ==== DELTA TIME LOCKED ====
 		}
 
 		// ==== FPS LOCKED ====
-
-		window->clear(sf::Color::Black);
-
-		ImGui::SFML::Update(*window, sf_delta_clock.restart());
-
-		// Pausing stops camera and light updates, as well as raycaster computes
-		if (!paused) {
-			camera->update(delta_time);
-			light_handle->update(delta_time);
-
-			// Run the raycast
-            fps.start(compute_fps_idx);
+//
+//		window->clear(sf::Color::Black);
+//
+//		ImGui::SFML::Update(*window, sf_delta_clock.restart());
+//
+//		// Pausing stops camera and light updates, as well as raycaster computes
+//		if (!paused) {
+//			camera->update(delta_time);
+//			light_handle->update(delta_time);
+//
+//			// Run the raycast
+//          fps.start(compute_fps_idx);
 //			if (!raycaster->compute()) {
 //				abort();
 //			};
-            fps.stop(compute_fps_idx);
-		}
+//          fps.stop(compute_fps_idx);
+//		}
+//
+//		// Let the raycaster draw it screen buffer
+//		//raycaster->draw(window.get());
+//
+//		// Give the frame counter the frame time and draw the average frame time
+//		fps.frame(fps_idx, delta_time);
+//		fps.draw();
+//
+//		Gui::do_render();
+//
+//		ImGui::Begin("Window");
+//		ImGui::InputText("filename", screenshot_buf, 128);
+//		if (ImGui::Button("Take Screen shot")) {
+//
+//			std::string path = "../assets/";
+//			std::string filename(screenshot_buf);
+//			filename += ".png";
+//
+//			sf::Texture window_texture;
+//			window_texture.create(window->getSize().x, window->getSize().y);
+//			window_texture.update(*window);
+//
+//			sf::Image image = window_texture.copyToImage();
+//			image.saveToFile(path + filename);
+//
+//		}
+//
+//		ImGui::NextColumn();
+//
+//		if (ImGui::Button("Pause")) {
+//
+//			paused = !paused;
+//
+//			if (paused)
+//				Logger::log("Pausing", Logger::LogLevel::INFO);
+//			else
+//				Logger::log("Unpausing", Logger::LogLevel::INFO);
+//
+//		}
+//		ImGui::End();
+//
+//
+//		//ImGui::ShowTestWindow();
+//
+//		ImGui::Render();
+//
+//		// ImGUI messes up somthing in the SFML GL state, so we need a single draw call to right things
+//		// then we can move on to flip the screen buffer via display
+//		window->draw(sf::CircleShape(0));
+//		window->display();
 
-		// Let the raycaster draw it screen buffer
-		//raycaster->draw(window.get());
-
-		// Give the frame counter the frame time and draw the average frame time
-		fps.frame(fps_idx, delta_time);
-		fps.draw();
-
-		Gui::do_render();
-
-		ImGui::Begin("Window");
-		ImGui::InputText("filename", screenshot_buf, 128);
-		if (ImGui::Button("Take Screen shot")) {
-
-			std::string path = "../assets/";
-			std::string filename(screenshot_buf);
-			filename += ".png";
-
-			sf::Texture window_texture;
-			window_texture.create(window->getSize().x, window->getSize().y);
-			window_texture.update(*window);
-
-			sf::Image image = window_texture.copyToImage();
-			image.saveToFile(path + filename);
-
-		}
-
-		ImGui::NextColumn();
-
-		if (ImGui::Button("Pause")) {
-
-			paused = !paused;
-
-			if (paused)
-				Logger::log("Pausing", Logger::LogLevel::INFO);
-			else
-				Logger::log("Unpausing", Logger::LogLevel::INFO);
-
-		}
-		ImGui::End();
-
-
-		//ImGui::ShowTestWindow();
-
-		ImGui::Render();
-
-		// ImGUI messes up somthing in the SFML GL state, so we need a single draw call to right things
-		// then we can move on to flip the screen buffer via display
-		window->draw(sf::CircleShape(0));
-		window->display();
-	}
+	return true;
 }
 
 float Application::elap_time() {

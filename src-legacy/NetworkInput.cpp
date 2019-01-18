@@ -1,4 +1,4 @@
-#include "NetworkInput.h"
+#include "../include-legacy/NetworkInput.h"
 
 NetworkInput::NetworkInput() {
 

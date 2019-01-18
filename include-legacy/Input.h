@@ -68,17 +68,17 @@ public:
 	WindowHandler(sf::RenderWindow *window) : window_ref(window) { };
 
 	virtual void event_handler(VrEventPublisher *publisher, std::unique_ptr<vr::Event>(event)) override {
-		if (event.get()->type == vr::Event::Closed) {
-			window_ref->close();
-
-		} else if (event.get()->type == vr::Event::KeyPressed) {
-
-			vr::KeyPressed *key_event = static_cast<vr::KeyPressed*>(event.get());
-
-			if (key_event->code == sf::Keyboard::Escape) {
-				window_ref->close();
-			}
-		}
+//		if (event.get()->type == vr::Event::Closed) {
+//			window_ref->close();
+//
+//		} else if (event.get()->type == vr::Event::KeyPressed) {
+//
+//			vr::KeyPressed *key_event = static_cast<vr::KeyPressed*>(event.get());
+//
+//			if (key_event->code == sf::Keyboard::Escape) {
+//				window_ref->close();
+//			}
+//		}
 	};
 
 private:

@@ -1,4 +1,4 @@
-#include "GraphTimer.h"
+#include "../include-legacy/GraphTimer.h"
 
 GraphTimer::GraphTimer()  {
     if (!started) {
